@@ -14,11 +14,29 @@
       "Cannot share root folder": [
         "Não é possível compartilhar a pasta raiz"
       ],
+      "Cannot verify the author of this file": [
+        "Não é possível verificar o autor deste arquivo"
+      ],
       "Copy operation aborted": [
         "A cópia foi cancelado."
       ],
       "Copying item to a non-folder is not allowed": [
         "Não é permitido copiar um item para um item que não seja uma pasta."
+      ],
+      "Could not find an available name": [
+        "Não foi possível encontrar um nome disponível"
+      ],
+      "Could not load sharing details": [
+        "Não foi possível carregar os detalhes de compartilhamento."
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Não foi possível ler este arquivo: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "Não foi possível desbloquear a pasta principal"
+      ],
+      "Could not unlock this item": [
+        "Não foi possível desbloquear este item"
       ],
       "Creating documents in non-folders is not allowed": [
         "Não é permitido criar documentos em itens que não sejam pastas."
@@ -34,9 +52,6 @@
       ],
       "Expiration date cannot be in the past": [
         "A data de expiração não pode ser no passado."
-      ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Erro ao descriptografar a revisão ativa: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Erro ao descriptografar a chave do favorito: ${ message }"
@@ -67,6 +82,9 @@
       ],
       "File has no revision": [
         "O arquivo não possui revisão"
+      ],
+      "Image preview not found": [
+        "Pré-visualização da imagem não encontrada"
       ],
       "Invalid URL": [
         "O URL não é válido."
@@ -105,6 +123,9 @@
       "Name must not be empty": [
         "O nome não pode estar vazio"
       ],
+      "No file data was received. Please try again.": [
+        "Não foram recebidos dados do arquivo. Tente novamente."
+      ],
       "Only admins can convert external invitations": [
         "Apenas administradores podem converter convites que não sejam externos"
       ],
@@ -113,6 +134,9 @@
       ],
       "Operation failed, try again later": [
         "Falha na operação, tente novamente mais tarde"
+      ],
+      "Part of the file appears to be corrupted": [
+        "Parte do arquivo parece corrompido"
       ],
       "Photo is already in the target album": [
         "A foto já está no álbum de destino"
@@ -141,8 +165,26 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verificação de assinatura para ${ signatureType } falhou: ${ errorMessage }"
       ],
+      "Some items could not be loaded": [
+        "Alguns itens não puderam ser carregados"
+      ],
       "Something went wrong": [
         "Algo deu errado"
+      ],
+      "Something went wrong. Please try again.": [
+        "Ocorreu um erro. Tente novamente."
+      ],
+      "This file has no version available to download": [
+        "Este arquivo não possui nenhuma versão disponível para baixar"
+      ],
+      "This item has no image preview": [
+        "Este item não possui pré-visualização da imagem"
+      ],
+      "This item is no longer shared": [
+        "Este item não está mais compartilhado"
+      ],
+      "This item is not shared": [
+        "Este item não está compartilhado"
       ],
       "Too many server errors, please try again later": [
         "Muitos erros do servidor. Tente novamente mais tarde."
@@ -158,6 +200,9 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "As chaves de verificação para ${ signatureType } não estão disponíveis"
+      ],
+      "You do not have access to this item": [
+        "Você não pode acessar este item"
       ]
     },
     "Info": {

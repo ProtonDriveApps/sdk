@@ -68,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "La date d\"expiration ne peut pas être antérieure."
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Le déchiffrement de la révision active n'a pas abouti : ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Le déchiffrement de la clé du favori n'a pas abouti : ${ message }"
       ],
@@ -88,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Le déchiffrement de la clé de nœud n'a pas abouti : ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "Le déchiffrement des métadonnées de la révision n'a pas abouti."
       ],
       "Failed to get inviter keys": [
         "La récupération des clés de l'invitant n'a pas abouti"

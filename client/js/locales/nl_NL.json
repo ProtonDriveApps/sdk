@@ -17,14 +17,35 @@
       "Cannot download a folder": [
         "Kan geen map downloaden"
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Kan het item niet verplaatsen zonder een geldige naam. Hernoem het item eerst"
+      ],
       "Cannot share root folder": [
         "Kan hoofdmap niet delen"
+      ],
+      "Cannot verify the author of this file": [
+        "Kan de auteur van dit bestand niet verifiëren"
+      ],
+      "Cannot verify who uploaded this file": [
+        "Kan niet verifiëren wie dit bestand heeft opgeladen"
       ],
       "Copy operation aborted": [
         "Kopieeractie afgebroken"
       ],
       "Copying item to a non-folder is not allowed": [
         "Het kopiëren van een item naar een niet-map is niet toegestaan"
+      ],
+      "Could not find an available name": [
+        "Kon geen beschikbare naam vinden"
+      ],
+      "Could not load sharing details": [
+        "Kan de deel instellingen niet laden"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Kan het afbeeldingsvoorbeeld niet laden: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Kon een deel van dit bestand niet lezen: ${ message }"
       ],
       "Could not unlock the parent folder": [
         "Kan delen van de hoofdmap niet unlocken"
@@ -47,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "De vervaldatum kan niet in het verleden liggen"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Fout bij het ontsleutelen van actieve revisie: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Fout bij het ontsleutelen van de bladwijzersleutel: ${ message }"
       ],
@@ -67,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Fout bij het ontsleutelen van de nodesleutel: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "Kan de metagegevens van de revisie niet ontsleutelen"
       ],
       "Failed to get inviter keys": [
         "Ophalen van de sleutels van de uitnodiger is niet gelukt."
@@ -88,6 +109,9 @@
       ],
       "Invitation not found": [
         "Uitnodiging niet gevonden"
+      ],
+      "Item not found": [
+        "Item niet gevonden"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "De verouderde openbare koppeling kan niet worden bijgewerkt. Maak opnieuw een openbare koppeling aan."
@@ -116,6 +140,12 @@
       ],
       "Name must not be empty": [
         "Naam mag niet leeg zijn"
+      ],
+      "No file data was received. Please try again.": [
+        "Er zijn geen bestandsgegevens ontvangen. Probeer het opnieuw."
+      ],
+      "Only admins can convert external invitations": [
+        "Alleen beheerders kunnen externe uitnodigingen converteren"
       ],
       "Operation aborted": [
         "Handeling afgebroken"
@@ -153,6 +183,36 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verificatie van de handtekening voor ${ signatureType } is mislukt: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "Sommige bestandsgegevens konden niet worden opgeladen. Probeer het opnieuw."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "Sommige bestandsdelen konden niet worden opgeladen. Probeer het opnieuw."
+      ],
+      "Some items could not be loaded": [
+        "Sommige items konden niet worden geladen"
+      ],
+      "Something went wrong": [
+        "Er is iets misgegaan"
+      ],
+      "Something went wrong. Please try again.": [
+        "Er is iets fout gegaan. Probeer later nog eens."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Het geüploade bestand komt niet overeen met het origineel. Probeer het opnieuw."
+      ],
+      "This file has missing crypto material": [
+        "Dit bestand bevat ontbrekend cryptomateriaal"
+      ],
+      "This file has no version available to download": [
+        "Er is geen versie van dit bestand beschikbaar om te downloaden"
+      ],
+      "This file version could not be uploaded": [
+        "Deze bestandsversie kan niet worden opgeladen"
+      ],
+      "This item has no image preview": [
+        "Dit item heeft geen afbeeldingsvoorbeeld"
+      ],
       "This item is no longer shared": [
         "Dit item wordt niet langer gedeeld."
       ],
@@ -174,8 +234,23 @@
       "Verification keys for ${ signatureType } are not available": [
         "Verificatiesleutels voor ${ signatureType } zijn niet beschikbaar"
       ],
+      "You can create public links for your own files only": [
+        "U kunt alleen openbare links voor uw eigen bestanden maken"
+      ],
+      "You can only leave items that are shared with you": [
+        "U kunt alleen items achterlaten die met u zijn gedeeld"
+      ],
+      "You can only upload a new version to a file": [
+        "U kunt alleen een nieuwe versie naar een bestand uploaden"
+      ],
+      "You can update a public link for your own files only": [
+        "U kunt een openbare link alleen voor uw eigen bestanden bijwerken"
+      ],
       "You do not have access to this item": [
         "Je hebt geen toegang tot dit item."
+      ],
+      "You do not have access to this shared item": [
+        "U hebt geen toegang tot dit gedeeld item."
       ]
     },
     "Info": {

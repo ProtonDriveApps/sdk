@@ -68,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "Тэрмін дзеяння не можа быць у мінулым"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Не ўдалося расшыфраваць актыўную рэдакцыю: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Не ўдалося расшыфраваць ключ закладкі: ${ message }"
       ],
@@ -88,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Не ўдалося расшыфраваць ключ вузла: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "Не ўдалося расшыфраваць выпраўленыя метаданыя"
       ],
       "Failed to get inviter keys": [
         "Не ўдалося атрымаць ключы запрашальніка"
@@ -144,7 +144,7 @@
         "Назва не можа быць пустой"
       ],
       "No file data was received. Please try again.": [
-        "Даныя файла не атрыманы. Паўтарыце спробу пазней."
+        "Даныя файла не атрыманы. Паўтарыце спробу."
       ],
       "Only admins can convert external invitations": [
         "Толькі адміністратары могуць пераўтвараць знешнія запрашэнні"
@@ -186,10 +186,10 @@
         "Збой спраўджання подпісу для ${ signatureType }: ${ errorMessage }"
       ],
       "Some file data failed to upload. Please try again.": [
-        "Не ўдалося запампаваць некаторыя даныя файла. Паўтарыце спробу пазней."
+        "Не ўдалося запампаваць некаторыя даныя файла. Паўтарыце спробу."
       ],
       "Some file parts failed to upload. Please try again.": [
-        "Не ўдалося запампаваць некаторыя часткі файла. Паўтарыце спробу пазней."
+        "Не ўдалося запампаваць некаторыя часткі файла. Паўтарыце спробу."
       ],
       "Some items could not be loaded": [
         "Некаторыя элементы не могуць быць загружаны"
@@ -198,10 +198,10 @@
         "Нешта пайшло не так"
       ],
       "Something went wrong. Please try again.": [
-        "Нешта пайшло не так. Паўтарыце спробу пазней."
+        "Нешта пайшло не так. Паўтарыце спробу."
       ],
       "The uploaded file does not match the original. Please try again.": [
-        "Запампаваны файл не адпавядае арыгінальнаму. Паўтарыце спробу пазней."
+        "Запампаваны файл не адпавядае арыгінальнаму. Паўтарыце спробу."
       ],
       "This file has missing crypto material": [
         "У файла адсутнічае крыптаматэрыял"

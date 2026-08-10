@@ -32,9 +32,6 @@
       "Expiration date cannot be in the past": [
         "Data wygaśnięcia nie może być wcześniejsza"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Nie udało się odszyfrować aktywnej rewizji: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Nie udało się odszyfrować klucza zakładki: ${ message }"
       ],

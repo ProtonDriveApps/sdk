@@ -26,9 +26,6 @@
       "Expiration date cannot be in the past": [
         "A data de expiração não pode estar no passado."
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Erro ao desencriptar a revisão ativa: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Erro ao desencriptar a chave do marcador: ${ message }"
       ],

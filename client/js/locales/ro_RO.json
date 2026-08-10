@@ -68,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "Data de expirare nu poate fi în trecut."
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Nu s-a reușit decriptarea reviziei active: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Nu s-a reușit decriptarea cheii semnului de carte: ${ message }"
       ],
@@ -88,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Nu s-a reușit decriptarea cheii nodului: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "Nu s-au putut decripta metadatele reviziei."
       ],
       "Failed to get inviter keys": [
         "Preluarea cheilor de invitare a eșuat."

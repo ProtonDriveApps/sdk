@@ -17,14 +17,17 @@
       "Cannot download a folder": [
         "Bir klasör indirilemedi"
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Geçerli bir adı olmadan öge taşınamaz. Lütfen önce ögeyi yeniden adlandırın"
+      ],
       "Cannot share root folder": [
         "Kök klasör paylaşılamaz"
       ],
       "Cannot verify the author of this file": [
-        "Bu dosyanın yazarı doğrulanamıyor"
+        "Bu dosyanın yazarı doğrulanamadı"
       ],
       "Cannot verify who uploaded this file": [
-        "Bu dosyayı kimin yüklediğini doğrulanamıyor"
+        "Bu dosyayı kimin yüklediği doğrulanamadı"
       ],
       "Copy operation aborted": [
         "Kopyalama işlemi iptal edildi"
@@ -32,14 +35,23 @@
       "Copying item to a non-folder is not allowed": [
         "Öge klasör olmayan bir ögeye kopyalanamaz"
       ],
+      "Could not find an available name": [
+        "Kullanılabilecek bir ad bulunamadı"
+      ],
       "Could not load sharing details": [
         "Paylaşım ayrıntıları yüklenemedi"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Görsel ön izlemesi yüklenemedi: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Bu dosyanın bir bölümü okunamadı: ${ message }"
       ],
       "Could not unlock the parent folder": [
         "Üst klasörün kilidi açılamadı"
       ],
       "Could not unlock this item": [
-        "Bu öğenin kilidi açılamadı"
+        "Bu ögenin kilidi açılamadı"
       ],
       "Creating documents in non-folders is not allowed": [
         "Klasör olmayan ögeler içinde belge oluşturulamaz"
@@ -55,9 +67,6 @@
       ],
       "Expiration date cannot be in the past": [
         "Geçerlilik süresi geçmişte bir tarih olamaz"
-      ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Etkin sürümün şifresi çözülemedi: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Yer imi anahtarının şifresi çözülemedi: ${ message }"
@@ -77,6 +86,9 @@
       "Failed to decrypt node key: ${ message }": [
         "Düğüm anahtarının şifresi çözülemedi: ${ message }"
       ],
+      "Failed to decrypt revision metadata": [
+        "Sürüm üst bilgilerinin şifresi çözülemedi"
+      ],
       "Failed to get inviter keys": [
         "Davet edenin anahtarları alınamadı"
       ],
@@ -90,7 +102,7 @@
         "Dosyanın sürümü yok"
       ],
       "Image preview not found": [
-        "Görsel önizlemesi bulunamadı"
+        "Görsel ön izlemesi bulunamadı"
       ],
       "Invalid URL": [
         "Adres geçersiz"
@@ -99,7 +111,7 @@
         "Davet bulunamadı"
       ],
       "Item not found": [
-        "Öğe bulunamadı"
+        "Öge bulunamadı"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Eski herkese açık bağlantı güncellenemedi. Lütfen yeni bir herkese açık bağlantı oluşturun."
@@ -130,7 +142,10 @@
         "Ad boş olamaz"
       ],
       "No file data was received. Please try again.": [
-        "Herhangi bir dosya verisi alınamadı. Lütfen tekrar deneyin."
+        "Herhangi bir dosya verisi alınamadı. Lütfen yeniden deneyin."
+      ],
+      "Only admins can convert external invitations": [
+        "Proton dışına gönderilen davetiyeleri yalnızca yöneticiler dönüştürebilir"
       ],
       "Operation aborted": [
         "İşlem iptal edildi"
@@ -139,7 +154,7 @@
         "İşlem yapılamadı. Lütfen bir süre sonra yeniden deneyin"
       ],
       "Part of the file appears to be corrupted": [
-        "Dosyanın bir kısmı bozuk gibi görünüyor"
+        "Dosyanın bir kısmı bozulmuş gibi görünüyor"
       ],
       "Photo is already in the target album": [
         "Fotoğraf zaten hedef albümde bulunuyor"
@@ -168,17 +183,41 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "${ signatureType } için imza doğrulanamadı: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "Bazı dosya verileri yüklenemedi. Lütfen yeniden deneyin."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "Bazı dosya bölümleri yüklenemedi. Lütfen yeniden deneyin."
+      ],
+      "Some items could not be loaded": [
+        "Bazı ögeler yüklenemedi"
+      ],
+      "Something went wrong": [
+        "Bir sorun çıktı"
+      ],
+      "Something went wrong. Please try again.": [
+        "Bir sorun çıktı. Lütfen yeniden deneyin."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Yüklenen dosya özgün dosya ile eşleşmiyor. Lütfen yeniden deneyin."
+      ],
+      "This file has missing crypto material": [
+        "Bu dosyada şifreleme malzemesi eksik"
+      ],
       "This file has no version available to download": [
         "Bu dosyanın indirilebilecek bir sürümü bulunmuyor"
       ],
+      "This file version could not be uploaded": [
+        "Bu dosya sürümü yüklenemedi"
+      ],
       "This item has no image preview": [
-        "Bu öğenin görsel önizlemesi yok"
+        "Bu ögenin görsel ön izlemesi yok"
       ],
       "This item is no longer shared": [
-        "Bu öğe artık paylaşılmıyor"
+        "Bu öge artık paylaşılmıyor"
       ],
       "This item is not shared": [
-        "Bu öğe paylaşılmamış"
+        "Bu öge paylaşılmamış"
       ],
       "Too many server errors, please try again later": [
         "Çok fazla sayıda sunucu sorunu çıktı. Lütfen bir süre sonra yeniden deneyin."
@@ -195,11 +234,23 @@
       "Verification keys for ${ signatureType } are not available": [
         "${ signatureType } için doğrulama anahtarları kullanılamıyor"
       ],
+      "You can create public links for your own files only": [
+        "Yalnızca kendi dosyalarınız için herkese açık bağlantılar oluşturabilirsiniz"
+      ],
+      "You can only leave items that are shared with you": [
+        "Yalnızca sizinle paylaşılan ögelerden ayrılabilirsiniz"
+      ],
+      "You can only upload a new version to a file": [
+        "Bir dosyaya yalnızca yeni bir sürüm yükleyebilirsiniz"
+      ],
+      "You can update a public link for your own files only": [
+        "Yalnızca kendi dosyalarınız için herkese açık bağlantıları güncelleyebilirsiniz"
+      ],
       "You do not have access to this item": [
-        "Bu öğeye erişiminiz yok"
+        "Bu ögeye erişme izniniz yok"
       ],
       "You do not have access to this shared item": [
-        "Bu paylaşılan öğeye erişim izniniz yok"
+        "Bu paylaşılan ögeye erişme izniniz yok"
       ]
     },
     "Info": {

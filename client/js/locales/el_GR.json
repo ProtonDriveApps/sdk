@@ -17,14 +17,41 @@
       "Cannot download a folder": [
         "Δεν είναι δυνατή η λήψη ενός φακέλου"
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Δεν είναι δυνατή η μετακίνηση στοιχείου χωρίς έγκυρο όνομα. Παρακαλούμε μετονομάστε το στοιχείο πρώτα."
+      ],
       "Cannot share root folder": [
         "Δεν είναι δυνατή η κοινοποίηση του κεντρικού φακέλου"
+      ],
+      "Cannot verify the author of this file": [
+        "Μέρος του αρχείου φαίνεται να είναι κατεστραμμένο"
+      ],
+      "Cannot verify who uploaded this file": [
+        "Δεν είναι δυνατή η επαλήθευση του χρήστη που ανέβασε αυτό το αρχείο"
       ],
       "Copy operation aborted": [
         "Η αντιγραφή ακυρώθηκε"
       ],
       "Copying item to a non-folder is not allowed": [
         "Δεν επιτρέπεται η αντιγραφή στοιχείου σε μη-φάκελο"
+      ],
+      "Could not find an available name": [
+        "Δεν ήταν δυνατή η εύρεση διαθέσιμου ονόματος"
+      ],
+      "Could not load sharing details": [
+        "Δεν ήταν δυνατή η φόρτωση των λεπτομερειών κοινής χρήσης"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Δεν ήταν δυνατή η φόρτωση της προεπισκόπησης εικόνας: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Δεν ήταν δυνατή η ανάγνωση μέρους αυτού του αρχείου: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "Δεν ήταν δυνατό το ξεκλείδωμα του γονικού φακέλου"
+      ],
+      "Could not unlock this item": [
+        "Δεν ήταν δυνατό το ξεκλείδωμα αυτού του στοιχείου"
       ],
       "Creating documents in non-folders is not allowed": [
         "Δεν επιτρέπεται η δημιουργία εγγράφων σε μη-φακέλους."
@@ -40,9 +67,6 @@
       ],
       "Expiration date cannot be in the past": [
         "Ημερομηνία λήξης δεν μπορεί να είναι στο παρελθόν"
-      ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Αποτυχία αποκρυπτογράφησης ενεργής αναθεώρησης: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού σελιδοδείκτη: ${ message }"
@@ -62,6 +86,9 @@
       "Failed to decrypt node key: ${ message }": [
         "Αποτυχία αποκρυπτογράφησης κλειδιού κόμβου: ${ message }"
       ],
+      "Failed to decrypt revision metadata": [
+        "Αποτυχία αποκρυπτογράφησης μεταδεδομένων αναθεώρησης"
+      ],
       "Failed to get inviter keys": [
         "Αποτυχία λήψης κλειδιών προσκαλούντος"
       ],
@@ -74,11 +101,17 @@
       "File has no revision": [
         "Το αρχείο δεν έχει αναθεώρηση"
       ],
+      "Image preview not found": [
+        "Δεν βρέθηκε προεπισκόπηση εικόνας"
+      ],
       "Invalid URL": [
         "Μη έγκυρη διεύθυνση URL"
       ],
       "Invitation not found": [
         "Η πρόσκληση δεν βρέθηκε"
+      ],
+      "Item not found": [
+        "Δεν βρέθηκαν στοιχεία"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Ο παλαιού τύπου δημόσιος σύνδεσμος δεν μπορεί να ενημερωθεί. Παρακαλούμε δημιουργήστε εκ νέου έναν νέο δημόσιο σύνδεσμο."
@@ -108,11 +141,20 @@
       "Name must not be empty": [
         "Το όνομα δεν πρέπει να είναι κενό"
       ],
+      "No file data was received. Please try again.": [
+        "Δεν ελήφθησαν δεδομένα αρχείου. Παρακαλούμε δοκιμάστε ξανά."
+      ],
+      "Only admins can convert external invitations": [
+        "Μόνο οι διαχειριστές μπορούν να μετατρέψουν εξωτερικές προσκλήσεις"
+      ],
       "Operation aborted": [
         "Η λειτουργία ακυρώθηκε"
       ],
       "Operation failed, try again later": [
         "Η λειτουργία απέτυχε, δοκιμάστε ξανά αργότερα"
+      ],
+      "Part of the file appears to be corrupted": [
+        "Μέρος του αρχείου φαίνεται να είναι κατεστραμμένο"
       ],
       "Photo is already in the target album": [
         "Η φωτογραφία βρίσκεται ήδη στο άλμπουμ προορισμού"
@@ -141,6 +183,39 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Αποτυχία επαλήθευσης υπογραφής για ${ signatureType }: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "Η μεταφόρτωση ορισμένων δεδομένων αρχείου απέτυχε. Παρακαλούμε δοκιμάστε ξανά."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "Η μεταφόρτωση ορισμένων τμημάτων του αρχείου απέτυχε. Παρακαλούμε δοκιμάστε ξανά."
+      ],
+      "Some items could not be loaded": [
+        "Δεν ήταν δυνατή η φόρτωση ορισμένων στοιχείων"
+      ],
+      "Something went wrong": [
+        "Κάτι πήγε στραβά"
+      ],
+      "Something went wrong. Please try again.": [
+        "Κάτι πήγε στραβά. Παρακαλούμε δοκιμάστε ξανά."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Το μεταφορτωμένο αρχείο δεν ταιριάζει με το πρωτότυπο. Παρακαλούμε δοκιμάστε ξανά."
+      ],
+      "This file has missing crypto material": [
+        "Αυτό το αρχείο δεν έχει κρυπτογραφικό υλικό"
+      ],
+      "This file has no version available to download": [
+        "Αυτό το αρχείο δεν έχει διαθέσιμη έκδοση για λήψη"
+      ],
+      "This file version could not be uploaded": [
+        "Δεν ήταν δυνατή η μεταφόρτωση αυτής της έκδοσης αρχείου"
+      ],
+      "This item has no image preview": [
+        "Αυτό το στοιχείο δεν έχει προεπισκόπηση εικόνας"
+      ],
+      "This item is no longer shared": [
+        "Αυτό το στοιχείο δεν είναι πλέον κοινοποιημένο"
+      ],
       "This item is not shared": [
         "Αυτό το στοιχείο δεν κοινοποιείται"
       ],
@@ -158,6 +233,24 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Τα κλειδιά επαλήθευσης για ${ signatureType } δεν είναι διαθέσιμα"
+      ],
+      "You can create public links for your own files only": [
+        "Μπορείτε να δημιουργήσετε δημόσιους συνδέσμους μόνο για τα δικά σας αρχεία"
+      ],
+      "You can only leave items that are shared with you": [
+        "Μπορείτε να αφήσετε μόνο στοιχεία που έχουν κοινοποιηθεί σε εσάς"
+      ],
+      "You can only upload a new version to a file": [
+        "Μπορείτε να ανεβάσετε μόνο μια νέα έκδοση σε ένα αρχείο"
+      ],
+      "You can update a public link for your own files only": [
+        "Μπορείτε να ενημερώσετε έναν δημόσιο σύνδεσμο μόνο για τα δικά σας αρχεία"
+      ],
+      "You do not have access to this item": [
+        "Δεν έχετε πρόσβαση σε αυτό το στοιχείο"
+      ],
+      "You do not have access to this shared item": [
+        "Δεν έχετε πρόσβαση σε αυτό το κοινόχρηστο στοιχείο"
       ]
     },
     "Info": {

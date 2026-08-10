@@ -17,14 +17,41 @@
       "Cannot download a folder": [
         "Impossibile scaricare una cartella"
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Impossibile spostare l'elemento senza un nome valido, rinomina prima l'elemento."
+      ],
       "Cannot share root folder": [
         "Impossibile condividere la cartella principale"
+      ],
+      "Cannot verify the author of this file": [
+        "Impossibile verificare l'autore di questo file."
+      ],
+      "Cannot verify who uploaded this file": [
+        "Impossibile verificare chi ha caricato questo file"
       ],
       "Copy operation aborted": [
         "Copia interrotta"
       ],
       "Copying item to a non-folder is not allowed": [
         "Non è consentito copiare l'elemento in un elemento che non è una cartella."
+      ],
+      "Could not find an available name": [
+        "Impossibile trovare un nome disponibile."
+      ],
+      "Could not load sharing details": [
+        "Impossibile caricare i dettagli della condivisione."
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Impossibile caricare l'anteprima dell'immagine: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "Impossibile leggere una parte di questo file: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "Impossibile sbloccare la cartella principale"
+      ],
+      "Could not unlock this item": [
+        "Impossibile sbloccare questo elemento."
       ],
       "Creating documents in non-folders is not allowed": [
         "La creazione di documenti in elementi non cartella non è consentita"
@@ -40,9 +67,6 @@
       ],
       "Expiration date cannot be in the past": [
         "La data di scadenza non può essere nel passato"
-      ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Impossibile decriptare la revisione attiva: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Impossibile decriptare la chiave del segnalibro: ${ message }"
@@ -62,6 +86,9 @@
       "Failed to decrypt node key: ${ message }": [
         "Impossibile decriptare la chiave del nodo: ${ message }"
       ],
+      "Failed to decrypt revision metadata": [
+        "Impossibile decifrare i metadati della revisione."
+      ],
       "Failed to get inviter keys": [
         "Recupero delle chiavi dell'invitante non riuscito"
       ],
@@ -74,11 +101,17 @@
       "File has no revision": [
         "Il file non ha una revisione"
       ],
+      "Image preview not found": [
+        "Anteprima immagine non trovata"
+      ],
       "Invalid URL": [
         "URL non valido"
       ],
       "Invitation not found": [
         "Invito non trovato"
+      ],
+      "Item not found": [
+        "Elemento non trovato"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Il link pubblico obsoleto non può essere aggiornato. Per favore, ricrea un nuovo link pubblico."
@@ -108,11 +141,20 @@
       "Name must not be empty": [
         "Nome necessario"
       ],
+      "No file data was received. Please try again.": [
+        "Non sono stati ricevuti dati del file. Riprova."
+      ],
+      "Only admins can convert external invitations": [
+        "Solo gli amministratori possono convertire gli inviti esterni"
+      ],
       "Operation aborted": [
         "Operazione annullata"
       ],
       "Operation failed, try again later": [
         "Operazione non riuscita, riprova più tardi."
+      ],
+      "Part of the file appears to be corrupted": [
+        "Parte del file sembra essere danneggiata."
       ],
       "Photo is already in the target album": [
         "La foto è già nell'album di destinazione"
@@ -141,6 +183,42 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verifica della firma per ${ signatureType } non riuscita: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "Alcuni dati del file non sono stati caricati. Riprova."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "Alcune parti del file non sono state caricate. Riprova."
+      ],
+      "Some items could not be loaded": [
+        "Impossibile caricare alcuni elementi."
+      ],
+      "Something went wrong": [
+        "Si è verificato un errore"
+      ],
+      "Something went wrong. Please try again.": [
+        "Qualcosa è andato storto. Riprova."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "Il file caricato non corrisponde all'originale. Riprova."
+      ],
+      "This file has missing crypto material": [
+        "Questo file contiene materiale crittografico mancante."
+      ],
+      "This file has no version available to download": [
+        "Questo file non ha una versione disponibile per il download"
+      ],
+      "This file version could not be uploaded": [
+        "Questa versione del file non è stata caricata."
+      ],
+      "This item has no image preview": [
+        "Questo elemento non dispone di un'anteprima immagine."
+      ],
+      "This item is no longer shared": [
+        "Questo elemento non è più condiviso."
+      ],
+      "This item is not shared": [
+        "Questo oggetto non è condiviso"
+      ],
       "Too many server errors, please try again later": [
         "Troppi errori del server, riprova più tardi"
       ],
@@ -155,6 +233,24 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Le chiavi di verifica per ${ signatureType } non sono disponibili"
+      ],
+      "You can create public links for your own files only": [
+        "Puoi creare link pubblici solo per i tuoi file."
+      ],
+      "You can only leave items that are shared with you": [
+        "Puoi lasciare solo gli elementi condivisi con te"
+      ],
+      "You can only upload a new version to a file": [
+        "Puoi caricare una nuova versione solo di un file"
+      ],
+      "You can update a public link for your own files only": [
+        "Puoi aggiornare un link pubblico solo per i tuoi file."
+      ],
+      "You do not have access to this item": [
+        "Non hai accesso a questo elemento."
+      ],
+      "You do not have access to this shared item": [
+        "Non hai accesso a questo elemento condiviso."
       ]
     },
     "Info": {

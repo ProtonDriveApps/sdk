@@ -68,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "Dátum expirácie nemôže byť v minulosti"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Nepodarilo sa dešifrovať aktívnu revíziu: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Nepodarilo sa dešifrovať kľúč záložky: ${ message }"
       ],
@@ -88,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Nepodarilo sa dešifrovať kľúč uzla: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "Nepodarilo sa dešifrovať metadáta revízie"
       ],
       "Failed to get inviter keys": [
         "Nepodarilo sa získať pozývacie kľúče"

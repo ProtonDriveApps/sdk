@@ -26,9 +26,6 @@
       "Expiration date cannot be in the past": [
         "Дата окончания срока действия не может быть в прошлом"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Не удалось расшифровать активную версию: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Не удалось расшифровать ключ закладки: ${ message }"
       ],

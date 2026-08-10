@@ -68,9 +68,6 @@
       "Expiration date cannot be in the past": [
         "La data de caducitat no pot haver passat"
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "No s'ha pogut desxifrar la revisió activa: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "No s'ha pogut desxifrar la clau d'adreces d'interès: ${ message }"
       ],
@@ -88,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "No s'ha pogut desxifrar la clau del node: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "No s'han pogut desxifrar les metadades de la revisió"
       ],
       "Failed to get inviter keys": [
         "No s'han pogut obtenir les claus de qui us convida"

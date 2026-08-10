@@ -17,14 +17,38 @@
       "Cannot download a folder": [
         "폴더를 다운로드할 수 없음"
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "유효한 이름이 아닌 경우 항목을 이동할 수 없습니다. 항목의 이름을 우선 변경해야 합니다."
+      ],
       "Cannot share root folder": [
         "상위 폴더를 공유할 수 없습니다"
+      ],
+      "Cannot verify who uploaded this file": [
+        "이 파일을 업로드한 사용자를 확인할 수 없습니다"
       ],
       "Copy operation aborted": [
         "복사 작업 중단됨"
       ],
       "Copying item to a non-folder is not allowed": [
         "폴더가 아닌 곳으로 항목을 복사할 수 없습니다"
+      ],
+      "Could not find an available name": [
+        "사용 가능한 이름을 찾을 수 없습니다"
+      ],
+      "Could not load sharing details": [
+        "공유 정보를 불러올 수 없음"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "이미지 미리보기를 불러올 수 없음: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "이 파일의 일부를 읽을 수 없음: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "상위 폴더를 잠금 해제할 수 없습니다"
+      ],
+      "Could not unlock this item": [
+        "항목을 잠금 해제할 수 없습니다"
       ],
       "Creating documents in non-folders is not allowed": [
         "폴더가 아닌 곳에 문서를 생성할 수 없습니다."
@@ -40,9 +64,6 @@
       ],
       "Expiration date cannot be in the past": [
         "만료 일자는 과거일 수 없습니다"
-      ],
-      "Failed to decrypt active revision: ${ message }": [
-        "활성 개정본 복호화 실패: ${ message }"
       ],
       "Failed to decrypt bookmark key: ${ message }": [
         "북마크 키를 복호화할 수 없음: ${ message }"
@@ -74,11 +95,17 @@
       "File has no revision": [
         "파일에 수정 버전이 없습니다"
       ],
+      "Image preview not found": [
+        "이미지 미리보기를 찾을 수 없음"
+      ],
       "Invalid URL": [
         "잘못된 URL"
       ],
       "Invitation not found": [
         "초대를 찾을 수 없음"
+      ],
+      "Item not found": [
+        "항목을 찾지 못했습니다"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "레거시 공개 링크는 업데이트가 불가능합니다. 새로운 공개 링크를 다시 생성해 주세요."
@@ -106,6 +133,12 @@
       ],
       "Name must not be empty": [
         "이름은 비워둘 수 없습니다"
+      ],
+      "No file data was received. Please try again.": [
+        "수신된 파일 데이터가 없습니다. 다시 시도하세요."
+      ],
+      "Only admins can convert external invitations": [
+        "관리자만 외부 초대장으로 전환할 수 있습니다"
       ],
       "Operation aborted": [
         "작업 중단됨"
@@ -140,6 +173,36 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "${ signatureType }의 서명 확인에 실패했습니다: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "일부 파일의 업로드에 실패했습니다. 다시 시도하세요."
+      ],
+      "Some items could not be loaded": [
+        "일부 항목을 불러올 수 없습니다"
+      ],
+      "Something went wrong": [
+        "문제가 발생했습니다"
+      ],
+      "Something went wrong. Please try again.": [
+        "문제가 발생했습니다. 다시 시도해 주세요."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "업로드된 파일이 원본과 일치하지 않습니다. 다시 시도하세요."
+      ],
+      "This file has no version available to download": [
+        "이 파일의 다운로드 가능한 버전이 없습니다."
+      ],
+      "This file version could not be uploaded": [
+        "이 버전의 파일은 업로드할 수 없습니다"
+      ],
+      "This item has no image preview": [
+        "이 항목에 이미지 미리보기가 없습니다"
+      ],
+      "This item is no longer shared": [
+        "이 파일은 더 이상 공유되지 않습니다"
+      ],
+      "This item is not shared": [
+        "이 파일은 공유되지 않습니다"
+      ],
       "Too many server errors, please try again later": [
         "너무 많은 서버 오류 발생, 나중에 다시 시도하세요"
       ],
@@ -154,6 +217,24 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "${ signatureType }에 대한 인증 키를 사용할 수 없습니다"
+      ],
+      "You can create public links for your own files only": [
+        "내가 소유한 파일만 공개 링크를 생성할 수 있습니다"
+      ],
+      "You can only leave items that are shared with you": [
+        "나와 공유된 항목에서만 나갈 수 있습니다."
+      ],
+      "You can only upload a new version to a file": [
+        "파일의 새로운 버전만 업로드할 수 있습니다"
+      ],
+      "You can update a public link for your own files only": [
+        "내가 소유한 파일만 공개 링크로 공유할 수 있습니다"
+      ],
+      "You do not have access to this item": [
+        "이 항목에 접근할 권한이 없습니다."
+      ],
+      "You do not have access to this shared item": [
+        "이 공유된 항목에 접근할 권한이 없습니다."
       ]
     },
     "Info": {

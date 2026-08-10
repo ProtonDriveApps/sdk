@@ -41,9 +41,6 @@
       "Expiration date cannot be in the past": [
         "La fecha de expiración no puede estar en el pasado."
       ],
-      "Failed to decrypt active revision: ${ message }": [
-        "Error al descifrar revisión activa: ${ message }"
-      ],
       "Failed to decrypt bookmark key: ${ message }": [
         "Error al descifrar la clave del marcador: ${ message }"
       ],
@@ -61,6 +58,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "Error al descifrar la clave del nodo: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "No se han podido descifrar los metadatos de la revisión"
       ],
       "Failed to get inviter keys": [
         "Fallo al obtener las claves de quien invita"
