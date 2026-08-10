@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.20.1 (2026-08-07)
+
+### Bug Fixes
+- Always return decrypted nodes before throwing errors
+
+
 ## js/v0.20.0 (2026-07-29)
 
 ### Features
