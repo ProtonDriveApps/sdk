@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.21.0 (2026-08-11)
+
+### Features
+- Always fetch fresh children uids from the server
+
+
 ## js/v0.20.1 (2026-08-07)
 
 ### Bug Fixes
