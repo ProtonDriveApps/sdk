@@ -17,6 +17,8 @@ The CLI is built with [Bun](https://bun.sh) and uses the Drive SDK under the hoo
 
 Download the latest release from [proton.me/download/drive/cli](https://proton.me/download/drive/cli/index.html).
 
+On Linux x64, use **`linux/x64-baseline`** if the default **`linux/x64`** build crashes at startup with `Illegal instruction` (common on NAS and embedded CPUs without AVX2). The baseline build avoids AVX2 and runs on a broader range of x86-64 hardware.
+
 ## Install and build (from source)
 
 From the `cli` directory:
