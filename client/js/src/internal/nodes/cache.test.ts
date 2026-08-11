@@ -229,53 +229,11 @@ describe('nodesCache', () => {
         expect(nodeUids).toStrictEqual(['volumeId~:node1', 'volumeId~:node2']);
     });
 
-    it('should iterate children without trashed items', async () => {
-        await generateTreeStructure(cache);
-        const result = await Array.fromAsync(cache.iterateChildren('volumeId~:node1'));
-        const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['volumeId~:node1a', 'volumeId~:node1c']);
-    });
-
-    it('should iterate children and silently remove a corrupted node', async () => {
-        await generateTreeStructure(cache);
-        // badObject has root as parent.
-        const result = await Array.fromAsync(cache.iterateChildren('volumeId~:root'));
-        const nodeUids = result.map(({ uid }) => uid);
-        expect(nodeUids).toStrictEqual(['volumeId~:node1', 'volumeId~:node2', 'volumeId~:node3']);
-        await verifyNodesCache(
-            cache,
-            [
-                'root',
-                'node1',
-                'node1a',
-                'node1b',
-                'node1c',
-                'node1c-alpha',
-                'node1c-beta',
-                'node2',
-                'node2a',
-                'node2b',
-                'node3',
-            ],
-            ['badObject'],
-        );
-    });
-
     it('should iterate trashed nodes', async () => {
         await generateTreeStructure(cache);
         const result = await Array.fromAsync(cache.iterateTrashedNodes());
         const nodeUids = result.map(({ uid }) => uid);
         expect(nodeUids).toStrictEqual(['volumeId~:node1b', 'volumeId~:node1c-beta', 'volumeId~:node2b']);
-    });
-
-    it('should set and unset children loaded state', async () => {
-        expect(await cache.isFolderChildrenLoaded('volumeId~:node1')).toBe(false);
-
-        await cache.setFolderChildrenLoaded('volumeId~:node1');
-        expect(await cache.isFolderChildrenLoaded('volumeId~:node1')).toBe(true);
-
-        await cache.resetFolderChildrenLoaded('volumeId~:node1');
-        expect(await cache.isFolderChildrenLoaded('volumeId~:node1')).toBe(false);
     });
 
     it('should set nodes from the volume as stale', async () => {

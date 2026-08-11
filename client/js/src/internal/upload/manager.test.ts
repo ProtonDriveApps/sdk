@@ -88,7 +88,6 @@ describe('UploadManager', () => {
                 email: 'signatureEmail',
                 addressId: 'addressId',
             }),
-            notifyChildCreated: jest.fn(),
             notifyNodeChanged: jest.fn(),
         };
 
@@ -453,7 +452,6 @@ describe('UploadManager', () => {
                 },
                 undefined,
             );
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
         });
 
         it('should delete existing draft and retry on ALREADY_EXISTS when own draft', async () => {
@@ -520,7 +518,6 @@ describe('UploadManager', () => {
                 },
                 undefined,
             );
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
         });
     });
 
@@ -666,7 +663,6 @@ describe('UploadManager', () => {
                 expect.anything(),
             );
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith('newNode:nodeUid');
-            expect(nodesService.notifyChildCreated).not.toHaveBeenCalled();
         });
 
         it('should commit node draft', async () => {
@@ -690,7 +686,6 @@ describe('UploadManager', () => {
                 nodeRevisionDraft.nodeRevisionUid,
                 expect.anything(),
             );
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('parentUid');
             expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
         });
 

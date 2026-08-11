@@ -77,7 +77,6 @@ describe('AddToAlbumProcess', () => {
             iterateNodes: jest.fn(),
             getNodePrivateAndSessionKeys: jest.fn(),
             notifyNodeChanged: jest.fn(),
-            notifyChildCreated: jest.fn(),
         };
     });
 
@@ -445,8 +444,6 @@ describe('AddToAlbumProcess', () => {
                     ok: true,
                 },
             ]);
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledTimes(1);
-            expect(nodesService.notifyChildCreated.mock.calls[0][0]).toContain('volume1~copied');
         });
 
         it('should not notify for failed photo copies', async () => {
@@ -463,7 +460,6 @@ describe('AddToAlbumProcess', () => {
                     error: new Error('API error'),
                 },
             ]);
-            expect(nodesService.notifyChildCreated).not.toHaveBeenCalled();
         });
     });
 
@@ -541,8 +537,6 @@ describe('AddToAlbumProcess', () => {
             expect(results).toHaveLength(2);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledTimes(1);
             expect(nodesService.notifyNodeChanged).toHaveBeenCalledWith(sameVolumeUid);
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledTimes(1);
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('volume1~copiedvolume2~photo2');
         });
     });
 });

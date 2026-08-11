@@ -118,8 +118,7 @@ export class AddToAlbumProcess {
 
             for (const payload of payloads) {
                 try {
-                    const newPhotoNodeUid = await this.apiService.copyPhoto(this.albumNodeUid, payload, this.signal);
-                    await this.nodesService.notifyChildCreated(newPhotoNodeUid);
+                    await this.apiService.copyPhoto(this.albumNodeUid, payload, this.signal);
                     yield { uid: payload.nodeUid, ok: true };
                 } catch (error) {
                     if (error instanceof MissingRelatedPhotosError) {

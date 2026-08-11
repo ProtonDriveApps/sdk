@@ -119,7 +119,6 @@ export interface NodesService {
     getNodeSigningKeys(
         uids: { nodeUid: string; parentNodeUid?: string } | { nodeUid?: string; parentNodeUid: string },
     ): Promise<NodeSigningKeys>;
-    notifyChildCreated(nodeUid: string): Promise<void>;
     notifyNodeChanged(nodeUid: string): Promise<void>;
 }
 

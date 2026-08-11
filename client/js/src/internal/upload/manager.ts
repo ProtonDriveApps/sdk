@@ -197,7 +197,6 @@ export class UploadManager {
                 },
                 signal,
             );
-            await this.nodesService.notifyChildCreated(parentFolderUid);
             return result;
         } catch (error: unknown) {
             return this.handleConflictError(parentFolderUid, metadata, error, async () => {
@@ -431,10 +430,7 @@ export class UploadManager {
 
     protected async notifyNodeUploaded(nodeRevisionDraft: NodeRevisionDraft): Promise<void> {
         // If new revision to existing node was created, invalidate the node.
-        // Otherwise notify about the new child in the parent.
-        if (nodeRevisionDraft.newNodeInfo) {
-            await this.nodesService.notifyChildCreated(nodeRevisionDraft.newNodeInfo.parentUid);
-        } else {
+        if (!nodeRevisionDraft.newNodeInfo) {
             await this.nodesService.notifyNodeChanged(nodeRevisionDraft.nodeUid);
         }
     }

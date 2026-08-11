@@ -151,23 +151,6 @@ export abstract class NodesAccessBase<
             batchSize: BATCH_LOADING_SIZE,
         });
 
-        const areChildrenCached = await this.cache.isFolderChildrenLoaded(parentNodeUid);
-        if (areChildrenCached) {
-            for await (const node of this.cache.iterateChildren(parentNodeUid)) {
-                if (node.ok && !node.node.isStale) {
-                    if (filterOptions?.type && node.node.type !== filterOptions.type) {
-                        continue;
-                    }
-                    yield node.node;
-                } else {
-                    yield* batchLoading.load(node.uid);
-                }
-            }
-            yield* batchLoading.loadRest();
-            return;
-        }
-
-        this.logger.debug(`Folder ${parentNodeUid} children are not cached`);
         const onlyFolders = filterOptions?.type === NodeType.Folder;
         for await (const nodeUid of this.apiService.iterateChildrenNodeUids(parentNode.uid, onlyFolders, signal)) {
             let node;
@@ -186,12 +169,7 @@ export abstract class NodesAccessBase<
                 yield* batchLoading.load(nodeUid);
             }
         }
-        yield* batchLoading.loadRest();
-
-        // If some nodes were filtered out, we don't have the folder fully loaded.
-        if (!filterOptions) {
-            await this.cache.setFolderChildrenLoaded(parentNodeUid);
-        }
+        yield * batchLoading.loadRest();
     }
 
     /**
@@ -233,14 +211,6 @@ export abstract class NodesAccessBase<
             }
         }
         yield* batchLoading.loadRest();
-    }
-
-    /**
-     * Call to invalidate the folder listing cache. This should be refactored into a clean
-     * cache layer once the cache is split off.
-     */
-    async notifyChildCreated(nodeUid: string): Promise<void> {
-        await this.cache.resetFolderChildrenLoaded(nodeUid);
     }
 
     /**

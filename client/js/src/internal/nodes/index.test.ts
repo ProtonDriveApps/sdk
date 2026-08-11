@@ -78,10 +78,19 @@ describe('nodesModules integration tests', () => {
         const nodeUid = makeNodeUid('volumeId', 'node1');
 
         await nodesCache.setNode(generateNode(originalFolderUid));
-        await nodesCache.setFolderChildrenLoaded(originalFolderUid);
         await nodesCache.setNode(generateNode(targetFolderUid));
-        await nodesCache.setFolderChildrenLoaded(targetFolderUid);
         await nodesCache.setNode(generateNode(nodeUid, originalFolderUid));
+
+        let afterMove = false;
+
+        apiService.get = jest.fn().mockImplementation(async (url, body) => {
+            const isOriginal = url.includes('originalFolder');
+            const isTarget = url.includes('targetFolder');
+            const returnIDs = (!afterMove && isOriginal) || (afterMove && isTarget);
+            return {
+                LinkIDs: returnIDs ? ['node1'] : [],
+            };
+        });
 
         // Mock the API services to return the moved node.
         // This is called when listing the children of the target folder after
@@ -123,6 +132,7 @@ describe('nodesModules integration tests', () => {
             treeEventScopeId: 'volumeId',
             eventId: '1',
         });
+        afterMove = true;
 
         // Verify the state after the move event, including when API service is called.
         const originalAfterMove = await Array.fromAsync(nodesModule.access.iterateFolderChildren(originalFolderUid));

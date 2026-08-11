@@ -68,7 +68,6 @@ describe('PhotosManager', () => {
             | 'iterateNodes'
             | 'getNodePrivateAndSessionKeys'
             | 'notifyNodeChanged'
-            | 'notifyChildCreated'
         >
     >;
     let manager: PhotosManager;
@@ -122,7 +121,6 @@ describe('PhotosManager', () => {
                 passphraseSessionKey: 'passphraseSessionKey' as any,
             }),
             notifyNodeChanged: jest.fn().mockResolvedValue(undefined),
-            notifyChildCreated: jest.fn().mockResolvedValue(undefined),
         };
 
         manager = new PhotosManager(logger, apiService as any, cryptoService as any, nodesService as any);
@@ -313,7 +311,6 @@ describe('PhotosManager', () => {
 
             expect(results).toEqual([{ uid: 'volume2~photo1', ok: true }]);
             expect(apiService.copyPhoto).toHaveBeenCalledTimes(1);
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('volume1~root');
             expect(nodesService.notifyNodeChanged).not.toHaveBeenCalled();
         });
 
@@ -335,7 +332,6 @@ describe('PhotosManager', () => {
             expect(logger.info).toHaveBeenCalledWith(
                 `Missing related photos for saving volume2~photo1, re-queuing: ${missingRelatedUid}`,
             );
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('volume1~root');
         });
     });
 });

@@ -100,7 +100,6 @@ export class PhotosManager {
             for (const payload of crossVolumePayloads) {
                 try {
                     await this.copyPhoto(payload, signal);
-                    await this.nodesService.notifyChildCreated(rootNode.uid);
                     yield { uid: payload.nodeUid, ok: true };
                 } catch (error) {
                     if (error instanceof MissingRelatedPhotosError && !retriedPhotoUids.has(payload.nodeUid)) {

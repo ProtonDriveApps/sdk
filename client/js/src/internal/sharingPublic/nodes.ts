@@ -272,7 +272,6 @@ export class SharingPublicNodesManagement extends NodesManagement {
             documentType,
         });
 
-        await this.nodesAccess.notifyChildCreated(parentNodeUid);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
 
         return this.nodesAccess.getNode(nodeUid);

@@ -28,18 +28,6 @@ export class NodesEventsHandler {
                 await this.cache.removeNodes([event.nodeUid]);
                 return;
             }
-            if (event.type === DriveEventType.NodeCreated) {
-                // FIXME Add it to the parent listing even if it's not cached
-                // so it doesn't need to refetch all children
-
-                // We do not have partial nodes in the cache, so we don't
-                // add it. If new node is not added, we need to reset the
-                // children loaded flag to force refetch when requested.
-                if (event.parentNodeUid) {
-                    await this.cache.resetFolderChildrenLoaded(event.parentNodeUid);
-                }
-                return;
-            }
             if (event.type === DriveEventType.NodeUpdated) {
                 let node;
                 try {

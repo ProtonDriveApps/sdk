@@ -78,11 +78,6 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
                 await this.setNode(node.node);
             }
         }
-
-        // Force all calls to children UIDs to be re-fetched.
-        for await (const result of this.driveCache.iterateEntitiesByTag(`children-volume:${volumeId}`)) {
-            await this.driveCache.removeEntities([result.key]);
-        }
     }
 
     /**
@@ -162,17 +157,6 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
         }
     }
 
-    async *iterateChildren(parentNodeUid: string): AsyncGenerator<DecryptedNodeResult<T>> {
-        for await (const result of this.driveCache.iterateEntitiesByTag(
-            `${CACHE_TAG_KEYS.ParentUid}:${parentNodeUid}`,
-        )) {
-            const node = await this.convertCacheResult(result);
-            if (node && (!node.ok || !node.node.trashTime)) {
-                yield node;
-            }
-        }
-    }
-
     async *iterateRootNodeUids(volumeId: string): AsyncGenerator<EntityResult<string>> {
         yield* this.driveCache.iterateEntitiesByTag(`${CACHE_TAG_KEYS.Roots}:${volumeId}`);
     }
@@ -216,24 +200,6 @@ export abstract class NodesCacheBase<T extends DecryptedNode = DecryptedNode> {
                 ...result,
                 uid: nodeUid,
             };
-        }
-    }
-
-    async setFolderChildrenLoaded(nodeUid: string): Promise<void> {
-        const { volumeId } = splitNodeUid(nodeUid);
-        await this.driveCache.setEntity(`node-children-${nodeUid}`, 'loaded', [`children-volume:${volumeId}`]);
-    }
-
-    async resetFolderChildrenLoaded(nodeUid: string): Promise<void> {
-        await this.driveCache.removeEntities([`node-children-${nodeUid}`]);
-    }
-
-    async isFolderChildrenLoaded(nodeUid: string): Promise<boolean> {
-        try {
-            await this.driveCache.getEntity(`node-children-${nodeUid}`);
-            return true;
-        } catch {
-            return false;
         }
     }
 }

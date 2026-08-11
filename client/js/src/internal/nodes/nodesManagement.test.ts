@@ -126,7 +126,6 @@ describe('NodesManagement', () => {
             }),
             notifyNodeChanged: jest.fn(),
             notifyNodeDeleted: jest.fn(),
-            notifyChildCreated: jest.fn(),
         };
 
         management = new NodesManagement(apiService, cryptoCache, cryptoService, nodesAccess);
@@ -344,7 +343,6 @@ describe('NodesManagement', () => {
             signatureEmail: undefined,
         });
         expect(nodesAccess.notifyNodeChanged).not.toHaveBeenCalledWith();
-        expect(nodesAccess.notifyChildCreated).toHaveBeenCalledWith('newParentNodeUid');
     });
 
     it('copyNode manages copy of anonymous node', async () => {

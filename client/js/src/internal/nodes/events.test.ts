@@ -23,7 +23,6 @@ describe('NodesEventsHandler', () => {
             ),
             setNode: jest.fn(),
             removeNodes: jest.fn(),
-            resetFolderChildrenLoaded: jest.fn(),
         };
         nodesEventsNodesEventsHandler = new NodesEventsHandler(logger, cache);
     });
@@ -40,8 +39,6 @@ describe('NodesEventsHandler', () => {
         };
         await nodesEventsNodesEventsHandler.updateNodesCacheOnEvent(event);
 
-        expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledTimes(1);
-        expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith('parentUid');
         expect(cache.setNode).toHaveBeenCalledTimes(0);
     });
 

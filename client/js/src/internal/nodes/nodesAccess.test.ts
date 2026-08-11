@@ -31,9 +31,6 @@ describe('nodesAccess', () => {
         cache = {
             getNode: jest.fn(),
             setNode: jest.fn(),
-            iterateChildren: jest.fn().mockImplementation(async function* () {}),
-            isFolderChildrenLoaded: jest.fn().mockResolvedValue(false),
-            setFolderChildrenLoaded: jest.fn(),
             removeNodes: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
@@ -269,43 +266,6 @@ describe('nodesAccess', () => {
                 cache.getNode = jest.fn().mockResolvedValue(parentNode);
             });
 
-            it('should serve fully from cache', async () => {
-                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(true);
-                cache.iterateChildren = jest.fn().mockImplementation(async function* () {
-                    yield { ok: true, node: node1 };
-                    yield { ok: true, node: node2 };
-                    yield { ok: true, node: node3 };
-                    yield { ok: true, node: node4 };
-                });
-
-                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
-                expect(result).toMatchObject([node1, node2, node3, node4]);
-                expect(apiService.iterateChildrenNodeUids).not.toHaveBeenCalled();
-                expect(apiService.iterateNodes).not.toHaveBeenCalled();
-            });
-
-            it('should serve children from cache and load stale nodes only', async () => {
-                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(true);
-                cache.iterateChildren = jest.fn().mockImplementation(async function* () {
-                    yield { ok: true, uid: node1.uid, node: node1 };
-                    yield { ok: true, uid: node2.uid, node: { ...node2, isStale: true } };
-                    yield { ok: true, uid: node3.uid, node: { ...node3, isStale: true } };
-                    yield { ok: true, uid: node4.uid, node: node4 };
-                });
-
-                const result = await Array.fromAsync(access.iterateFolderChildren('volumeId~parentNodeid'));
-                expect(result).toMatchObject([node1, node4, node2, node3]);
-                expect(apiService.iterateNodes).toHaveBeenCalledWith(
-                    [node2.uid, node3.uid],
-                    'volumeId',
-                    undefined, // filterOptions
-                    undefined, // signal
-                );
-                expect(cryptoService.decryptNode).toHaveBeenCalledTimes(2);
-                expect(cache.setNode).toHaveBeenCalledTimes(2);
-                expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(2);
-            });
-
             it('should load children uids and serve nodes from cache', async () => {
                 apiService.iterateChildrenNodeUids = jest.fn().mockImplementation(async function* () {
                     yield node1.uid;
@@ -323,7 +283,6 @@ describe('nodesAccess', () => {
                     undefined, // signal
                 );
                 expect(apiService.iterateNodes).not.toHaveBeenCalled();
-                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('volumeId~parentNodeid');
             });
 
             it('should load from API', async () => {
@@ -356,7 +315,6 @@ describe('nodesAccess', () => {
                 expect(cryptoService.decryptNode).toHaveBeenCalledTimes(4);
                 expect(cache.setNode).toHaveBeenCalledTimes(4);
                 expect(cryptoCache.setNodeKeys).toHaveBeenCalledTimes(4);
-                expect(cache.setFolderChildrenLoaded).toHaveBeenCalledWith('volumeId~parentNodeid');
             });
 
             it('should remove from cache if missing on API', async () => {
@@ -422,25 +380,7 @@ describe('nodesAccess', () => {
                 }
             });
 
-            it('should return only filtered nodes from cache', async () => {
-                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(true);
-                cache.iterateChildren = jest.fn().mockImplementation(async function* () {
-                    yield { ok: true, node: { ...node1, type: NodeType.Folder } };
-                    yield { ok: true, node: { ...node2, type: NodeType.Folder } };
-                    yield { ok: true, node: { ...node3, type: NodeType.File } };
-                    yield { ok: true, node: { ...node4, type: NodeType.File } };
-                });
-
-                const result = await Array.fromAsync(
-                    access.iterateFolderChildren('volumeId~parentNodeid', { type: NodeType.Folder }),
-                );
-
-                expect(result).toMatchObject([node1, node2]);
-                expect(cache.setFolderChildrenLoaded).not.toHaveBeenCalled();
-            });
-
             it('should return only filtered nodes from API', async () => {
-                cache.isFolderChildrenLoaded = jest.fn().mockResolvedValue(false);
                 cache.getNode = jest.fn().mockImplementation((uid: string) => {
                     if (uid === parentNode.uid) {
                         return parentNode;
@@ -463,7 +403,6 @@ describe('nodesAccess', () => {
                 );
 
                 expect(result).toMatchObject([node1, node2]);
-                expect(cache.setFolderChildrenLoaded).not.toHaveBeenCalled();
             });
         });
 
@@ -812,15 +751,6 @@ describe('nodesAccess', () => {
             await access.notifyNodeChanged(node.uid, 'v1~pn2');
             expect(cache.getNode).toHaveBeenCalledWith(node.uid);
             expect(cache.setNode).toHaveBeenCalledWith({ ...node, parentUid: 'v1~pn2', isStale: true });
-        });
-    });
-
-    describe('notifyChildCreated', () => {
-        it('should reset parent listing', async () => {
-            const nodeUid = 'VolumeId1~NodeId1';
-            cache.resetFolderChildrenLoaded = jest.fn();
-            await access.notifyChildCreated(nodeUid);
-            expect(cache.resetFolderChildrenLoaded).toHaveBeenCalledWith(nodeUid);
         });
     });
 

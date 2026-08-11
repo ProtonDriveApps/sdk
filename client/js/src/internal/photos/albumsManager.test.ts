@@ -97,7 +97,6 @@ describe('Albums', () => {
             }),
             notifyNodeChanged: jest.fn(),
             notifyNodeDeleted: jest.fn(),
-            notifyChildCreated: jest.fn(),
         };
 
         // @ts-expect-error No need to implement all methods for mocking
@@ -148,7 +147,6 @@ describe('Albums', () => {
                 signatureEmail: 'signature@example.com',
                 armoredHashKey: 'armoredHashKey',
             });
-            expect(nodesService.notifyChildCreated).toHaveBeenCalledWith('rootNodeUid');
         });
 
         it('throws validation error for invalid album name', async () => {

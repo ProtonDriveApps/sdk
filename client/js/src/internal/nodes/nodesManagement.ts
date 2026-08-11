@@ -277,7 +277,6 @@ export abstract class NodesManagementBase<
             keyAuthor: resultOk(encryptedCrypto.signatureEmail),
             nameAuthor: resultOk(encryptedCrypto.nameSignatureEmail),
         };
-        await this.nodesAccess.notifyChildCreated(newParentUid);
         return newNode;
     }
 
@@ -383,7 +382,6 @@ export abstract class NodesManagementBase<
             armoredExtendedAttributes: encryptedCrypto.folder.armoredExtendedAttributes,
         });
 
-        await this.nodesAccess.notifyChildCreated(parentNodeUid);
         const node = this.generateNodeFolder(parentNode, nodeUid, folderName, encryptedCrypto);
         await this.cryptoCache.setNodeKeys(nodeUid, keys);
         return node;

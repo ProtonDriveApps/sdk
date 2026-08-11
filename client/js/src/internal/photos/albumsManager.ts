@@ -96,8 +96,6 @@ export class AlbumsManager {
             armoredHashKey: encryptedCrypto.armoredHashKey,
         });
 
-        await this.nodesService.notifyChildCreated(rootNode.uid);
-
         return {
             // Internal metadata
             hash: encryptedCrypto.hash,
