@@ -4,11 +4,22 @@ import { sanitizeTerminalText } from '../../cli/formatters';
 import { question } from '../../cli/readline';
 
 export enum ConflictChoice {
-    Merge = 'merge',
-    KeepBoth = 'keep-both',
-    Replace = 'replace',
+    Merge = 'merge', // Only for folders
+    CreateNewRevision = 'create-new-revision', // Only for files
+    Rename = 'rename',
+    TrashRemote = 'replace', // Only for upload
+    DeleteLocal = 'remove', // Only for download
     Skip = 'skip',
 }
+
+const CONFLICT_CHOICES_HELP = {
+    [ConflictChoice.Merge]: 'Merge folder contents.',
+    [ConflictChoice.CreateNewRevision]: 'Create a new revision of the existing file.',
+    [ConflictChoice.Rename]: 'Add a unique suffix to the name.',
+    [ConflictChoice.TrashRemote]: 'Trash the remote file or folder and upload the local copy.',
+    [ConflictChoice.DeleteLocal]: 'Delete the local file or folder and download the remote copy.',
+    [ConflictChoice.Skip]: 'Skip the conflicting file or folder.',
+};
 
 export enum ConflictTargetKind {
     File = 'file',
@@ -33,8 +44,8 @@ export class TransferConflictResolver {
     constructor(
         private readonly logger: Logger,
         readonly options: {
-            fileStrategyChoices?: readonly ConflictChoice[];
-            folderStrategyChoices?: readonly ConflictChoice[];
+            fileStrategyChoices: readonly ConflictChoice[];
+            folderStrategyChoices: readonly ConflictChoice[];
             forcedFileStrategy?: string;
             forcedFolderStrategy?: string;
             disableInteractiveResolution?: boolean;
@@ -42,8 +53,8 @@ export class TransferConflictResolver {
             onInteractivePromptEnd?: () => void;
         },
     ) {
-        this.fileStrategyChoices = options.fileStrategyChoices ?? Object.values(ConflictChoice);
-        this.folderStrategyChoices = options.folderStrategyChoices ?? Object.values(ConflictChoice);
+        this.fileStrategyChoices = options.fileStrategyChoices;
+        this.folderStrategyChoices = options.folderStrategyChoices;
         this.globalFileStrategy = options.forcedFileStrategy?.trim()
             ? resolveConflictStrategy(options.forcedFileStrategy, this.fileStrategyChoices)
             : undefined;
@@ -181,4 +192,8 @@ export function resolveConflictStrategy(
         );
     }
     return matches[0];
+}
+
+export function getConflictChoicesHelp(choices: readonly ConflictChoice[]): { value: ConflictChoice; help: string }[] {
+    return choices.map((c) => ({ value: c, help: CONFLICT_CHOICES_HELP[c] }));
 }

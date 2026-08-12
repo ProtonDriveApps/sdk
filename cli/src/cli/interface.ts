@@ -26,7 +26,7 @@ export interface Options {
 }
 
 export type Option = ParseArgsOptionDescriptor & {
-    allowedValues?: string[];
+    allowedValues?: string[] | { value: string; help: string }[];
     help?: string;
 };
 

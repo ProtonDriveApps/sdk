@@ -12,14 +12,18 @@ import {
 } from '../fileSystem/downloadOperations';
 import { assertValidDownloadRoot, sanitizePathSegmentForLocalFilesystem } from '../fileSystem/downloadPathValidation';
 import { resolveLocalPaths } from '../fileSystem/localPath';
-import { ConflictChoice, TransferConflictResolver } from '../fileSystem/transferConflictResolver';
+import {
+    ConflictChoice,
+    getConflictChoicesHelp,
+    TransferConflictResolver,
+} from '../fileSystem/transferConflictResolver';
 import { createTransferProgress } from '../fileSystem/transferProgress';
 import { TransferQueue, TransferQueueHandlers } from '../fileSystem/transferQueue';
 import { TransferSummary } from '../fileSystem/transferSummary';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.Photos, PathType.PhotosSharedWithMe, PathType.Albums];
 
-const FILE_DOWNLOAD_CONFLICT_STRATEGIES = [ConflictChoice.Skip, ConflictChoice.Replace, ConflictChoice.KeepBoth];
+const FILE_CONFLICT_STRATEGIES = [ConflictChoice.Rename, ConflictChoice.DeleteLocal, ConflictChoice.Skip];
 
 export class CommandPhotoDownload implements Command {
     group = 'photo';
@@ -31,8 +35,8 @@ export class CommandPhotoDownload implements Command {
             type: 'string',
             short: 'c',
             default: '',
-            allowedValues: FILE_DOWNLOAD_CONFLICT_STRATEGIES,
-            help: 'Conflict strategy applied to all files and folders. Note, there can be multiple images with the same name in the photos timeline. If selecting overwrite or skip as strategy, only one of the images will be kept.',
+            allowedValues: getConflictChoicesHelp(FILE_CONFLICT_STRATEGIES),
+            help: `Conflict strategy applied to all photos. Note, there can be multiple images with the same name in the photos timeline. If selecting replace or skip as strategy, only one of the images will be kept.`,
         },
     };
 
@@ -62,9 +66,12 @@ export class CommandPhotoDownload implements Command {
         const progress = json ? undefined : createTransferProgress(() => summary.formatProgressLine());
 
         const conflictResolver = new TransferConflictResolver(logger, {
-            fileStrategyChoices: FILE_DOWNLOAD_CONFLICT_STRATEGIES,
+            fileStrategyChoices: FILE_CONFLICT_STRATEGIES,
+            folderStrategyChoices: [ConflictChoice.Merge],
             forcedFileStrategy: conflictStrategy,
-            forcedFolderStrategy: conflictStrategy,
+            // When downloading photos, only folder is the root.
+            // Simplify user interface by automatically merging the root folder.
+            forcedFolderStrategy: ConflictChoice.Merge,
             disableInteractiveResolution: json,
             onInteractivePromptBegin: () => progress?.pause(),
             onInteractivePromptEnd: () => progress?.resume(),

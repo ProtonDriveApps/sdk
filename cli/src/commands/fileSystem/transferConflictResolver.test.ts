@@ -35,21 +35,35 @@ describe('TransferConflictResolver', () => {
         consoleLogSpy.mockRestore();
     });
 
+    function createResolver(
+        options: {
+            forcedFileStrategy?: string;
+            forcedFolderStrategy?: string;
+            disableInteractiveResolution?: boolean;
+        } = {},
+    ) {
+        return new TransferConflictResolver(getMockLogger(), {
+            fileStrategyChoices: Object.values(ConflictChoice),
+            folderStrategyChoices: Object.values(ConflictChoice),
+            ...options,
+        });
+    }
+
     describe('forced strategies', () => {
         it('returns forced file strategy for file conflicts', async () => {
-            const resolver = new TransferConflictResolver(getMockLogger(), { forcedFileStrategy: 'replace' });
-            await expect(resolver.resolve('x', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.Replace);
+            const resolver = createResolver({ forcedFileStrategy: ConflictChoice.TrashRemote });
+            await expect(resolver.resolve('x', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.TrashRemote);
         });
 
         it('returns forced folder strategy for folder conflicts', async () => {
-            const resolver = new TransferConflictResolver(getMockLogger(), { forcedFolderStrategy: 'skip' });
+            const resolver = createResolver({ forcedFolderStrategy: ConflictChoice.Skip });
             await expect(resolver.resolve('x', ConflictTargetKind.Folder)).resolves.toBe(ConflictChoice.Skip);
         });
     });
 
     describe('disableInteractiveResolution', () => {
         it('throws when no global strategy and interactive is disabled', async () => {
-            const resolver = new TransferConflictResolver(getMockLogger(), { disableInteractiveResolution: true });
+            const resolver = createResolver({ disableInteractiveResolution: true });
             await expect(resolver.resolve('foo.txt', ConflictTargetKind.File)).rejects.toMatchObject({
                 message: expect.stringMatching(/Name conflict on "foo\.txt".*\(file\)/),
             });
@@ -59,13 +73,13 @@ describe('TransferConflictResolver', () => {
     describe('interactive resolution', () => {
         it('resolves one item', async () => {
             mockReadlineAnswers('replace');
-            const resolver = new TransferConflictResolver(getMockLogger(), {});
-            await expect(resolver.resolve('a', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.Replace);
+            const resolver = createResolver();
+            await expect(resolver.resolve('a', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.TrashRemote);
         });
 
         it('resolves multiple items sequentially', async () => {
             mockReadlineAnswers('merge', 'skip');
-            const resolver = new TransferConflictResolver(getMockLogger(), {});
+            const resolver = createResolver();
             const a = resolver.resolve('a', ConflictTargetKind.File);
             const b = resolver.resolve('b', ConflictTargetKind.File);
             await expect(Promise.all([a, b])).resolves.toEqual([ConflictChoice.Merge, ConflictChoice.Skip]);
@@ -73,7 +87,7 @@ describe('TransferConflictResolver', () => {
 
         it('apply-to-all sets global strategy for subsequent conflicts of the same kind', async () => {
             mockReadlineAnswers('a', 'skip', 'merge');
-            const resolver = new TransferConflictResolver(getMockLogger(), {});
+            const resolver = createResolver();
 
             await expect(resolver.resolve('first', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.Skip);
             await expect(resolver.resolve('second', ConflictTargetKind.File)).resolves.toBe(ConflictChoice.Skip);
@@ -90,11 +104,11 @@ describe('resolveConflictStrategy', () => {
     });
 
     it('normalizes underscores to hyphens', () => {
-        expect(resolveConflictStrategy('keep_both', allChoices)).toBe(ConflictChoice.KeepBoth);
+        expect(resolveConflictStrategy('create_new_revision', allChoices)).toBe(ConflictChoice.CreateNewRevision);
     });
 
     it('resolves a unique prefix', () => {
-        expect(resolveConflictStrategy('rep', allChoices)).toBe(ConflictChoice.Replace);
+        expect(resolveConflictStrategy('rep', allChoices)).toBe(ConflictChoice.TrashRemote);
     });
 
     it('throws when no strategy matches', () => {

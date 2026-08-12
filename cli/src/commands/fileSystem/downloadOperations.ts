@@ -57,10 +57,10 @@ export async function createLocalFolder(
                     return;
                 case ConflictChoice.Merge:
                     return targetPath;
-                case ConflictChoice.Replace:
+                case ConflictChoice.DeleteLocal:
                     await rm(targetPath, { recursive: true, force: true });
                     continue;
-                case ConflictChoice.KeepBoth:
+                case ConflictChoice.Rename:
                     name = await getAvailableLocalName(parentPath, name);
                     targetPath = path.join(parentPath, name);
                     continue;
@@ -98,10 +98,10 @@ export async function downloadRemoteFile(
             switch (choice) {
                 case ConflictChoice.Skip:
                     return false;
-                case ConflictChoice.Replace:
+                case ConflictChoice.DeleteLocal:
                     await unlink(targetPath);
                     break;
-                case ConflictChoice.KeepBoth:
+                case ConflictChoice.Rename:
                     name = await getAvailableLocalName(parentPath, name);
                     targetPath = path.join(parentPath, name);
                     continue;

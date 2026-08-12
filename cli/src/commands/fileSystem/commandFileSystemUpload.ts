@@ -13,7 +13,12 @@ import type { CliMetrics } from '../../telemetry';
 import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
 import { getLocalFileMediaType } from './mediaType';
-import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from './transferConflictResolver';
+import {
+    ConflictChoice,
+    ConflictTargetKind,
+    getConflictChoicesHelp,
+    TransferConflictResolver,
+} from './transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface, TransferProgressItem } from './transferProgress';
 import { type QueueItemDirectory, type QueueItemFile, UploadQueue } from './transferQueue';
 import { TransferSummary } from './transferSummary';
@@ -64,6 +69,19 @@ type UploadContext = {
     metrics?: CliMetrics;
 };
 
+const FILE_CONFLICT_STRATEGIES = [
+    ConflictChoice.CreateNewRevision,
+    ConflictChoice.Rename,
+    ConflictChoice.TrashRemote,
+    ConflictChoice.Skip,
+];
+const FOLDER_CONFLICT_STRATEGIES = [
+    ConflictChoice.Merge,
+    ConflictChoice.Rename,
+    ConflictChoice.TrashRemote,
+    ConflictChoice.Skip,
+];
+
 export class CommandFileSystemUpload implements Command {
     group = 'filesystem';
     name = 'upload';
@@ -71,25 +89,18 @@ export class CommandFileSystemUpload implements Command {
         'Uploads files and folders. It prompts for conflict resolution unless a strategy option is set. Files with the same content are automatically skipped.';
     args = ['localPath...', 'parentPath'];
     options: Options = {
-        'conflict-strategy': {
-            type: 'string',
-            short: 'c',
-            default: '',
-            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
-            help: 'Conflict strategy applied to all files and folders.',
-        },
         'file-conflict-strategy': {
             type: 'string',
             short: 'f',
             default: '',
-            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            allowedValues: getConflictChoicesHelp(FILE_CONFLICT_STRATEGIES),
             help: 'Conflict strategy applied to files.',
         },
         'folder-conflict-strategy': {
             type: 'string',
             short: 'd',
             default: '',
-            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            allowedValues: getConflictChoicesHelp(FOLDER_CONFLICT_STRATEGIES),
             help: 'Conflict strategy applied to folders.',
         },
         'skip-thumbnails': {
@@ -108,7 +119,6 @@ export class CommandFileSystemUpload implements Command {
         args,
         options: {
             json,
-            'conflict-strategy': conflictStrategy,
             'file-conflict-strategy': fileConflictStrategy,
             'folder-conflict-strategy': folderConflictStrategy,
             'skip-thumbnails': skipThumbnails,
@@ -135,8 +145,10 @@ export class CommandFileSystemUpload implements Command {
         const progress = json ? undefined : createTransferProgress(() => summary.formatProgressLine());
 
         const conflictResolver = new TransferConflictResolver(logger, {
-            forcedFileStrategy: fileConflictStrategy || conflictStrategy,
-            forcedFolderStrategy: folderConflictStrategy || conflictStrategy,
+            fileStrategyChoices: FILE_CONFLICT_STRATEGIES,
+            folderStrategyChoices: FOLDER_CONFLICT_STRATEGIES,
+            forcedFileStrategy: fileConflictStrategy,
+            forcedFolderStrategy: folderConflictStrategy,
             disableInteractiveResolution: json,
             onInteractivePromptBegin: () => progress?.pause(),
             onInteractivePromptEnd: () => progress?.resume(),
@@ -207,10 +219,10 @@ export class CommandFileSystemUpload implements Command {
                         return;
                     case ConflictChoice.Merge:
                         return { node: existingNode };
-                    case ConflictChoice.Replace:
+                    case ConflictChoice.TrashRemote:
                         await this.trashConflictingNode(ctx, existingNode);
                         continue;
-                    case ConflictChoice.KeepBoth:
+                    case ConflictChoice.Rename:
                         name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName);
                         continue;
                     default:
@@ -270,13 +282,13 @@ export class CommandFileSystemUpload implements Command {
                 switch (choice) {
                     case ConflictChoice.Skip:
                         return false;
-                    case ConflictChoice.Merge:
+                    case ConflictChoice.CreateNewRevision:
                         newRevisionForNodeUid = existingNodeUid;
                         break;
-                    case ConflictChoice.Replace:
+                    case ConflictChoice.TrashRemote:
                         await this.trashConflictingNode(ctx, existingNode);
                         break;
-                    case ConflictChoice.KeepBoth:
+                    case ConflictChoice.Rename:
                         name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName);
                         break;
                     default:

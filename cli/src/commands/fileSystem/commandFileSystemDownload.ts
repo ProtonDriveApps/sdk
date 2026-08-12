@@ -4,14 +4,20 @@ import { type ActionArgs, type Command, Options, PathType } from '../../cli';
 import { createLocalFolder, type DownloadContext, downloadRemoteFile, ensureDirectory } from './downloadOperations';
 import { assertValidDownloadRoot } from './downloadPathValidation';
 import { resolveLocalPaths } from './localPath';
-import { ConflictChoice, TransferConflictResolver } from './transferConflictResolver';
+import { ConflictChoice, getConflictChoicesHelp, TransferConflictResolver } from './transferConflictResolver';
 import { createTransferProgress } from './transferProgress';
 import { DownloadQueue } from './transferQueue';
 import { TransferSummary } from './transferSummary';
 
 const SUPPORTED_REMOTE_PATH_TYPES = [PathType.MyFiles, PathType.Devices, PathType.SharedWithMe];
 
-const FILE_DOWNLOAD_CONFLICT_STRATEGIES = [ConflictChoice.Skip, ConflictChoice.Replace, ConflictChoice.KeepBoth];
+const FILE_CONFLICT_STRATEGIES = [ConflictChoice.Rename, ConflictChoice.DeleteLocal, ConflictChoice.Skip];
+const FOLDER_CONFLICT_STRATEGIES = [
+    ConflictChoice.Merge,
+    ConflictChoice.Rename,
+    ConflictChoice.DeleteLocal,
+    ConflictChoice.Skip,
+];
 
 export class CommandFileSystemDownload implements Command {
     group = 'filesystem';
@@ -20,25 +26,18 @@ export class CommandFileSystemDownload implements Command {
         'Downloads files and folders. It prompts for conflict resolution unless a strategy option is set. Proton Docs or Sheets will be skipped.';
     args = ['path...', 'localFolder'];
     options: Options = {
-        'conflict-strategy': {
-            type: 'string',
-            short: 'c',
-            default: '',
-            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
-            help: 'Conflict strategy applied to all files and folders.',
-        },
         'file-conflict-strategy': {
             type: 'string',
             short: 'f',
             default: '',
-            allowedValues: ['keep-both', 'replace', 'skip'],
+            allowedValues: getConflictChoicesHelp(FILE_CONFLICT_STRATEGIES),
             help: 'Conflict strategy applied to files.',
         },
         'folder-conflict-strategy': {
             type: 'string',
             short: 'd',
             default: '',
-            allowedValues: ['merge', 'keep-both', 'replace', 'skip'],
+            allowedValues: getConflictChoicesHelp(FOLDER_CONFLICT_STRATEGIES),
             help: 'Conflict strategy applied to folders.',
         },
     };
@@ -51,7 +50,6 @@ export class CommandFileSystemDownload implements Command {
         args,
         options: {
             json,
-            'conflict-strategy': conflictStrategy,
             'file-conflict-strategy': fileConflictStrategy,
             'folder-conflict-strategy': folderConflictStrategy,
         },
@@ -74,9 +72,10 @@ export class CommandFileSystemDownload implements Command {
         const progress = json ? undefined : createTransferProgress(() => summary.formatProgressLine());
 
         const conflictResolver = new TransferConflictResolver(logger, {
-            fileStrategyChoices: FILE_DOWNLOAD_CONFLICT_STRATEGIES,
-            forcedFileStrategy: fileConflictStrategy || conflictStrategy,
-            forcedFolderStrategy: folderConflictStrategy || conflictStrategy,
+            fileStrategyChoices: FILE_CONFLICT_STRATEGIES,
+            folderStrategyChoices: FOLDER_CONFLICT_STRATEGIES,
+            forcedFileStrategy: fileConflictStrategy,
+            forcedFolderStrategy: folderConflictStrategy,
             disableInteractiveResolution: json,
             onInteractivePromptBegin: () => progress?.pause(),
             onInteractivePromptEnd: () => progress?.resume(),

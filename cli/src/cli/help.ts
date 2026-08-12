@@ -151,8 +151,15 @@ function buildCommandSynopsisOptionColumn(longName: string, opt: Option): string
 function buildCommandOptionDescription(opt: Option): string {
     let text = opt.help?.trim() || '';
     if (opt.allowedValues?.length) {
-        const allowed = opt.allowedValues.join(', ');
-        text = text ? `${text} Values: ${allowed}.` : `Values: ${allowed}.`;
+        if (typeof opt.allowedValues[0] === 'string') {
+            const allowed = opt.allowedValues.join(', ');
+            text = text ? `${text} Values: ${allowed}.` : `Values: ${allowed}.`;
+        } else {
+            const allowed = (opt.allowedValues as { value: string; help: string }[])
+                .map(({ value, help }) => ` * ${value}: ${help}`)
+                .join('\n');
+            text = text ? `${text} Values:\n${allowed}` : `Values:\n${allowed}`;
+        }
     }
     if (opt.multiple) {
         text = text ? `${text} May be repeated.` : 'May be repeated.';
@@ -177,26 +184,35 @@ function getOptionVariableName(longName: string): string {
     return base.toUpperCase();
 }
 
-function wrapText(text: string, width: number): string[] {
+export function wrapText(text: string, width: number): string[] {
     if (!text) {
         return [''];
     }
-    const words = text.trim().split(/\s+/);
+
     const lines: string[] = [];
-    let line = '';
-    for (const word of words) {
-        const next = line ? `${line} ${word}` : word;
-        if (next.length <= width) {
-            line = next;
-        } else {
-            if (line) {
-                lines.push(line);
+    for (const paragraph of text.trim().split('\n')) {
+        const trimmed = paragraph.trim();
+        if (!trimmed) {
+            lines.push('');
+            continue;
+        }
+
+        let line = '';
+        for (const word of trimmed.split(/\s+/)) {
+            const next = line ? `${line} ${word}` : word;
+            if (next.length <= width) {
+                line = next;
+            } else {
+                if (line) {
+                    lines.push(line);
+                }
+                line = word;
             }
-            line = word;
+        }
+        if (line) {
+            lines.push(line);
         }
     }
-    if (line) {
-        lines.push(line);
-    }
+
     return lines.length ? lines : [''];
 }

@@ -10,7 +10,12 @@ import { type ActionArgs, type Command, Options } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
 import { createUploadProgressCallback, getFileMetadata } from '../fileSystem/commandFileSystemUpload';
 import { getLocalFileMediaType } from '../fileSystem/mediaType';
-import { ConflictChoice, ConflictTargetKind, TransferConflictResolver } from '../fileSystem/transferConflictResolver';
+import {
+    ConflictChoice,
+    ConflictTargetKind,
+    getConflictChoicesHelp,
+    TransferConflictResolver,
+} from '../fileSystem/transferConflictResolver';
 import { createTransferProgress, TransferProgressInterface } from '../fileSystem/transferProgress';
 import { type QueueItemFile, UploadQueue } from '../fileSystem/transferQueue';
 import { TransferSummary } from '../fileSystem/transferSummary';
@@ -27,6 +32,8 @@ type PhotosUploadContext = {
     metrics?: CliMetrics;
 };
 
+const PHOTO_FILE_CONFLICT_STRATEGIES = [ConflictChoice.Rename, ConflictChoice.Skip];
+
 export class CommandPhotoUpload implements Command {
     group = 'photo';
     name = 'upload';
@@ -38,7 +45,7 @@ export class CommandPhotoUpload implements Command {
             type: 'string',
             short: 'c',
             default: '',
-            allowedValues: ['keep-both', 'skip'],
+            allowedValues: getConflictChoicesHelp(PHOTO_FILE_CONFLICT_STRATEGIES),
             help: 'Conflict strategy applied to duplicate photos.',
         },
     };
@@ -64,7 +71,8 @@ export class CommandPhotoUpload implements Command {
         const progress = json ? undefined : createTransferProgress(() => summary.formatProgressLine());
 
         const conflictResolver = new TransferConflictResolver(logger, {
-            fileStrategyChoices: [ConflictChoice.KeepBoth, ConflictChoice.Skip],
+            fileStrategyChoices: PHOTO_FILE_CONFLICT_STRATEGIES,
+            folderStrategyChoices: [],
             forcedFileStrategy: conflictStrategy,
             disableInteractiveResolution: json,
             onInteractivePromptBegin: () => progress?.pause(),
@@ -131,7 +139,7 @@ export class CommandPhotoUpload implements Command {
                 switch (choice) {
                     case ConflictChoice.Skip:
                         return false;
-                    case ConflictChoice.KeepBoth:
+                    case ConflictChoice.Rename:
                         name = await ctx.photosSdk.getAvailableName(ctx.volumeRootFolder, name);
                         continue;
                     default:

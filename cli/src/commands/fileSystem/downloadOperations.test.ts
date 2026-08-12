@@ -102,7 +102,11 @@ function createConflictResolver(
         forcedFolderStrategy?: string;
     } = {},
 ): TransferConflictResolver {
-    return new TransferConflictResolver(getMockLogger(), options);
+    return new TransferConflictResolver(getMockLogger(), {
+        fileStrategyChoices: Object.values(ConflictChoice),
+        folderStrategyChoices: Object.values(ConflictChoice),
+        ...options,
+    });
 }
 
 describe('createLocalFolder', () => {
@@ -152,7 +156,7 @@ describe('createLocalFolder', () => {
         const item = directoryItem('existing');
 
         const result = await createLocalFolder(
-            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: 'merge' }) },
+            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.Merge }) },
             item,
         );
 
@@ -165,7 +169,10 @@ describe('createLocalFolder', () => {
         const item = directoryItem('existing');
 
         const result = await createLocalFolder(
-            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: 'replace' }) },
+            {
+                downloadRoot,
+                conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.DeleteLocal }),
+            },
             item,
         );
 
@@ -180,9 +187,9 @@ describe('createLocalFolder', () => {
         const item = directoryItem('existing');
 
         const result = await createLocalFolder(
-            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: 'keep-both' }) },
+            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.Rename }) },
             item,
-        )
+        );
 
         expect(result).toBe(path.join(downloadRoot, 'existing (1)'));
     });
@@ -258,7 +265,7 @@ describe('downloadRemoteFile', () => {
     ): DownloadContext {
         return {
             logger: getMockLogger(),
-            conflictResolver: createConflictResolver({ forcedFileStrategy: 'replace' }),
+            conflictResolver: createConflictResolver({ forcedFileStrategy: ConflictChoice.DeleteLocal }),
             downloadRoot,
             getFileDownloader: jest.fn(async () => mockDownloader()),
             ...overrides,
@@ -292,7 +299,9 @@ describe('downloadRemoteFile', () => {
 
         await expect(
             downloadRemoteFile(
-                downloadContext({ conflictResolver: createConflictResolver({ forcedFileStrategy: 'skip' }) }),
+                downloadContext({
+                    conflictResolver: createConflictResolver({ forcedFileStrategy: ConflictChoice.Skip }),
+                }),
                 item,
             ),
         ).resolves.toBe(false);
@@ -331,7 +340,9 @@ describe('downloadRemoteFile', () => {
 
         await expect(
             downloadRemoteFile(
-                downloadContext({ conflictResolver: createConflictResolver({ forcedFileStrategy: 'keep-both' }) }),
+                downloadContext({
+                    conflictResolver: createConflictResolver({ forcedFileStrategy: ConflictChoice.Rename }),
+                }),
                 item,
             ),
         ).resolves.toBe(512);
