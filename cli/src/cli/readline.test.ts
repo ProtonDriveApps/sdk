@@ -22,11 +22,14 @@ describe('readline.question', () => {
     });
 
     function stubInterface(questionImpl: ReadlinePromisesInterface['question'], closeMock = jest.fn()) {
-        const listeners = new Map<string, Set<() => void>>();
-        return {
+        const listeners = new Map<string, Set<(...args: unknown[]) => void>>();
+        const stub = {
             question: questionImpl,
-            close: closeMock,
-            once: jest.fn((event: string, listener: () => void) => {
+            close: (...args: unknown[]) => {
+                closeMock(...args);
+                stub.emit('close');
+            },
+            on: jest.fn((event: string, listener: (...args: unknown[]) => void) => {
                 let set = listeners.get(event);
                 if (!set) {
                     set = new Set();
@@ -34,22 +37,60 @@ describe('readline.question', () => {
                 }
                 set.add(listener);
             }),
-            emit: (event: string) => {
+            once: jest.fn((event: string, listener: (...args: unknown[]) => void) => {
+                let set = listeners.get(event);
+                if (!set) {
+                    set = new Set();
+                    listeners.set(event, set);
+                }
+                set.add(listener);
+            }),
+            emit: (event: string, ...args: unknown[]) => {
                 for (const listener of listeners.get(event) ?? []) {
-                    listener();
+                    listener(...args);
                 }
             },
-        } as unknown as ReadlinePromisesInterface;
+        };
+        return stub as unknown as ReadlinePromisesInterface;
     }
 
-    async function flushUntil(predicate: () => boolean, maxTicks = 30): Promise<void> {
+    function questionHangingUntilSignalAborted() {
+        return jest.fn((_prompt: string, options?: { signal?: AbortSignal }) => {
+            return new Promise<string>((_resolve, reject) => {
+                options?.signal?.addEventListener('abort', () => {
+                    reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+                });
+            });
+        });
+    }
+
+    async function flushUntil(
+        predicate: () => boolean,
+        maxTicks = 30,
+        tick: 'microtask' | 'setImmediate' = 'microtask',
+    ): Promise<void> {
         for (let i = 0; i < maxTicks; i++) {
             if (predicate()) {
                 return;
             }
-            await Promise.resolve();
+            if (tick === 'setImmediate') {
+                await new Promise<void>((resolve) => setImmediate(resolve));
+            } else {
+                await Promise.resolve();
+            }
         }
         throw new Error('async progress did not complete in time');
+    }
+
+    async function expectStillPending(pending: Promise<unknown>): Promise<void> {
+        let settled = false;
+        void pending.then(() => {
+            settled = true;
+        });
+        for (let i = 0; i < 5; i++) {
+            await Promise.resolve();
+        }
+        expect(settled).toBe(false);
     }
 
     it('serializes overlapping calls — second prompt runs after the first completes', async () => {
@@ -159,5 +200,119 @@ describe('readline.question', () => {
         await flushUntil(() => mockedCreateInterface.mock.calls.length > 0);
         emitClose();
         await expect(pending).resolves.toBeNull();
+    });
+
+    it('recreates the readline interface on SIGCONT and still accepts input', async () => {
+        let emitSigcont!: () => void;
+        let releaseSecond!: (value: string) => void;
+
+        mockedCreateInterface
+            .mockImplementationOnce(() => {
+                const stub = stubInterface(questionHangingUntilSignalAborted());
+                emitSigcont = () => stub.emit('SIGCONT');
+                return stub;
+            })
+            .mockImplementationOnce(() =>
+                stubInterface(
+                    jest.fn(
+                        () =>
+                            new Promise<string>((resolve) => {
+                                releaseSecond = resolve;
+                            }),
+                    ),
+                ),
+            );
+
+        const pending = question('resume>');
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 0);
+
+        emitSigcont();
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 1, 30, 'setImmediate');
+
+        releaseSecond('after-fg');
+        await expect(pending).resolves.toBe('after-fg');
+        expect(mockedCreateInterface).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not treat SIGCONT close as EOF', async () => {
+        let emitSigcont!: () => void;
+        let emitClose!: () => void;
+        let releaseSecond!: (value: string) => void;
+
+        mockedCreateInterface
+            .mockImplementationOnce(() => {
+                const stub = stubInterface(questionHangingUntilSignalAborted());
+                emitSigcont = () => stub.emit('SIGCONT');
+                emitClose = () => stub.emit('close');
+                return stub;
+            })
+            .mockImplementationOnce(() =>
+                stubInterface(
+                    jest.fn(
+                        () =>
+                            new Promise<string>((resolve) => {
+                                releaseSecond = resolve;
+                            }),
+                    ),
+                ),
+            );
+
+        const pending = question('resume>');
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 0);
+
+        emitSigcont();
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 1, 30, 'setImmediate');
+
+        emitClose();
+        await expectStillPending(pending);
+
+        releaseSecond('after-fg');
+        await expect(pending).resolves.toBe('after-fg');
+    });
+
+    it('preserves history across SIGCONT resume and syncHistory runs only for the winning generation', async () => {
+        let emitSigcont!: () => void;
+        let releaseSecond!: (value: string) => void;
+
+        mockedCreateInterface.mockImplementationOnce(() => stubInterface(jest.fn(async () => 'prior-line')));
+
+        await expect(question('repl>', { enableHistory: true })).resolves.toBe('prior-line');
+
+        mockedCreateInterface
+            .mockImplementationOnce(() => {
+                const stub = stubInterface(questionHangingUntilSignalAborted());
+                emitSigcont = () => stub.emit('SIGCONT');
+                return stub;
+            })
+            .mockImplementationOnce(() =>
+                stubInterface(
+                    jest.fn(
+                        () =>
+                            new Promise<string>((resolve) => {
+                                releaseSecond = resolve;
+                            }),
+                    ),
+                ),
+            );
+
+        const pending = question('repl>', { enableHistory: true });
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 1);
+
+        emitSigcont();
+        await flushUntil(() => mockedCreateInterface.mock.calls.length > 2, 30, 'setImmediate');
+
+        const recreatedOptions = mockedCreateInterface.mock.calls[2]?.[0] as { history?: string[] };
+        expect(recreatedOptions.history).toEqual(['prior-line']);
+
+        await expectStillPending(pending);
+
+        releaseSecond('new-answer');
+        await expect(pending).resolves.toBe('new-answer');
+
+        mockedCreateInterface.mockImplementationOnce(() => stubInterface(jest.fn(async () => 'third')));
+        await expect(question('repl>', { enableHistory: true })).resolves.toBe('third');
+
+        const nextPromptOptions = mockedCreateInterface.mock.calls[3]?.[0] as { history?: string[] };
+        expect(nextPromptOptions.history).toEqual(['new-answer', 'prior-line']);
     });
 });

@@ -19,47 +19,61 @@ export type QuestionOptions = {
  */
 export function question(prompt: string, options: QuestionOptions = {}): Promise<string | null> {
     const enableHistory = options.enableHistory ?? false;
-    const task = chain.then(async (): Promise<string | null> => {
+    const task = chain.then(() => askQuestion(prompt, enableHistory));
+    chain = task.catch(() => undefined);
+    return task;
+}
+
+/**
+ * Prompt once, recreating the readline interface after job-control resume (Ctrl-Z / fg).
+ * Suspending clobbers TTY settings; Node's readline does not recover unless the interface
+ * is restarted on SIGCONT.
+ */
+async function askQuestion(prompt: string, enableHistory: boolean): Promise<string | null> {
+    while (true) {
         const rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
             ...(enableHistory ? { history: [...history], historySize } : {}),
         });
-        let closed = false;
-        let answer: string | null = null;
-        try {
-            return await new Promise<string | null>((resolve, reject) => {
-                let settled = false;
-                const settle = (callback: () => void) => {
-                    if (settled) {
-                        return;
-                    }
-                    settled = true;
-                    callback();
-                };
 
-                rl.once('close', () => {
-                    closed = true;
-                    settle(() => resolve(null));
-                });
-                rl.question(prompt)
-                    .then((value) => {
-                        answer = value;
-                        settle(() => resolve(value));
-                    })
-                    .catch((error) => settle(() => reject(error)));
+        const sigcontAbortController = new AbortController();
+
+        rl.on('SIGCONT', () => {
+            sigcontAbortController.abort();
+            rl.close();
+        });
+
+        const eof = new Promise<null>((resolve) => {
+            rl.once('close', () => {
+                if (!sigcontAbortController.signal.aborted) {
+                    resolve(null);
+                }
             });
-        } finally {
+        });
+
+        try {
+            const answer = await Promise.race([rl.question(prompt, { signal: sigcontAbortController.signal }), eof]);
+
+            if (answer === null) {
+                return null;
+            }
+
             if (enableHistory) {
                 syncHistory(rl, answer);
             }
-            if (!closed) {
-                rl.close();
+            return answer;
+        } catch (error: unknown) {
+            if (sigcontAbortController.signal.aborted) {
+                // Defer until Node's own SIGCONT handler finishes setRawMode + refreshLine.
+                await new Promise<void>((resolve) => setImmediate(resolve));
+                continue;
             }
+            throw error;
+        } finally {
+            rl.close();
         }
-    });
-    chain = task.catch(() => undefined);
-    return task;
+    }
 }
 
 function syncHistory(rl: readline.Interface, answer: string | null): void {
