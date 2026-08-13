@@ -1,5 +1,15 @@
 # Changelog
 
+## cli/v0.8.0 (2026-08-12)
+
+### Features
+- Clarify conflict strategies
+- Improve command discovery
+
+### Bug Fixes
+- Resolve photos inside albums via the Photos SDK
+
+
 ## cli/v0.7.0 (2026-07-30)
 
 ### Features
