@@ -8,7 +8,7 @@ import {
     RateLimitedError,
     ValidationError,
 } from '../../errors';
-import { AnonymousUser, Logger, MemberRole, NodeResult, RevisionState } from '../../interface';
+import { AnonymousUser, FolderSizeInfo, Logger, MemberRole, NodeResult, RevisionState } from '../../interface';
 import {
     DriveAPIService,
     drivePaths,
@@ -102,6 +102,9 @@ type PostCreateFolderRequest = Extract<
 >['content']['application/json'];
 type PostCreateFolderResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/folders']['post']['responses']['200']['content']['application/json'];
+
+type GetFolderDescendentsSizeResponse =
+    drivePaths['/drive/volumes/{volumeID}/folders/{linkID}/calculate-descendents-size']['get']['responses']['200']['content']['application/json'];
 
 type GetRevisionResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}']['get']['responses']['200']['content']['application/json'];
@@ -558,6 +561,20 @@ export abstract class NodeAPIServiceBase<
         }
 
         return makeNodeUid(volumeId, response.Folder.ID);
+    }
+
+    async getFolderSize(nodeUid: string, signal?: AbortSignal): Promise<FolderSizeInfo> {
+        const { volumeId, nodeId } = splitNodeUid(nodeUid);
+
+        const response = await this.apiService.get<GetFolderDescendentsSizeResponse>(
+            `drive/volumes/${volumeId}/folders/${nodeId}/calculate-descendents-size`,
+            signal,
+        );
+
+        return {
+            size: response.DescendentsSize,
+            numberOfDescendants: response.DescendentsCount,
+        };
     }
 
     async getRevision(nodeRevisionUid: string, signal?: AbortSignal): Promise<EncryptedRevision> {

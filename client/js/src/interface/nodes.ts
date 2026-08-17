@@ -216,3 +216,19 @@ export type RevisionOrUid = Revision | string;
 
 export type NodeResult = { uid: string; ok: true } | { uid: string; ok: false; error: Error };
 export type NodeResultWithNewUid = { uid: string; newUid: string; ok: true } | { uid: string; ok: false; error: Error };
+
+/**
+ * Size information about a folder and its descendants.
+ */
+export type FolderSizeInfo = {
+    /**
+     * Sum of sizes of all descendants of the folder, in bytes, visible to
+     * the user (active and trashed).
+     */
+    size: number;
+    /**
+     * Number of descendants (files and folders) of the folder, visible to
+     * the user (active and trashed).
+     */
+    numberOfDescendants: number;
+};

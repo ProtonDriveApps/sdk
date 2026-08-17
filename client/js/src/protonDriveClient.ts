@@ -9,6 +9,7 @@ import {
     DriveEvent,
     FileDownloader,
     FileUploader,
+    FolderSizeInfo,
     Logger,
     MaybeBookmark,
     MaybeMissingNode,
@@ -539,6 +540,18 @@ export class ProtonDriveClient {
         this.logger.info(`Getting node hierarchy for ${getUid(nodeUid)}`);
         const hierarchy = await this.nodes.access.getNodeHierarchy(getUid(nodeUid));
         return hierarchy.map(convertInternalNode);
+    }
+
+    /**
+     * Calculates the size of a folder, including all active and trashed
+     * descendants.
+     *
+     * @param nodeUid - Node entity or its UID string.
+     * @returns The folder size info.
+     */
+    async getFolderSize(nodeUid: NodeOrUid, signal?: AbortSignal): Promise<FolderSizeInfo> {
+        this.logger.info(`Getting folder size for ${getUid(nodeUid)}`);
+        return this.nodes.access.getFolderSize(getUid(nodeUid), signal);
     }
 
     /**

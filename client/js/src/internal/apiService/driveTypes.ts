@@ -482,6 +482,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/v2/volumes/{volumeID}/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a folder
+         * @description Create a new folder under a given parent folder.
+         */
+        post: operations["post_drive-v2-volumes-{volumeID}-folders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/shares/{shareID}/folders": {
         parameters: {
             query?: never;
@@ -494,7 +514,7 @@ export interface paths {
         /**
          * Create a folder
          * @deprecated
-         * @description Create a new folder in a given share, under a given folder link.
+         * @description Create a new folder under a given parent folder.
          */
         post: operations["post_drive-shares-{shareID}-folders"];
         delete?: never;
@@ -503,7 +523,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/v2/volumes/{volumeID}/folders": {
+    "/drive/v3/volumes/{volumeID}/folders": {
         parameters: {
             query?: never;
             header?: never;
@@ -513,10 +533,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create a folder (v2)
+         * Create a folder
          * @description Create a new folder under a given parent folder.
          */
-        post: operations["post_drive-v2-volumes-{volumeID}-folders"];
+        post: operations["post_drive-v3-volumes-{volumeID}-folders"];
         delete?: never;
         options?: never;
         head?: never;
@@ -955,13 +975,6 @@ export interface paths {
         /**
          * Commit a revision
          * @description The revision becomes the current active one and the updated file content become available for reading.
-         *
-         *     If NO `BlockNumber` parameter is passed when creating a new revision,
-         *     ALL blocks after the greatest index in the submitted block list will be
-         *     truncated for this revision. All blocks for the new revision should be
-         *     submitted. If `BlockNumber` is submitted, all previous blocks
-         *     1...BlockNumber will be preserved if they are not overridden by a new block
-         *     BlockNumber+1... will be discarded.
          */
         put: operations["put_drive-v2-volumes-{volumeID}-files-{linkID}-revisions-{revisionID}"];
         post?: never;
@@ -994,13 +1007,6 @@ export interface paths {
          * Commit a revision
          * @deprecated
          * @description The revision becomes the current active one and the updated file content become available for reading.
-         *
-         *     If NO `BlockNumber` parameter is passed when creating a new revision,
-         *     ALL blocks after the greatest index in the submitted block list will be
-         *     truncated for this revision. All blocks for the new revision should be
-         *     submitted. If `BlockNumber` is submitted, all previous blocks
-         *     1...BlockNumber will be preserved if they are not overridden by a new block
-         *     BlockNumber+1... will be discarded.
          */
         put: operations["put_drive-shares-{shareID}-files-{linkID}-revisions-{revisionID}"];
         post?: never;
@@ -1012,6 +1018,26 @@ export interface paths {
          *     another revision first. You cannot delete a draft revision for a draft link. Delete the link instead.
          */
         delete: operations["delete_drive-shares-{shareID}-files-{linkID}-revisions-{revisionID}"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/v3/volumes/{volumeID}/files/{linkID}/revisions/{revisionID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Commit a revision
+         * @description The revision becomes the current active one and the updated file content become available for reading.
+         */
+        put: operations["put_drive-v3-volumes-{volumeID}-files-{linkID}-revisions-{revisionID}"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1048,6 +1074,23 @@ export interface paths {
          * @deprecated
          */
         post: operations["post_drive-shares-{shareID}-files"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/v3/volumes/{volumeID}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new draft file */
+        post: operations["post_drive-v3-volumes-{volumeID}-files"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1438,6 +1481,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/v3/volumes/{volumeID}/files/small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload small file */
+        post: operations["post_drive-v3-volumes-{volumeID}-files-small"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/v2/volumes/{volumeID}/files/{linkID}/revisions/small": {
         parameters: {
             query?: never;
@@ -1449,6 +1509,23 @@ export interface paths {
         put?: never;
         /** Upload small revision */
         post: operations["post_drive-v2-volumes-{volumeID}-files-{linkID}-revisions-small"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/v3/volumes/{volumeID}/files/{linkID}/revisions/small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload small revision */
+        post: operations["post_drive-v3-volumes-{volumeID}-files-{linkID}-revisions-small"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1888,13 +1965,6 @@ export interface paths {
          * Commit a revision
          * @deprecated
          * @description The revision becomes the current active one and the updated file content become available for reading.
-         *
-         *     If NO `BlockNumber` parameter is passed when creating a new revision,
-         *     ALL blocks after the greatest index in the submitted block list will be
-         *     truncated for this revision. All blocks for the new revision should be
-         *     submitted. If `BlockNumber` is submitted, all previous blocks
-         *     1...BlockNumber will be preserved if they are not overridden by a new block
-         *     BlockNumber+1... will be discarded.
          */
         put: operations["put_drive-urls-{token}-files-{linkID}-revisions-{revisionID}"];
         post?: never;
@@ -2336,7 +2406,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create a folder (v2)
+         * Create a folder
          * @description See /drive/v2/volumes/{volumeID}/folders for full documentation
          */
         post: operations["post_drive-unauth-v2-volumes-{volumeID}-folders"];
@@ -3673,7 +3743,7 @@ export interface components {
             /** @description Current name hash before move operation. Used to prevent race conditions. */
             OriginalHash: string;
             /**
-             * @description Optional, when transferring an Album-Link, required when transferring photos. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
+             * @description Optional, when transferring an Album-Link, required when transferring photos. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
             ContentHash: string | null;
@@ -3686,17 +3756,14 @@ export interface components {
         TransferPhotoLinksRequestDto: {
             ParentLinkID: components["schemas"]["Id"];
             Links: components["schemas"]["TransferPhotoLinkInBatchRequestDto"][];
-            /**
-             * Format: email
-             * @description Signature email address used for signing name
-             */
-            NameSignatureEmail: string;
+            /** @description Signature email address used for signing name */
+            NameSignatureEmail: components["schemas"]["AddressEmail"];
             /**
              * Format: email
              * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
-            SignatureEmail: string | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
         };
         RemovePhotosFromAlbumRequestDto: {
             LinkIDs: components["schemas"]["Id"][];
@@ -4331,6 +4398,16 @@ export interface components {
                 /** @description A list of tags assigned to the photo. The list will always be empty when requested by a user that is not the volume-owner. */
                 Tags?: number[];
             } | null;
+            /** @description Ownership information of the volume containing this link. */
+            OwnedBy: {
+                /**
+                 * Format: email
+                 * @description OwnerUser email for regular and photo volumes, null otherwise. Always null in public-sharing context.
+                 */
+                Email?: string | null;
+                /** @description OwnerOrganization name for org. volumes, null otherwise. Always null in public-sharing context. */
+                Organization?: string | null;
+            };
         };
         EventResponseDto: {
             EventID: components["schemas"]["ShortId"];
@@ -4479,27 +4556,13 @@ export interface components {
              */
             Code: 1000;
         };
-        CreateFolderRequestDto2: {
-            /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: components["schemas"]["PGPMessage"];
-            /**
-             * @description Extended attributes encrypted with link key
-             * @default null
-             */
-            XAttr: components["schemas"]["PGPMessage"] | null;
-            Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
+        CreateFolderCryptoV2RequestDto: {
+            /** @default null */
+            XAttr: components["schemas"]["BinaryString"] | null;
             ParentLinkID: components["schemas"]["Id"];
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodePassphraseSignature: components["schemas"]["PGPSignature"];
-            NodeKey: components["schemas"]["PGPPrivateKey"];
-            /**
-             * Format: email
-             * @description Signature email address used to sign passphrase and name
-             * @default null
-             */
-            SignatureEmail: components["schemas"]["AddressEmail"] | null;
+            NodeKey: components["schemas"]["BinaryString"];
+            Name: components["schemas"]["BinaryString"];
+            NameHash: string;
         };
         /** @description An encrypted ID */
         EncryptedId: string;
@@ -4561,11 +4624,11 @@ export interface components {
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
-            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
+            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
             ContentHash: string;
         };
         PhotosDto: {
-            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
+            /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
             ContentHash: string;
             /** @default [] */
             RelatedPhotos: components["schemas"]["RelatedPhotoDto"][];
@@ -4729,6 +4792,7 @@ export interface components {
         };
         FileDto: {
             ActiveRevision: components["schemas"]["ActiveRevisionDto"] | null;
+            /** @description The sum of all revision sizes (blocks + thumbnails) excluding zero-rated ones. So this reflects the consumed storage quota rather than the actual encrypted size. */
             TotalEncryptedSize: number;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             MediaType?: string | null;
@@ -4741,6 +4805,7 @@ export interface components {
         MembershipDto: {
             ShareID: components["schemas"]["Id"];
             MembershipID: components["schemas"]["ShortId"];
+            AddressID: components["schemas"]["LongId"];
             /**
              * @description Permission bitfield, valid permissions:
              *      - 4: read access
@@ -4759,6 +4824,11 @@ export interface components {
             InviterSharePassphraseKeyPacketSignature: components["schemas"]["PGPSignature"];
             /** @description Signature of the share passphrase's session key with the private key of the user (invitee). */
             InviteeSharePassphraseSessionKeySignature: components["schemas"]["PGPSignature"];
+            SharePassphrase: components["schemas"]["PGPMessage"];
+            SharePassphraseSignature: components["schemas"]["PGPSignature"];
+            /** Format: email */
+            ShareCreatorEmail: string;
+            ShareKey: components["schemas"]["PGPPrivateKey"];
         };
         FileDetailsDto: {
             Link: components["schemas"]["LinkDto"];
@@ -4830,7 +4900,7 @@ export interface components {
             LinkID: components["schemas"]["Id"];
             /** @description Name, reusing same session key as previously. */
             Name: components["schemas"]["PGPMessage"];
-            /** @description Node passphrase, reusing same session key as previously. The data packet may be omitted for non-anonymous links; the existing one is reused. Anonymous links must include the data packet. */
+            /** @description Node passphrase, reusing same session key as previously. The data packet may be omitted; the existing one is reused. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
             Hash: string;
@@ -4840,7 +4910,7 @@ export interface components {
              */
             OriginalHash: string | null;
             /**
-             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
+             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
             ContentHash: string | null;
@@ -4853,18 +4923,14 @@ export interface components {
         MoveLinkBatchRequestDto: {
             ParentLinkID: components["schemas"]["Id"];
             Links: components["schemas"]["MoveLinkInBatchRequestDto"][];
-            /**
-             * Format: email
-             * @description Signature email address used for signing name
-             * @default null
-             */
-            NameSignatureEmail: string | null;
+            /** @description Signature email address used for signing name */
+            NameSignatureEmail: components["schemas"]["AddressEmail"];
             /**
              * Format: email
              * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
-            SignatureEmail: string | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
         };
         MoveLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
@@ -4879,14 +4945,14 @@ export interface components {
              * @description Signature email address used for signing name; Required when not passing `SignatureAddress`
              * @default null
              */
-            NameSignatureEmail: string | null;
+            NameSignatureEmail: components["schemas"]["AddressEmail"] | null;
             /**
              * Format: email
              * @deprecated
              * @description [DEPRECATED] since only the name is signed, use `NameSignatureEmail`. Signature email address used for the name.
              * @default null
              */
-            SignatureAddress: string | null;
+            SignatureAddress: components["schemas"]["AddressEmail"] | null;
             /**
              * @description Current name hash before move operation. Used to prevent race conditions.
              * @default null
@@ -4899,7 +4965,7 @@ export interface components {
              */
             NewShareID: components["schemas"]["Id"] | null;
             /**
-             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
+             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
             ContentHash: string | null;
@@ -4913,7 +4979,7 @@ export interface components {
              * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
-            SignatureEmail: string | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
         };
         MoveLinkRequestDto2: {
             /** @description Name, reusing same session key as previously. */
@@ -4925,13 +4991,10 @@ export interface components {
             ParentLinkID: components["schemas"]["Id"];
             /** @description Current name hash before move operation. Used to prevent race conditions. */
             OriginalHash: string;
+            /** @description Signature email address used for signing name */
+            NameSignatureEmail: components["schemas"]["AddressEmail"];
             /**
-             * Format: email
-             * @description Signature email address used for signing name
-             */
-            NameSignatureEmail: string;
-            /**
-             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ]
+             * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
             ContentHash: string | null;
@@ -4945,7 +5008,7 @@ export interface components {
              * @description Signature email address used for the NodePassphraseSignature.
              * @default null
              */
-            SignatureEmail: string | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
         };
         RenameLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
@@ -4988,7 +5051,7 @@ export interface components {
         CommitRevisionPhotoDto: {
             /** @description Photo capture timestamp (in seconds), use negative values for times before 1970 */
             CaptureTime: number;
-            /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key [ hmacSha256(folder hash key, sha1(plain content)) ] */
+            /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
             ContentHash: string;
             /**
              * @description Main photo LinkID reference. Pass null if none.
@@ -5055,6 +5118,24 @@ export interface components {
              */
             ChecksumVerified: boolean;
         };
+        CommitRevisionCryptoV2Dto: {
+            ManifestHash: string;
+            /**
+             * Format: email
+             * @description Address used to sign the manifest. Is null for anonymous users. Must be the address in the membership of the context share.
+             */
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
+            ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            /** @default null */
+            XAttr: components["schemas"]["BinaryString"] | null;
+            /** @default null */
+            Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
+        };
         CreateFileDto: {
             /** @example text/plain */
             MIMEType: string;
@@ -5102,6 +5183,24 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
+        };
+        CreateFileCryptoV2Dto: {
+            /** @example text/plain */
+            MIMEType: string;
+            /**
+             * @description Client unique ID. Useful for marking client's drafts - in case of failure client can recognise its own draft and continue upload.
+             * @default null
+             */
+            ClientUID: string | null;
+            /**
+             * @description Intended upload file size, future BE size validation
+             * @default null
+             */
+            IntendedUploadSize: number | null;
+            ParentLinkID: components["schemas"]["Id"];
+            NodeKey: components["schemas"]["BinaryString"];
+            Name: components["schemas"]["BinaryString"];
+            NameHash: string;
         };
         CreateRevisionRequestDto: {
             /** @default null */
@@ -5271,19 +5370,20 @@ export interface components {
             /** @default null */
             Verifier: components["schemas"]["Verifier"] | null;
             /**
+             * @deprecated
              * @description Encrypted PGP Signature of the raw block content. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
              * @default null
              */
             EncSignature: components["schemas"]["PGPMessage"] | null;
             /**
              * @deprecated
-             * @description Block size in bytes
+             * @description Block size in bytes. Deprecated and unused. Calculated based on actual upload
              * @default null
              */
             Size: number | null;
             /**
              * @deprecated
-             * @description sha256 hash of encrypted block, base64 encoded
+             * @description sha256 hash of encrypted block, base64 encoded. Deprecated and unused. Calculated based on actual upload
              */
             Hash?: components["schemas"]["BinaryString"] | null;
         };
@@ -5291,13 +5391,13 @@ export interface components {
             Type: components["schemas"]["ThumbnailType"];
             /**
              * @deprecated
-             * @description Block size in bytes. WARNING: when type is NOT 2=HDPreview(1920) then the max size is 69632
+             * @description Block size in bytes. Deprecated and unused. Calculated based on actual upload
              * @default null
              */
             Size: number | null;
             /**
              * @deprecated
-             * @description sha256 hash of encrypted block, base64 encoded
+             * @description sha256 hash of encrypted block, base64 encoded. Deprecated and unused. Calculated based on actual upload
              */
             Hash?: components["schemas"]["BinaryString"] | null;
         };
@@ -5499,11 +5599,8 @@ export interface components {
             /** @description Name Hash */
             Hash: string;
             Name: components["schemas"]["PGPMessage"];
-            /**
-             * Format: email
-             * @description Email address used for signing name
-             */
-            NameSignatureEmail: string;
+            /** @description Email address used for signing name */
+            NameSignatureEmail: components["schemas"]["AddressEmail"];
             /** @description Passphrase should be unchanged, reusing same session key as previously */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Photo content hash */
@@ -5514,7 +5611,7 @@ export interface components {
              * Format: email
              * @description Nullable: Required when moving an anonymous link. Email address used for the NodePassphraseSignature
              */
-            SignatureEmail?: string | null;
+            SignatureEmail?: components["schemas"]["AddressEmail"] | null;
             /** @default [] */
             RelatedPhotos: components["schemas"]["AlbumPhotoLinkDataDto"][];
         };
@@ -5632,6 +5729,7 @@ export interface components {
             Albums: components["schemas"]["PhotoAlbumDto"][];
             /** @description Will be empty if the user is not the owner. */
             Tags: components["schemas"]["TagType"][];
+            /** @description The sum of all revision sizes (blocks + thumbnails) excluding zero-rated ones. So this reflects the consumed storage quota rather than the actual encrypted size. */
             TotalEncryptedSize: number;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             MediaType?: string | null;
@@ -5882,28 +5980,6 @@ export interface components {
              */
             Code: 1000;
         };
-        CreateAnonymousFolderRequestDto: {
-            Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
-            ParentLinkID: components["schemas"]["Id"];
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodePassphraseSignature: components["schemas"]["PGPSignature"];
-            NodeKey: components["schemas"]["PGPPrivateKey"];
-            /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
-            NodeHashKey: components["schemas"]["PGPMessage"];
-            /**
-             * Format: email
-             * @description Signature email address used to sign passphrase and name
-             * @default null
-             */
-            SignatureEmail: components["schemas"]["AddressEmail"] | null;
-            /**
-             * @description Extended attributes encrypted with link key
-             * @default null
-             */
-            XAttr: components["schemas"]["PGPMessage"] | null;
-        };
         CreateAnonymousFolderResponseDto: {
             Folder: components["schemas"]["FolderResponseDto"];
             AuthorizationToken: string;
@@ -5949,6 +6025,7 @@ export interface components {
             RevisionID: components["schemas"]["Id"];
             /**
              * Format: email
+             * @deprecated
              * @description Signature email address used to sign the blocks content
              * @default null
              */
@@ -7284,15 +7361,15 @@ export interface components {
              * Format: email
              * @description Address used to sign passphrase, name, manifest, block, and xAttr. Is null for anonymous users.
              */
-            SignatureEmail?: components["schemas"]["AddressEmail"] | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
             NodeKey: components["schemas"]["PGPPrivateKey"];
             /** @example text/plain */
             MIMEType: string;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             /** @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey. */
-            ContentKeyPacketSignature?: components["schemas"]["PGPSignature"] | null;
+            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"];
-            ContentBlockVerificationToken?: components["schemas"]["BinaryString"] | null;
+            ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
             /**
              * @description Extended attributes encrypted with link key
              * @default null
@@ -7301,6 +7378,7 @@ export interface components {
             /** @default null */
             Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
             /**
+             * @deprecated
              * @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
              * @default null
              */
@@ -7311,22 +7389,67 @@ export interface components {
              */
             ChecksumVerified: boolean;
         };
+        SmallFileUploadMetadataCryptoV2RequestDto: {
+            /** @example text/plain */
+            MIMEType: string;
+            /**
+             * Format: email
+             * @description Address used to sign manifest hash. Is null for anonymous users.
+             */
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
+            ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
+            /** @default null */
+            XAttr: components["schemas"]["BinaryString"] | null;
+            /** @default null */
+            Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
+            ParentLinkID: components["schemas"]["Id"];
+            NodeKey: components["schemas"]["BinaryString"];
+            Name: components["schemas"]["BinaryString"];
+            NameHash: string;
+        };
         SmallRevisionUploadMetadataRequestDto: {
             CurrentRevisionID: components["schemas"]["Id"];
             /**
              * Format: email
              * @description Address used to sign manifest, block, and xAttr. Is null for anonymous users.
              */
-            SignatureEmail?: components["schemas"]["AddressEmail"] | null;
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"];
-            /** @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. */
-            ContentBlockEncSignature?: components["schemas"]["PGPMessage"] | null;
-            ContentBlockVerificationToken?: components["schemas"]["BinaryString"] | null;
+            ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
             /**
              * @description File extended attributes encrypted with link key
              * @default null
              */
             XAttr: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @deprecated
+             * @description Encrypted PGP Signature of the raw block content. Is null for empty files as they do not have blocks or when uploaded by anonymous users. Deprecated: Once clients do not validate the block signature, it should also not be calculated and uploaded anymore.
+             * @default null
+             */
+            ContentBlockEncSignature: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
+             * @default false
+             */
+            ChecksumVerified: boolean;
+        };
+        SmallRevisionUploadMetadataCryptoV2RequestDto: {
+            CurrentRevisionID: components["schemas"]["Id"];
+            /**
+             * Format: email
+             * @description Address used to sign manifest. Is null for anonymous users.
+             */
+            SignatureEmail: components["schemas"]["AddressEmail"] | null;
+            ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
+            /** @default null */
+            XAttr: components["schemas"]["BinaryString"] | null;
             /**
              * @description Whether the checksum in xattr of the revision content was verified by the client during upload
              * @default false
@@ -8555,6 +8678,51 @@ export interface operations {
             };
         };
     };
+    "post_drive-v2-volumes-{volumeID}-folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateFolderRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateFolderResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2511: the link targeted is a photo link
+                         *      - 200300: max folder size reached
+                         *      - 200301: max folder depth reached
+                         *      - 2500: file or folder with same name already exists
+                         *      - 2501: parent folder was not found
+                         *      */
+                        Code?: number;
+                    } | components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+        };
+    };
     "post_drive-shares-{shareID}-folders": {
         parameters: {
             query?: never;
@@ -8600,7 +8768,7 @@ export interface operations {
             };
         };
     };
-    "post_drive-v2-volumes-{volumeID}-folders": {
+    "post_drive-v3-volumes-{volumeID}-folders": {
         parameters: {
             query?: never;
             header?: never;
@@ -8611,7 +8779,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto2"];
+                "application/json": components["schemas"]["CreateFolderCryptoV2RequestDto"];
             };
         };
         responses: {
@@ -9512,6 +9680,49 @@ export interface operations {
             };
         };
     };
+    "put_drive-v3-volumes-{volumeID}-files-{linkID}-revisions-{revisionID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: components["schemas"]["Id"];
+                revisionID: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CommitRevisionCryptoV2Dto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 200303: Cannot commit related photo with main already in album
+                         *      */
+                        Code: number;
+                    } | components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+        };
+    };
     "post_drive-v2-volumes-{volumeID}-files": {
         parameters: {
             query?: never;
@@ -9569,6 +9780,51 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["CreateFileDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateDraftFileResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 200300: max folder size reached
+                         *      - 200301: max folder depth reached
+                         *      - 2500: file or folder with same name already exists
+                         *      - 2501: parent folder was not found
+                         *      - 200701: A document type cannot create a revision
+                         *      */
+                        Code: number;
+                    } | components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+        };
+    };
+    "post_drive-v3-volumes-{volumeID}-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateFileCryptoV2Dto"];
             };
         };
         responses: {
@@ -10322,6 +10578,126 @@ export interface operations {
             };
         };
     };
+    "post_drive-v3-volumes-{volumeID}-files-small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                /** @example POST /drive/v3/volumes/{volumeID}/files/small
+                 *     Content-Type: multipart/form-data; boundary=[SOME_BOUNDARY]
+                 *     Content-Length: [ACTUAL_CONTENT_LENGTH]
+                 *
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/json
+                 *     Content-Disposition: form-data; name="Metadata"
+                 *
+                 *     {
+                 *       "Name": "string",
+                 *       "NameHash": "string",
+                 *       "ParentLinkID": "string",
+                 *       "MIMEType": "string",
+                 *       // ... remaining metadata, see SmallFileUploadMetadataCryptoV2RequestDto schema
+                 *     }
+                 *
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ContentBlock"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ThumbnailBlockType_1"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]--
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ThumbnailBlockType_2"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]-- */
+                "multipart/form-data": {
+                    Metadata: components["schemas"]["SmallFileUploadMetadataCryptoV2RequestDto"];
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data of the file content. This is optional as 0-byte files do not have a block.
+                     */
+                    ContentBlock?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the Preview thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_1?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the HDPreview thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_2?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the MachineLearning thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_3?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmallUploadResponseDto"];
+                };
+            };
+            /** @description Bad request, the metadata does not pass validation. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtonError"];
+                };
+            };
+            /** @description Conflict, there is a name hash collision with another link in the same folder. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The parent link does not exist or is trashed
+                         *      - 2011: The user does not have write permission on the link
+                         *      - 2032: crypto v2 disabled.
+                         *      - 200003: Small file upload can only be used for revisions up to 128 KiB in size (encrypted content + thumbnails)
+                         *      - 200002: Storage quota exceeded
+                         *      - 200701: A document type cannot create a revision
+                         *      - 2511: A photo link is missing photo metadata
+                         *      - 200300: max folder size reached
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
     "post_drive-v2-volumes-{volumeID}-files-{linkID}-revisions-small": {
         parameters: {
             query?: never;
@@ -10433,6 +10809,126 @@ export interface operations {
                          *      - 200003: Small file upload can only be used for revisions up to 128 KiB in size (encrypted content + thumbnails)
                          *      - 200002: Storage quota exceeded
                          *      - 2001: PGP data is not correct
+                         *      - 200700: A document type cannot create a revision
+                         *      - 2511: A photo link cannot have multiple revisions
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "post_drive-v3-volumes-{volumeID}-files-{linkID}-revisions-small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+                linkID: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                /** @example POST /drive/v3/volumes/{volumeID}/files/{linkID}/revisions/small
+                 *     Content-Type: multipart/form-data; boundary=[SOME_BOUNDARY]
+                 *     Content-Length: [ACTUAL_CONTENT_LENGTH]
+                 *
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/json
+                 *     Content-Disposition: form-data; name="Metadata"
+                 *
+                 *     {
+                 *       "CurrentRevisionID": string,
+                 *       "SignatureEmail": "string",
+                 *       "ManifestSignature": "string",
+                 *       "BlockEncSignature": "string",
+                 *       // ... remaining metadata, see SmallRevisionUploadMetadataCryptoV2RequestDto schema
+                 *     }
+                 *
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ContentBlock"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ThumbnailBlockType_1"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]--
+                 *     Content-Type: application/octet-stream
+                 *     Content-Disposition: form-data; name="ThumbnailBlockType_2"
+                 *
+                 *     <encrypted binary data>
+                 *     --[SOME_BOUNDARY]-- */
+                "multipart/form-data": {
+                    Metadata: components["schemas"]["SmallRevisionUploadMetadataCryptoV2RequestDto"];
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data of the file content. This is optional as 0-byte files do not have a block.
+                     */
+                    ContentBlock?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the Preview thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_1?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the HDPreview thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_2?: string;
+                    /**
+                     * Format: binary
+                     * @description The encrypted binary data for the MachineLearning thumbnail. This is optional.
+                     */
+                    ThumbnailBlockType_3?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmallUploadResponseDto"];
+                };
+            };
+            /** @description Bad request, the metadata does not pass validation. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtonError"];
+                };
+            };
+            /** @description Conflict, the passed CurrentRevisionID is no longer up to date. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProtonError"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 2501: The link does not exist or is trashed
+                         *      - 2011: The user does not have write permission on the link
+                         *      - 2032: crypto v2 disabled.
+                         *      - 200003: Small file upload can only be used for revisions up to 128 KiB in size (encrypted content + thumbnails)
+                         *      - 200002: Storage quota exceeded
                          *      - 200700: A document type cannot create a revision
                          *      - 2511: A photo link cannot have multiple revisions
                          *      */
@@ -11425,7 +11921,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAnonymousFolderRequestDto"];
+                "application/json": components["schemas"]["CreateFolderRequestDto"];
             };
         };
         responses: {
@@ -12122,7 +12618,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto2"];
+                "application/json": components["schemas"]["CreateFolderRequestDto"];
             };
         };
         responses: {

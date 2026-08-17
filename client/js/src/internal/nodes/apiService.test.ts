@@ -760,6 +760,29 @@ describe('nodeAPIService', () => {
         });
     });
 
+    describe('getFolderSize', () => {
+        it('should get folder size', async () => {
+            apiMock.get = jest.fn().mockResolvedValue({
+                Code: ErrorCode.OK,
+                VolumeID: 'volumeId',
+                LinkID: 'nodeId',
+                DescendentsSize: 12345,
+                DescendentsCount: 42,
+            });
+
+            const result = await api.getFolderSize('volumeId~nodeId');
+
+            expect(result).toEqual({
+                size: 12345,
+                numberOfDescendants: 42,
+            });
+            expect(apiMock.get).toHaveBeenCalledWith(
+                'drive/volumes/volumeId/folders/nodeId/calculate-descendents-size',
+                undefined,
+            );
+        });
+    });
+
     describe('renameNode', () => {
         it('should rename node', async () => {
             await api.renameNode(

@@ -3,6 +3,7 @@ import { c } from 'ttag';
 import { PrivateKey, SessionKey } from '../../crypto';
 import { DecryptionError, ProtonDriveError } from '../../errors';
 import {
+    FolderSizeInfo,
     InvalidNameError,
     Logger,
     MissingNode,
@@ -112,6 +113,10 @@ export abstract class NodesAccessBase<
         }
         const parents = await this.getNodeHierarchy(node.parentUid, [...visitedNodeUids, nodeUid]);
         return [...parents, node];
+    }
+
+    async getFolderSize(nodeUid: string, signal?: AbortSignal): Promise<FolderSizeInfo> {
+        return this.apiService.getFolderSize(nodeUid, signal);
     }
 
     async *iterateFolderChildrenNodeUids(

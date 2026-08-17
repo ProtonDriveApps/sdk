@@ -11,6 +11,7 @@ import { CommandFileSystemList } from './fileSystem/commandFileSystemList';
 import { CommandFileSystemMove } from './fileSystem/commandFileSystemMove';
 import { CommandFileSystemRename } from './fileSystem/commandFileSystemRename';
 import { CommandFileSystemRestore } from './fileSystem/commandFileSystemRestore';
+import { CommandFileSystemSize } from './fileSystem/commandFileSystemSize';
 import { CommandFileSystemTrash } from './fileSystem/commandFileSystemTrash';
 import { CommandFileSystemUpload } from './fileSystem/commandFileSystemUpload';
 import { CommandAlbumAddPhoto } from './photos/commandAlbumAddPhoto';
@@ -40,6 +41,7 @@ export const COMMANDS = applyDefaultCliOptions([
     // Regular Drive commands
     new CommandFileSystemList(),
     new CommandFileSystemInfo(),
+    new CommandFileSystemSize(),
     new CommandFileSystemCreateFolder(),
     new CommandFileSystemUpload(),
     new CommandFileSystemDownload(),

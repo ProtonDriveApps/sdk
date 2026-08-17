@@ -26,6 +26,7 @@ describe('nodesAccess', () => {
                 yield* uids.map((uid) => ({ uid, parentUid: 'volumeId~parentNodeId' }) as EncryptedNode);
             }),
             iterateChildrenNodeUids: jest.fn(),
+            getFolderSize: jest.fn(),
         };
         // @ts-expect-error No need to implement all methods for mocking
         cache = {
@@ -235,6 +236,17 @@ describe('nodesAccess', () => {
             expect(cache.getNode).toHaveBeenCalledTimes(2);
             expect(cache.getNode).toHaveBeenNthCalledWith(1, 'volumeId~nodeA');
             expect(cache.getNode).toHaveBeenNthCalledWith(2, 'volumeId~nodeB');
+        });
+    });
+
+    describe('getFolderSize', () => {
+        it('should get folder size', async () => {
+            apiService.getFolderSize = jest.fn().mockResolvedValue({ size: 12345, numberOfDescendants: 42 });
+
+            const result = await access.getFolderSize('volumeId~nodeId');
+
+            expect(result).toEqual({ size: 12345, numberOfDescendants: 42 });
+            expect(apiService.getFolderSize).toHaveBeenCalledWith('volumeId~nodeId', undefined);
         });
     });
 

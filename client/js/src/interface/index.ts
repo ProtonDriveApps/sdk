@@ -32,6 +32,7 @@ export type {
     ProtonDriveHTTPClientJsonRequest,
 } from './httpClient';
 export type {
+    FolderSizeInfo,
     InvalidNameError,
     MaybeMissingNode,
     Membership,
