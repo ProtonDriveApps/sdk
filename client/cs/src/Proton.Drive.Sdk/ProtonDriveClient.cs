@@ -46,13 +46,13 @@ public sealed class ProtonDriveClient
     internal ProtonDriveClient(
         IProtonAccountClient accountClient,
         IDriveApiClients api,
-        INodeProvider nodeProvider,
         IDriveCache cache,
         IBlockVerifierFactory blockVerifierFactory,
         IFeatureFlagProvider featureFlagProvider,
         ITelemetry telemetry,
         string? uid = null,
-        int? degreeOfBlockTransferParallelism = null)
+        int? degreeOfBlockTransferParallelism = null,
+        Func<ProtonDriveClient, INodeProvider?>? nodeProviderFactory = null)
     {
         Uid = uid ?? Guid.NewGuid().ToString();
 
@@ -63,7 +63,7 @@ public sealed class ProtonDriveClient
         Telemetry = telemetry;
         FeatureFlagProvider = featureFlagProvider;
 
-        NodeProvider = nodeProvider;
+        NodeProvider = nodeProviderFactory?.Invoke(this) ?? new NodeProvider(this, api.Links.GetDetailsAsync);
 
         var maxDegreeOfBlockTransferParallelism = degreeOfBlockTransferParallelism ?? DefaultDegreeOfBlockTransferParallelism;
 
@@ -82,7 +82,6 @@ public sealed class ProtonDriveClient
         : this(
             parameters.AccountClient,
             parameters.Api,
-            parameters.NodeProvider,
             parameters.Cache,
             parameters.BlockVerifierFactory,
             parameters.FeatureFlagProvider,
@@ -125,9 +124,7 @@ public sealed class ProtonDriveClient
 
     public ValueTask<Node?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
-        return NodeOperations
-            .EnumerateNodesAsync(this, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
-            .FirstOrDefaultAsync(cancellationToken);
+        return NodeOperations.TryGetNodeAsync(this, nodeUid, cancellationToken);
     }
 
     public IAsyncEnumerable<Node> EnumerateNodesAsync(IAsyncEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)
@@ -352,7 +349,6 @@ public sealed class ProtonDriveClient
     private readonly record struct CreationParameters(
         IProtonAccountClient AccountClient,
         IDriveApiClients Api,
-        INodeProvider NodeProvider,
         IDriveCache Cache,
         IBlockVerifierFactory BlockVerifierFactory,
         IFeatureFlagProvider FeatureFlagProvider,
@@ -379,7 +375,6 @@ public sealed class ProtonDriveClient
             return new CreationParameters(
                 accountClient,
                 api,
-                new DriveNodeProvider(api),
                 new DriveCache(cacheRepository),
                 new BlockVerifierFactory(defaultHttpClient),
                 featureFlagProvider,

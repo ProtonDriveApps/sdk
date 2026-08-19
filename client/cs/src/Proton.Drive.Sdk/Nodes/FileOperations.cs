@@ -7,13 +7,9 @@ internal static class FileOperations
 {
     private const int MaxThumbnailIdsPerRequest = 30;
 
-    public static async ValueTask<FileOperationData> GetOperationDataAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
+    public static async ValueTask<FileOperationData> GetOperationDataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var nodeOperationData = await NodeOperations.GetOperationDataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+        var nodeOperationData = await NodeOperations.GetOperationDataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
         if (nodeOperationData is not FileOperationData fileOperationData)
         {
@@ -34,62 +30,53 @@ internal static class FileOperations
         {
             var volumeId = volumeLinkIdGroup.Key;
 
-            var unprocessedLinkIds = volumeLinkIdGroup.ToHashSet();
-
-            var nodeResults = client.NodeProvider
-                .EnumerateNodeMetadataAsync(client, volumeId, unprocessedLinkIds, knownShareAndKey: null, cancellationToken)
-                .Select(metadata => metadata.Node);
+            var nodeResults = client.NodeProvider.EnumerateNodeMetadataAsync(volumeId, volumeLinkIdGroup, cancellationToken).ConfigureAwait(false);
 
             var errors = new List<FileThumbnail>();
+            var thumbnailRevisions = new Dictionary<string, Revision>();
 
-            var thumbnailIds = await nodeResults
-                .Select(FileNodeInfo? (node) =>
+            await foreach (var (linkId, result) in nodeResults)
+            {
+                var nodeUid = new NodeUid(volumeId, linkId);
+
+                if (!result.TryGetValueElseError(out var metadata, out var exception))
                 {
-                    unprocessedLinkIds.Remove(node.Uid.LinkId);
+                    errors.Add(new FileThumbnail(nodeUid, new ProtonDriveError(exception.Message)));
+                    continue;
+                }
 
-                    if (!node.TryGetFileElseFolder(out var fileNode, out _))
-                    {
-                        errors.Add(new FileThumbnail(node.Uid, new ProtonDriveError("This item is not a file")));
-                        return null;
-                    }
+                var node = metadata.Node;
 
-                    var revision = fileNode.ActiveRevision;
-
-                    return new FileNodeInfo(fileNode.Uid, revision.Uid, revision.Thumbnails);
-                })
-                .Where(x => x.HasValue)
-                .Select(x => x!.Value)
-                .SelectMany(fileNodeInfo =>
+                if (!node.TryGetFileElseFolder(out var fileNode, out _))
                 {
-                    var thumbnails = fileNodeInfo.Thumbnails;
-                    if (thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
-                    {
-                        var errorMessage = thumbnails.Count != 0
-                            ? "This item has no image preview"
-                            : "This item has no image preview available";
+                    errors.Add(new FileThumbnail(nodeUid, new ProtonDriveError("This item is not a file")));
+                    continue;
+                }
 
-                        errors.Add(new FileThumbnail(fileNodeInfo.Uid, new ProtonDriveError(errorMessage)));
-                    }
+                var revision = fileNode.ActiveRevision;
 
-                    return thumbnails
-                        .Where(thumbnail => thumbnail.Type == thumbnailType)
-                        .Select(thumbnail => (thumbnail.Id, Info: fileNodeInfo))
-                        .ToAsyncEnumerable();
-                })
-                .ToDictionaryAsync(thumbnail => thumbnail.Id, thumbnail => thumbnail.Info, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+                if (revision.Thumbnails.All(thumbnail => thumbnail.Type != thumbnailType))
+                {
+                    var errorMessage = revision.Thumbnails.Count != 0
+                        ? "This item has no image preview"
+                        : "This item has no image preview available";
 
-            errors.AddRange(
-                unprocessedLinkIds
-                    .Select(missingLinkId =>
-                        new FileThumbnail(new NodeUid(volumeId, missingLinkId), new ProtonDriveError("Item not found"))));
+                    errors.Add(new FileThumbnail(nodeUid, new ProtonDriveError(errorMessage)));
+                    continue;
+                }
+
+                foreach (var thumbnail in revision.Thumbnails.Where(thumbnail => thumbnail.Type == thumbnailType))
+                {
+                    thumbnailRevisions[thumbnail.Id] = revision;
+                }
+            }
 
             foreach (var error in errors)
             {
                 yield return error;
             }
 
-            if (thumbnailIds.Count == 0)
+            if (thumbnailRevisions.Count == 0)
             {
                 continue;
             }
@@ -97,7 +84,7 @@ internal static class FileOperations
             // Naive implementation: thumbnails from a batch won't start downloading until all thumbnails from the previous batch have finished downloading,
             // even if there are available download slots in the queue.
             // TODO: allow parallelization across the batch boundaries
-            foreach (var thumbnailIdBatch in thumbnailIds.Keys.Chunk(MaxThumbnailIdsPerRequest))
+            foreach (var thumbnailIdBatch in thumbnailRevisions.Keys.Chunk(MaxThumbnailIdsPerRequest))
             {
                 var response = await client.Api.Files.GetThumbnailBlocksAsync(volumeId, thumbnailIdBatch, cancellationToken).ConfigureAwait(false);
 
@@ -106,7 +93,7 @@ internal static class FileOperations
                 foreach (var block in response.Blocks)
                 {
                     processedThumbnailIds.Add(block.ThumbnailId);
-                    var nodeInfo = thumbnailIds[block.ThumbnailId];
+                    var revision = thumbnailRevisions[block.ThumbnailId];
 
                     if (!client.ThumbnailDownloadQueue.TryEnqueueBlock())
                     {
@@ -118,18 +105,18 @@ internal static class FileOperations
                         await client.ThumbnailDownloadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
                     }
 
-                    tasks.Enqueue(DownloadThumbnailAsync(client, nodeInfo.ActiveRevisionUid, block, cancellationToken));
+                    tasks.Enqueue(DownloadThumbnailAsync(client, revision.Uid, block, cancellationToken));
                 }
 
                 foreach (var error in response.Errors)
                 {
-                    if (!thumbnailIds.TryGetValue(error.ThumbnailId, out var nodeInfo))
+                    if (!thumbnailRevisions.TryGetValue(error.ThumbnailId, out var revision))
                     {
                         continue;
                     }
 
                     processedThumbnailIds.Add(error.ThumbnailId);
-                    yield return new FileThumbnail(nodeInfo.Uid, new ProtonDriveError(error.Error));
+                    yield return new FileThumbnail(revision.Uid.NodeUid, new ProtonDriveError(error.Error));
                 }
 
                 // TODO: cancel other thumbnail downloads if one fails
@@ -140,7 +127,7 @@ internal static class FileOperations
 
                 foreach (var thumbnailId in thumbnailIdBatch.Where(id => !processedThumbnailIds.Contains(id)))
                 {
-                    yield return new FileThumbnail(thumbnailIds[thumbnailId].Uid, new ProtonDriveError("Image preview not found"));
+                    yield return new FileThumbnail(thumbnailRevisions[thumbnailId].Uid.NodeUid, new ProtonDriveError("Image preview not found"));
                 }
             }
         }
@@ -159,11 +146,7 @@ internal static class FileOperations
             var outputStream = new MemoryStream(initialBufferLength);
             await using (outputStream.ConfigureAwait(false))
             {
-                var operationData = await GetOperationDataAsync(
-                    client,
-                    revisionUid.NodeUid,
-                    knownShareAndKey: null,
-                    cancellationToken).ConfigureAwait(false);
+                var operationData = await GetOperationDataAsync(client, revisionUid.NodeUid, cancellationToken).ConfigureAwait(false);
 
                 var contentKey = operationData.ContentKey
                     ?? throw new InvalidOperationException($"Content key not available for file {revisionUid.NodeUid}");
@@ -190,6 +173,4 @@ internal static class FileOperations
             client.ThumbnailDownloadQueue.DequeueBlocks(1);
         }
     }
-
-    private readonly record struct FileNodeInfo(NodeUid Uid, RevisionUid ActiveRevisionUid, IReadOnlyList<ThumbnailHeader> Thumbnails);
 }

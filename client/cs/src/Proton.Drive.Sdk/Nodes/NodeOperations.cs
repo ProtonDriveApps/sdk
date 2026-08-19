@@ -18,7 +18,7 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class NodeOperations
 {
-    private const int MaximumBatchCount = 150;
+    private const int MaximumBatchSize = 150;
     private const int MaxNodeNameLength = 255;
 
     public static async ValueTask<FolderNode> GetOrCreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
@@ -41,41 +41,45 @@ internal static class NodeOperations
         }
     }
 
-    public static async ValueTask<NodeMetadata> GetNodeMetadataAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
+    public static async ValueTask<NodeMetadata> GetNodeMetadataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var nodeMetadataEnumerator = client.NodeProvider
-            .EnumerateNodeMetadataAsync(client, uid.VolumeId, [uid.LinkId], knownShareAndKey, cancellationToken).GetAsyncEnumerator(cancellationToken);
+        var metadataOrNone = await EnumerateNodeMetadataAsync(client, uid.VolumeId, [uid.LinkId], cancellationToken)
+            .Select(Option<NodeMetadata>.Some)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
-        await using (nodeMetadataEnumerator.ConfigureAwait(false))
-        {
-            if (!await nodeMetadataEnumerator.MoveNextAsync().ConfigureAwait(false))
-            {
-                throw new NodeNotFoundException(uid);
-            }
-
-            return nodeMetadataEnumerator.Current;
-        }
+        return metadataOrNone.TryGetValue(out var metadata) ? metadata : throw new NodeNotFoundException(uid);
     }
 
-    public static ValueTask<NodeOperationData> GetOperationDataAsync(
+    public static async ValueTask<NodeOperationData> GetOperationDataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
+    {
+        var operationData = await EnumerateNodeOperationDataAsync(client, uid.VolumeId, [uid.LinkId], cancellationToken)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+        return operationData ?? throw new NodeNotFoundException(uid);
+    }
+
+    public static ValueTask<Node?> TryGetNodeAsync(
         ProtonDriveClient client,
         NodeUid uid,
-        ShareAndKey? knownShareAndKey,
         CancellationToken cancellationToken)
     {
-        return client.Cache.GetOrCreateNodeOperationDataAsync(
-            uid,
-            async ct =>
+        return client.NodeProvider
+            .EnumerateNodeMetadataAsync(uid.VolumeId, [uid.LinkId], cancellationToken)
+            .Select(x =>
             {
-                var nodeMetadata = await GetNodeMetadataAsync(client, uid, knownShareAndKey, ct).ConfigureAwait(false);
+                if (!x.Result.TryGetValueElseError(out var metadata, out var exception))
+                {
+                    if (exception is not NodeNotFoundException)
+                    {
+                        throw exception;
+                    }
 
-                return nodeMetadata.OperationData;
-            },
-            cancellationToken);
+                    return null;
+                }
+
+                return metadata.Node;
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public static IAsyncEnumerable<Node> EnumerateNodesAsync(
@@ -85,18 +89,54 @@ internal static class NodeOperations
     {
         // TODO: replace grouping with something that does not require enumerating everything first
         return nodeUids.GroupBy(uid => uid.VolumeId, uid => uid.LinkId)
-            .SelectMany(linkGroup => EnumerateNodesAsync(client, linkGroup.Key, linkGroup, cancellationToken));
+            .SelectMany(linkGroup => EnumerateNodeMetadataAsync(client, linkGroup.Key, linkGroup, cancellationToken))
+            .Select(metadata => metadata.Node);
     }
 
-    public static IAsyncEnumerable<Node> EnumerateNodesAsync(
+    public static async IAsyncEnumerable<NodeMetadata> EnumerateNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        return client.NodeProvider
-            .EnumerateNodeMetadataAsync(client, volumeId, linkIds, knownShareAndKey: null, cancellationToken)
-            .Select(metadata => metadata.Node);
+        await foreach (var (_, result) in client.NodeProvider.EnumerateNodeMetadataAsync(volumeId, linkIds, cancellationToken).ConfigureAwait(false))
+        {
+            if (!result.TryGetValueElseError(out var nodeMetadata, out var error))
+            {
+                // TODO: explicitly return missing nodes instead of skipping them
+                if (error is NodeNotFoundException)
+                {
+                    continue;
+                }
+
+                throw error;
+            }
+
+            yield return nodeMetadata;
+        }
+    }
+
+    public static async IAsyncEnumerable<NodeOperationData> EnumerateNodeOperationDataAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        IEnumerable<LinkId> linkIds,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var (_, result) in client.NodeProvider.EnumerateNodeOperationDataAsync(volumeId, linkIds, cancellationToken).ConfigureAwait(false))
+        {
+            if (!result.TryGetValueElseError(out var operationData, out var error))
+            {
+                // TODO: explicitly return missing nodes instead of skipping them
+                if (error is NodeNotFoundException)
+                {
+                    continue;
+                }
+
+                throw error;
+            }
+
+            yield return operationData;
+        }
     }
 
     public static void GetCommonCreationParameters(
@@ -160,8 +200,7 @@ internal static class NodeOperations
             throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
         }
 
-        var originMetadata = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken)
-            .ConfigureAwait(false);
+        var originMetadata = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
         var (originNode, originOperationData, _, originNameHashDigest) = originMetadata;
 
@@ -239,8 +278,7 @@ internal static class NodeOperations
             }
 
             // FIXME: Try to use the degraded node if it has enough for the move to be successful
-            var (originNode, originSecrets, _, originNameHashDigest) =
-                await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+            var (originNode, originSecrets, _, originNameHashDigest) = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
             var originName = originNode.Name.GetValueOrThrow();
 
@@ -296,7 +334,7 @@ internal static class NodeOperations
         ValidateNodeName(newName);
 
         // This incurs a round-trip, but this is a temporary implementation until the rename function is replaced by an all-purpose move function.
-        var nodeMetadata = await GetNodeMetadataAsync(client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+        var nodeMetadata = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
         // Root nodes are renamed differently (their name is encrypted with the context share key and is not hashed).
         // Such renames belong to the owning feature (e.g. devices), not to the generic node rename path.
@@ -348,7 +386,7 @@ internal static class NodeOperations
 
         var tasks = uidsByVolumeId.Select(async uidGroup =>
         {
-            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchSize))
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
@@ -377,7 +415,7 @@ internal static class NodeOperations
     {
         foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
-            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchSize))
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
@@ -402,7 +440,7 @@ internal static class NodeOperations
     {
         foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
-            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchSize))
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
@@ -427,7 +465,7 @@ internal static class NodeOperations
     {
         foreach (var uidGroup in uids.GroupBy(x => x.VolumeId))
         {
-            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchCount))
+            foreach (var batch in uidGroup.Select(x => x.LinkId).Chunk(MaximumBatchSize))
             {
                 var request = new MultipleLinksNullaryRequest { LinkIds = batch };
 
@@ -450,7 +488,7 @@ internal static class NodeOperations
     {
         const int batchSize = 10;
 
-        var operationData = await FolderOperations.GetOperationDataAsync(client, parentUid, knownShareAndKey: null, cancellationToken)
+        var operationData = await FolderOperations.GetOperationDataAsync(client, parentUid, cancellationToken)
             .ConfigureAwait(false);
 
         var folderHashKey = operationData.HashKey ?? throw new InvalidOperationException($"Folder hash key not available for {parentUid}");
@@ -559,8 +597,7 @@ internal static class NodeOperations
     public static async Task<ReadOnlyMemory<byte>> GetParentFolderHashKeyAsync(
         ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var (node, _, _, _) = await GetNodeMetadataAsync(
-            client, uid, knownShareAndKey: null, cancellationToken).ConfigureAwait(false);
+        var (node, _, _, _) = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
         if (node.ParentUid is not { } parentUid)
         {
@@ -598,10 +635,22 @@ internal static class NodeOperations
             client,
             volumeDto.Id,
             linkDetailsDto,
-            shareAndKey,
+            shareKey,
+            cancellationToken).ConfigureAwait(false);
+
+        await client.Cache.SetNodeOperationDataAsync(
+            conversionResult.Metadata.Node.Uid,
+            conversionResult.Metadata.OperationData,
             cancellationToken).ConfigureAwait(false);
 
         return conversionResult.Metadata.GetFolderNodeOrThrow();
+    }
+
+    private static async ValueTask<FolderNode> CreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
+    {
+        var (_, _, folderNode) = await VolumeOperations.CreateVolumeAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return folderNode;
     }
 
     private static void GetNameParameters(
@@ -627,12 +676,5 @@ internal static class NodeOperations
 
             nameHashDigest = HMACSHA256.HashData(parentFolderHashKey, nameBytes);
         }
-    }
-
-    private static async ValueTask<FolderNode> CreateMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
-    {
-        var (_, _, folderNode) = await VolumeOperations.CreateVolumeAsync(client, cancellationToken).ConfigureAwait(false);
-
-        return folderNode;
     }
 }

@@ -162,22 +162,14 @@ internal static class PhotoTransferPayloadBuilder
 
         foreach (var volumeGroup in nodeUids.Distinct().GroupBy(uid => uid.VolumeId))
         {
-            var linkIds = volumeGroup.Select(uid => uid.LinkId);
+            var nodeMetadataResults = client.NodeProvider.EnumerateNodeMetadataAsync(
+                volumeGroup.Key,
+                volumeGroup.Select(uid => (uid, uid.LinkId)),
+                cancellationToken);
 
-            try
+            await foreach (var (uid, result) in nodeMetadataResults.ConfigureAwait(false))
             {
-                await foreach (var metadata in client.NodeProvider
-                    .EnumerateNodeMetadataAsync(client, volumeGroup.Key, linkIds, knownShareAndKey: null, cancellationToken).ConfigureAwait(false))
-                {
-                    resultsByUid[metadata.Node.Uid] = metadata;
-                }
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                foreach (var uid in volumeGroup)
-                {
-                    resultsByUid[uid] = e;
-                }
+                resultsByUid[uid] = result;
             }
         }
 

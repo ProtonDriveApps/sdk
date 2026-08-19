@@ -2,6 +2,7 @@ using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Volumes;
+using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Caching;
 
@@ -22,10 +23,7 @@ internal interface IDriveCache
 
     ValueTask SetShareKeyAsync(ShareId shareId, PgpPrivateKey shareKey, CancellationToken cancellationToken);
 
-    ValueTask<DriveCacheAcquisition<NodeOperationData>> TryAcquireNodeOperationDataAsync(NodeUid nodeId, CancellationToken cancellationToken);
-
-    ValueTask<NodeOperationData> GetOrCreateNodeOperationDataAsync(
-        NodeUid nodeId, Func<CancellationToken, ValueTask<NodeOperationData>> factory, CancellationToken cancellationToken);
+    ValueTask<Option<NodeOperationData>> TryGetNodeOperationDataAsync(NodeUid nodeId, CancellationToken cancellationToken);
 
     ValueTask SetNodeOperationDataAsync(NodeUid nodeId, NodeOperationData operationData, CancellationToken cancellationToken);
 

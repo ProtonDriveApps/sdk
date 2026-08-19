@@ -24,11 +24,7 @@ internal static class RevisionOperations
     {
         var (fileUid, revisionId) = revisionUid;
 
-        var operationDataTask = FileOperations.GetOperationDataAsync(
-            client,
-            revisionUid.NodeUid,
-            knownShareAndKey: null,
-            cancellationToken).AsTask();
+        var operationDataTask = FileOperations.GetOperationDataAsync(client, revisionUid.NodeUid, cancellationToken).AsTask();
 
         var revisionTask = client.Api.Files.GetRevisionAsync(
             fileUid.VolumeId,

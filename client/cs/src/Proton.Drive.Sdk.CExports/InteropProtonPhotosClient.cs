@@ -99,9 +99,7 @@ internal static class InteropProtonPhotosClient
 
         var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
 
-        await foreach (var result in client.SavePhotosToTimelineAsync(
-            request.PhotoUids.Select(NodeUid.Parse).ToList(),
-            cancellationToken).ConfigureAwait(false))
+        await foreach (var result in client.SavePhotosToTimelineAsync([.. request.PhotoUids.Select(NodeUid.Parse)], cancellationToken).ConfigureAwait(false))
         {
             yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
         }

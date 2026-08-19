@@ -1,65 +1,19 @@
 using System.Collections.ObjectModel;
-using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Photos;
-using Proton.Drive.Sdk.Api.Shares;
-using Proton.Drive.Sdk.Caching;
 using Proton.Drive.Sdk.Nodes.Cryptography;
-using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk;
-using Proton.Sdk.Caching;
 
 namespace Proton.Drive.Sdk.Nodes;
 
 internal static class DtoToMetadataConverter
 {
     public static async Task<NodeMetadataConversionResult> ConvertDtoToNodeMetadataAsync(
-        ProtonDriveClient client,
-        VolumeId volumeId,
-        LinkDetailsDto linkDetailsDto,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
-    {
-        PgpPrivateKey passphraseDecryptionKey;
-
-        if (linkDetailsDto.Link.ParentId is not null
-            || linkDetailsDto.Photo is not { AlbumInclusions: { Count: > 0 } albumInclusions })
-        {
-            passphraseDecryptionKey = await GetNodePassphraseDecryptionKeyAsync(
-                client,
-                volumeId,
-                linkDetailsDto.Link.ParentId,
-                knownShareAndKey,
-                linkDetailsDto.Sharing?.ShareId,
-                cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            passphraseDecryptionKey = await GetAlbumNodePassphraseDecryptionKeyAsync(
-                client, volumeId, linkDetailsDto, knownShareAndKey, albumInclusions, cancellationToken).ConfigureAwait(false);
-        }
-
-        var conversionResult = await ConvertNodeMetadataAsync(
-            client,
-            volumeId,
-            linkDetailsDto,
-            passphraseDecryptionKey,
-            cancellationToken).ConfigureAwait(false);
-
-        await client.Cache.SetNodeOperationDataAsync(
-            conversionResult.Metadata.Node.Uid,
-            conversionResult.Metadata.OperationData,
-            cancellationToken).ConfigureAwait(false);
-
-        return conversionResult;
-    }
-
-    private static async Task<NodeMetadataConversionResult> ConvertNodeMetadataAsync(
         ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
@@ -494,174 +448,6 @@ internal static class DtoToMetadataConverter
         }
 
         return (nodeErrors, failedDecryptionFields);
-    }
-
-    private static async ValueTask<PgpPrivateKey> GetNodePassphraseDecryptionKeyAsync(
-        ProtonDriveClient client,
-        VolumeId volumeId,
-        LinkId? parentId,
-        ShareAndKey? shareAndKeyToUse,
-        ShareId? shareId,
-        CancellationToken cancellationToken)
-    {
-        if (shareId is not null && shareId == shareAndKeyToUse?.Share.Id)
-        {
-            return shareAndKeyToUse.Value.Key;
-        }
-
-        var currentId = parentId;
-        var currentShareId = shareId;
-
-        var pendingDecryptions = new Stack<(LinkDetailsDto Link, DriveCacheEntryClaim<NodeOperationData> Claim)>(8);
-        var visitedIds = new HashSet<LinkId>();
-
-        PgpPrivateKey? lastKey = null;
-
-        try
-        {
-            while (currentId is not null)
-            {
-                if (shareAndKeyToUse is var (shareToUse, shareKeyToUse) && currentId == shareToUse.RootFolderId.LinkId)
-                {
-                    lastKey = shareKeyToUse;
-                    break;
-                }
-
-                if (!visitedIds.Add(currentId.Value))
-                {
-                    throw new InvalidOperationException($"Cyclic parent structure detected while resolving node {new NodeUid(volumeId, currentId.Value)}");
-                }
-
-                var nodeUid = new NodeUid(volumeId, currentId.Value);
-
-                // Attempt to acquire the ancestor's node key using the cache:
-                // - Hit and node key is there: Use it and stop walking up.
-                // - Hit but no node key: Fail fast (prior decryption failed permanently).
-                // - Miss: Receive a claim (we claim that we can provide the value) that we will complete on our way back down the recursion.
-                //   Concurrent requests for the same ancestor will get a promise and either fall under the hit cases above,
-                //   get an exception if completing the claim failed, or retry if the claim holder cancelled.
-                var acquisition = await client.Cache.TryAcquireNodeOperationDataAsync(nodeUid, cancellationToken).ConfigureAwait(false);
-
-                if (acquisition.TryGetValueElseClaim(out var operationData, out var claim))
-                {
-                    if (operationData.Key is null)
-                    {
-                        // A cached-but-keyless entry means decryption of this node has already permanently failed
-                        // (e.g. due to a corrupted or inaccessible key): retrying it would not help
-                        throw new InvalidOperationException($"Folder node does not have a key: {nodeUid}");
-                    }
-
-                    lastKey = operationData.Key;
-
-                    break;
-                }
-
-                try
-                {
-                    var response = await client.Api.Links.GetDetailsAsync(volumeId, [currentId.Value], cancellationToken).ConfigureAwait(false);
-
-                    var linkDetails = response.Links is { Count: > 0 } links
-                        ? links[0]
-                        : throw new NodeNotFoundException(nodeUid);
-
-                    pendingDecryptions.Push((linkDetails, claim));
-
-                    currentShareId = linkDetails.Sharing?.ShareId;
-
-                    currentId = linkDetails.Link.ParentId;
-                }
-                catch (Exception exception)
-                {
-                    claim.CancelOrFail(exception, cancellationToken);
-                    throw;
-                }
-            }
-
-            if (lastKey is not { } currentParentKey)
-            {
-                if (shareAndKeyToUse is not null)
-                {
-                    currentParentKey = shareAndKeyToUse.Value.Key;
-                }
-                else
-                {
-                    if (currentShareId is null)
-                    {
-                        throw new InvalidOperationException("No share available to access node");
-                    }
-
-                    (_, currentParentKey) = await ShareOperations.GetShareAsync(client, currentShareId.Value, cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            while (pendingDecryptions.TryPop(out var pending))
-            {
-                try
-                {
-                    var conversionResult = await ConvertNodeMetadataAsync(
-                        client,
-                        volumeId,
-                        pending.Link,
-                        currentParentKey,
-                        cancellationToken).ConfigureAwait(false);
-
-                    // The claim is completed with the operation data, which includes the node key (unless decryption failed).
-                    // This will fulfill the promise (task) that concurrent requests for the same node are awaiting.
-                    await pending.Claim.CompleteAsync(
-                        conversionResult.Metadata.OperationData,
-                        cancellationToken).ConfigureAwait(false);
-
-                    currentParentKey = conversionResult.Metadata.GetFolderKeyOrThrow();
-                }
-                catch (Exception exception)
-                {
-                    pending.Claim.CancelOrFail(exception, cancellationToken);
-                    throw;
-                }
-            }
-
-            return currentParentKey;
-        }
-        finally
-        {
-            while (pendingDecryptions.TryPop(out var pending))
-            {
-                pending.Claim.Dispose();
-            }
-        }
-    }
-
-    private static async Task<PgpPrivateKey> GetAlbumNodePassphraseDecryptionKeyAsync(
-        ProtonDriveClient client,
-        VolumeId volumeId,
-        LinkDetailsDto linkDetailsDto,
-        ShareAndKey? knownShareAndKey,
-        IReadOnlyList<PhotoAlbumInclusionDto> albumInclusions,
-        CancellationToken cancellationToken)
-    {
-        var logger = client.Telemetry.GetLogger("Node metadata");
-
-        // TODO: optimize by selecting the album that is in cache, if any
-        // TODO: getting node passphrase decryption key from the first album should be enough when back-end only returns accessible album IDs
-        foreach (var albumInclusionId in albumInclusions.Select(albumInclusion => albumInclusion.Id))
-        {
-            try
-            {
-                return await GetNodePassphraseDecryptionKeyAsync(
-                    client,
-                    volumeId,
-                    albumInclusionId,
-                    knownShareAndKey,
-                    linkDetailsDto.Sharing?.ShareId,
-                    cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Album \"{Uid}\" not found", new NodeUid(volumeId, albumInclusionId));
-            }
-        }
-
-        throw new InvalidOperationException("No album node passphrase decryption key found");
     }
 
     private static OwnedBy MapOwnedBy(OwnedByDto? dto) => new(dto?.Email, dto?.Organization);

@@ -47,7 +47,12 @@ internal static class PhotosNodeOperations
                 client,
                 volumeDto.Id,
                 linkDetailsDto,
-                shareAndKey,
+                shareKey,
+                cancellationToken).ConfigureAwait(false);
+
+            await client.Cache.SetNodeOperationDataAsync(
+                conversionResult.Metadata.Node.Uid,
+                conversionResult.Metadata.OperationData,
                 cancellationToken).ConfigureAwait(false);
 
             return conversionResult.Metadata.GetFolderNodeOrThrow();

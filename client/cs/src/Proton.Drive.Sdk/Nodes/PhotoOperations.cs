@@ -49,7 +49,7 @@ internal static class PhotoOperations
     {
         var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(client, cancellationToken).ConfigureAwait(false);
 
-        var operationData = await FolderOperations.GetOperationDataAsync(client, photosRoot.Uid, knownShareAndKey: null, cancellationToken)
+        var operationData = await FolderOperations.GetOperationDataAsync(client, photosRoot.Uid, cancellationToken)
             .ConfigureAwait(false);
 
         var hashKey = operationData.HashKey ?? throw new InvalidOperationException("Photos root hash key not available");

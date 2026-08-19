@@ -68,21 +68,13 @@ internal sealed class DriveCache(ICacheRepository? repository = null) : IDriveCa
         return SetAsync(GetShareKeyCacheKey(shareId), shareKey, DriveSecretsSerializerContext.Default.PgpPrivateKey, cancellationToken);
     }
 
-    public ValueTask<DriveCacheAcquisition<NodeOperationData>> TryAcquireNodeOperationDataAsync(NodeUid nodeId, CancellationToken cancellationToken)
+    public ValueTask<Option<NodeOperationData>> TryGetNodeOperationDataAsync(NodeUid nodeId, CancellationToken cancellationToken)
     {
-        return TryAcquireAsync(
+        return TryGetAsync(
             GetNodeOperationDataCacheKey(nodeId),
             DriveSecretsSerializerContext.Default.NodeOperationData,
             Option<NodeOperationData>.FromNullable,
             cancellationToken);
-    }
-
-    public ValueTask<NodeOperationData> GetOrCreateNodeOperationDataAsync(
-        NodeUid nodeId,
-        Func<CancellationToken, ValueTask<NodeOperationData>> factory,
-        CancellationToken cancellationToken)
-    {
-        return GetOrCreateAsync(GetNodeOperationDataCacheKey(nodeId), DriveSecretsSerializerContext.Default.NodeOperationData, factory, cancellationToken);
     }
 
     public ValueTask SetNodeOperationDataAsync(NodeUid nodeId, NodeOperationData operationData, CancellationToken cancellationToken)
@@ -111,7 +103,7 @@ internal sealed class DriveCache(ICacheRepository? repository = null) : IDriveCa
         return $"node:{nodeId}";
     }
 
-    private async ValueTask<DriveCacheAcquisition<T>> TryAcquireAsync<T>(
+    private async ValueTask<Option<T>> TryGetAsync<T>(
         string key,
         JsonTypeInfo<T> typeInfo,
         Func<T?, Option<T>> convertToCacheHitOption,
@@ -119,7 +111,7 @@ internal sealed class DriveCache(ICacheRepository? repository = null) : IDriveCa
     {
         if (_memoryCache.TryGet<T>(key, out var memoryCached))
         {
-            return DriveCacheAcquisition<T>.ForValue(memoryCached);
+            return Option<T>.Some(memoryCached);
         }
 
         var repositoryValueOrNone = await TryReadFromRepositoryAsync(key, typeInfo, convertToCacheHitOption, cancellationToken).ConfigureAwait(false);
@@ -127,17 +119,10 @@ internal sealed class DriveCache(ICacheRepository? repository = null) : IDriveCa
         if (repositoryValueOrNone.TryGetValue(out var repositoryValue))
         {
             _memoryCache.Set(key, repositoryValue);
-            return DriveCacheAcquisition<T>.ForValue(repositoryValue);
+            return Option<T>.Some(repositoryValue);
         }
 
-        var acquisition = await _memoryCache.TryAcquireOrWaitAsync<T>(key, cancellationToken).ConfigureAwait(false);
-
-        if (acquisition.TryGetValueElseClaim(out var value, out var innerClaim))
-        {
-            return DriveCacheAcquisition<T>.ForValue(value);
-        }
-
-        return DriveCacheAcquisition<T>.ForClaim(new DriveCacheEntryClaim<T>(innerClaim, (v, ct) => WriteToRepositoryAsync(key, v, typeInfo, ct)));
+        return Option<T>.None;
     }
 
     private ValueTask<T?> GetOrCreateNullableAsync<T>(

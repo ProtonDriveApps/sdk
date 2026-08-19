@@ -38,8 +38,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
             IntendedUploadSize = intendedUploadSize,
         };
 
-        var operationData = await FileOperations.GetOperationDataAsync(_client, _fileUid, knownShareAndKey: null, cancellationToken)
-            .ConfigureAwait(false);
+        var operationData = await FileOperations.GetOperationDataAsync(_client, _fileUid, cancellationToken).ConfigureAwait(false);
 
         if (operationData is not { Key: { } nodeKey, ContentKey: { } contentKey })
         {

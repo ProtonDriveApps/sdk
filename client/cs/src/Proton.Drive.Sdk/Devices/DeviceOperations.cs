@@ -106,9 +106,7 @@ internal static partial class DeviceOperations
         string name,
         CancellationToken cancellationToken)
     {
-        var operationData = await NodeOperations
-            .GetOperationDataAsync(client, rootFolderUid, knownShareAndKey: null, cancellationToken)
-            .ConfigureAwait(false);
+        var operationData = await NodeOperations.GetOperationDataAsync(client, rootFolderUid, cancellationToken).ConfigureAwait(false);
 
         var nameSessionKey = operationData.NameSessionKey
             ?? throw new InvalidOperationException($"Name session key not available for {rootFolderUid}");

@@ -41,13 +41,13 @@ public sealed class ProtonPhotosClient
         DriveClient = new ProtonDriveClient(
             accountClient,
             api,
-            new PhotosNodeProvider(api),
             new DriveCache(cacheRepository),
             new BlockVerifierFactory(defaultApiHttpClient),
             featureFlagProvider,
             telemetry,
             creationParameters?.Uid,
-            creationParameters?.DegreeOfBlockTransferParallelismOverride);
+            creationParameters?.DegreeOfBlockTransferParallelismOverride,
+            nodeProviderFactory: client => new NodeProvider(client, api.Photos.GetDetailsAsync));
     }
 
     internal ProtonDriveClient DriveClient { get; }
@@ -93,9 +93,7 @@ public sealed class ProtonPhotosClient
 
     public ValueTask<Node?> GetNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
-        return NodeOperations
-            .EnumerateNodesAsync(DriveClient, nodeUid.VolumeId, [nodeUid.LinkId], cancellationToken)
-            .FirstOrDefaultAsync(cancellationToken);
+        return NodeOperations.TryGetNodeAsync(DriveClient, nodeUid, cancellationToken);
     }
 
     public IAsyncEnumerable<Node> EnumerateNodesAsync(IAsyncEnumerable<NodeUid> nodeUids, CancellationToken cancellationToken = default)

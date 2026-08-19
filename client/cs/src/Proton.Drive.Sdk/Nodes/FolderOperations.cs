@@ -11,13 +11,9 @@ namespace Proton.Drive.Sdk.Nodes;
 
 internal static class FolderOperations
 {
-    public static async ValueTask<FolderOperationData> GetOperationDataAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        ShareAndKey? knownShareAndKey,
-        CancellationToken cancellationToken)
+    public static async ValueTask<FolderOperationData> GetOperationDataAsync(ProtonDriveClient client, NodeUid uid, CancellationToken cancellationToken)
     {
-        var nodeOperationData = await NodeOperations.GetOperationDataAsync(client, uid, knownShareAndKey, cancellationToken).ConfigureAwait(false);
+        var nodeOperationData = await NodeOperations.GetOperationDataAsync(client, uid, cancellationToken).ConfigureAwait(false);
 
         if (nodeOperationData is not FolderOperationData folderOperationData)
         {
@@ -152,8 +148,7 @@ internal static class FolderOperations
         NodeUid folderUid,
         CancellationToken cancellationToken)
     {
-        var operationData = await GetOperationDataAsync(client, folderUid, knownShareAndKey: null, cancellationToken)
-            .ConfigureAwait(false);
+        var operationData = await GetOperationDataAsync(client, folderUid, cancellationToken).ConfigureAwait(false);
 
         var key = operationData.Key ?? throw new InvalidOperationException($"Folder key not available for {folderUid}");
         var hashKey = operationData.HashKey ?? throw new InvalidOperationException($"Folder hash key not available for {folderUid}");

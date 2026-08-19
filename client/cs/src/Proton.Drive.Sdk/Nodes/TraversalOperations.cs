@@ -19,11 +19,7 @@ internal static class TraversalOperations
                 throw new InvalidOperationException("Folder structure loop detected");
             }
 
-            currentMetadata = await NodeOperations.GetNodeMetadataAsync(
-                client,
-                (NodeUid)entryPointUid,
-                knownShareAndKey: null,
-                cancellationToken).ConfigureAwait(false);
+            currentMetadata = await NodeOperations.GetNodeMetadataAsync(client, (NodeUid)entryPointUid, cancellationToken).ConfigureAwait(false);
 
             entryPointUid = GetNextEntryPoint(currentMetadata);
         }

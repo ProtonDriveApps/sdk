@@ -268,6 +268,7 @@ internal static class InteropProtonDriveClient
             request.NewName,
             request.HasNewMediaType ? request.NewMediaType : null,
             cancellationToken).ConfigureAwait(false);
+
         return null;
     }
 

@@ -6,12 +6,12 @@ public class ValidationException : ProtonDriveException
     {
     }
 
-    public ValidationException(string message)
+    public ValidationException(string? message)
         : base(message)
     {
     }
 
-    public ValidationException(string message, Exception innerException)
+    public ValidationException(string? message, Exception? innerException)
         : base(message, innerException)
     {
     }
