@@ -155,6 +155,8 @@ enum ErrorDomain {
     Cryptography = 6;
     DataIntegrity = 7;
     BusinessLogic = 8;
+    UnknownIO = 9;
+    FileSystem = 10;
 }
 
 message Error {

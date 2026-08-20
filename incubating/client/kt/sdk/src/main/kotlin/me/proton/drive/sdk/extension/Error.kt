@@ -31,6 +31,8 @@ private fun ProtonDriveSdk.Error.toErrorDomain() = when (domain) {
     ProtonDriveSdk.ErrorDomain.Cryptography -> ProtonSdkError.ErrorDomain.Cryptography
     ProtonDriveSdk.ErrorDomain.DataIntegrity -> ProtonSdkError.ErrorDomain.DataIntegrity
     ProtonDriveSdk.ErrorDomain.BusinessLogic -> ProtonSdkError.ErrorDomain.BusinessLogic
+    ProtonDriveSdk.ErrorDomain.UnknownIO -> ProtonSdkError.ErrorDomain.UnknownIO
+    ProtonDriveSdk.ErrorDomain.FileSystem -> ProtonSdkError.ErrorDomain.FileSystem
     ProtonDriveSdk.ErrorDomain.UNRECOGNIZED, null -> ProtonSdkError.ErrorDomain.UNRECOGNIZED
 }
 

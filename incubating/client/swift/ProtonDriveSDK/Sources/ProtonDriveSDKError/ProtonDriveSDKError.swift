@@ -16,6 +16,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
         case cryptography
         case dataIntegrity
         case businessLogic
+        case unknownIo
+        case fileSystem
 
         // Interop domains
         case interop
@@ -31,6 +33,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .cryptography: return .cryptography
             case .dataIntegrity: return .dataIntegrity
             case .businessLogic: return .businessLogic
+            case .unknownIo: return .unknownIo
+            case .fileSystem: return .fileSystem
             case .interop: return .undefined
             }
         }
@@ -45,6 +49,8 @@ public struct ProtonDriveSDKError: LocalizedError, Sendable {
             case .serialization: self = .serialization
             case .cryptography: self = .cryptography
             case .dataIntegrity: self = .dataIntegrity
+            case .unknownIo: self = .unknownIo
+            case .fileSystem: self = .fileSystem
             case .UNRECOGNIZED(let int):
                 assertionFailure("Received unexpected error domain value \(int)")
                 self = .undefined
@@ -225,6 +231,71 @@ public enum ProtonDriveSDKDataIntegrityError: LocalizedError {
         case .unknown(let message, _), .shareMetadata(let message, _), .nodeMetadata(let message, _, _), .fileContents(let message, _),
              .uploadKeyMismatch(let message, _), .manifestSignatureVerification(let message, _), .contentUploadIntegrity(let message, _, _):
             return message
+        }
+    }
+}
+
+// MARK: - Helpers for local file-system / I/O errors
+
+public extension ProtonDriveSDKError {
+
+    enum FileSystemErrorCode: Int, Sendable {
+        case unknown = 0
+        case outOfSpace = 1
+        case permissionDenied = 2
+        case notFound = 3
+    }
+
+    /// The normalized file-system error code, if this error is in the `.fileSystem` domain.
+    var asFileSystemErrorCode: FileSystemErrorCode? {
+        guard domain == .fileSystem else { return nil }
+        return primaryCode.flatMap(FileSystemErrorCode.init(rawValue:)) ?? .unknown
+    }
+
+    /// The first `.fileSystem` error found in this error chain, if any.
+    var underlyingFileSystemErrorCode: FileSystemErrorCode? {
+        asFileSystemErrorCode ?? innerError?.underlyingFileSystemErrorCode
+    }
+}
+
+extension ProtonDriveSDKError.FileSystemErrorCode {
+
+    /// Normalized code when `nsError` is positively a file-system failure; `nil` otherwise.
+    init?(nsError: NSError) {
+        if let posixError = nsError as? POSIXError {
+            self.init(posixCode: posixError.code)
+            return
+        }
+        if nsError.domain == NSPOSIXErrorDomain, let code = POSIXErrorCode(rawValue: Int32(nsError.code)) {
+            self.init(posixCode: code)
+            return
+        }
+        // NSCocoaErrorDomain file errors live in 0...1023 (NSFileErrorMinimum...NSFileErrorMaximum).
+        guard nsError.domain == NSCocoaErrorDomain, (0...1023).contains(nsError.code) else {
+            return nil
+        }
+        switch nsError.code {
+        case NSFileWriteOutOfSpaceError:
+            self = .outOfSpace
+        case NSFileWriteNoPermissionError, NSFileReadNoPermissionError, NSFileWriteVolumeReadOnlyError:
+            self = .permissionDenied
+        case NSFileNoSuchFileError, NSFileReadNoSuchFileError:
+            self = .notFound
+        default:
+            self = .unknown
+        }
+    }
+
+    private init?(posixCode: POSIXErrorCode) {
+        switch posixCode {
+        case .ENOSPC, .EDQUOT:
+            self = .outOfSpace
+        case .EACCES, .EPERM, .EROFS:
+            self = .permissionDenied
+        case .ENOENT:
+            self = .notFound
+        default:
+            return nil
         }
     }
 }

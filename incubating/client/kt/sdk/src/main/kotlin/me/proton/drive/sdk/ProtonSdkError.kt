@@ -24,6 +24,8 @@ data class ProtonSdkError(
         Cryptography,
         DataIntegrity,
         BusinessLogic,
+        UnknownIO,
+        FileSystem,
         UNRECOGNIZED,
     }
 

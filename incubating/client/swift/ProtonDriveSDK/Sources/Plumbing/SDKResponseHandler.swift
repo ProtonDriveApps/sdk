@@ -67,7 +67,7 @@ extension Proton_Drive_Sdk_Error {
         let domain: Proton_Drive_Sdk_ErrorDomain
         let message: String
         var primaryCode: Int? = nil
-        let secondaryCode: Int? = nil
+        var secondaryCode: Int? = nil
         let context: String? = nil
         let innerError: Proton_Drive_Sdk_Error? = nil
         let additionalData: Codable? = nil
@@ -92,7 +92,14 @@ extension Proton_Drive_Sdk_Error {
             domain = .network
             message = urlError.localizedDescription
             primaryCode = urlError.code.rawValue
-        
+
+        case _ where ProtonDriveSDKError.FileSystemErrorCode(nsError: nsError) != nil:
+            type = nsError.domain
+            domain = .fileSystem
+            message = nsError.localizedDescription
+            primaryCode = ProtonDriveSDKError.FileSystemErrorCode(nsError: nsError)?.rawValue
+            secondaryCode = nsError.code
+
         default:
             type = nsError.domain
             domain = .undefined
