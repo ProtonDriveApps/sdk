@@ -9,6 +9,7 @@ import me.proton.drive.sdk.internal.NoCoroutineScopeException
 import proton.drive.sdk.ProtonDriveSdk
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.net.SocketException
 
 fun Throwable.toProtonSdkError(message: String) = proton.drive.sdk.error {
     val exception = this@toProtonSdkError
@@ -32,6 +33,8 @@ private fun Throwable.domain(): ProtonDriveSdk.ErrorDomain = when (this) {
         is ApiResult.Error.Connection -> ProtonDriveSdk.ErrorDomain.Network
         is ApiResult.Error.Parse -> ProtonDriveSdk.ErrorDomain.Serialization
     }
+
+    is SocketException -> ProtonDriveSdk.ErrorDomain.Network
 
     is IOException -> if (fileSystemErrorCode() != null) {
         ProtonDriveSdk.ErrorDomain.FileSystem
