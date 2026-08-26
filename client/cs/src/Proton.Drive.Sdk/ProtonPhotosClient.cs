@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Proton.Drive.Sdk.Api;
 using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Caching;
+using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
@@ -168,6 +169,14 @@ public sealed class ProtonPhotosClient
     public IAsyncEnumerable<NodeActionResult> RestoreNodesAsync(IEnumerable<NodeUid> uids, CancellationToken cancellationToken)
     {
         return NodeOperations.RestoreFromTrashAsync(DriveClient, uids, cancellationToken);
+    }
+
+    public IAsyncEnumerable<DriveEvent> EnumerateEventsAsync(
+        DriveEventScopeId eventScopeId,
+        DriveEventId? cursorEventId,
+        CancellationToken cancellationToken = default)
+    {
+        return DriveClient.EnumerateEventsAsync(eventScopeId, cursorEventId, cancellationToken);
     }
 
     public async IAsyncEnumerable<NodeUid> EnumerateTrashNodeUidsAsync([EnumeratorCancellation] CancellationToken cancellationToken)

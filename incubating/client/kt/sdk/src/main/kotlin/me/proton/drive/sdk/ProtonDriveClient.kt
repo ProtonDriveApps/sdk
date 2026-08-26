@@ -4,12 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import me.proton.drive.sdk.entity.Device
 import me.proton.drive.sdk.entity.DeviceType
 import me.proton.drive.sdk.entity.DeviceUid
+import me.proton.drive.sdk.entity.DriveEvent
+import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.FileDownloaderRequest
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.ScopeId
 import java.time.Instant
 
 interface ProtonDriveClient : ProtonSdkClient {
@@ -19,6 +22,7 @@ interface ProtonDriveClient : ProtonSdkClient {
     suspend fun createFolder(parentFolderUid: NodeUid, name: String, lastModificationTime: Instant? = null): FolderNode
     suspend fun getMyFilesFolder(): FolderNode
     fun enumerateFolderChildrenNodeUids(folderUid: NodeUid): Flow<NodeUid>
+    fun enumerateEvents(scopeId: ScopeId, cursorEventId: DriveEventId? = null): Flow<DriveEvent>
     suspend fun downloader(request: FileDownloaderRequest): Downloader
     suspend fun uploader(request: FileUploaderRequest): Uploader
     suspend fun uploader(request: FileRevisionUploaderRequest): Uploader

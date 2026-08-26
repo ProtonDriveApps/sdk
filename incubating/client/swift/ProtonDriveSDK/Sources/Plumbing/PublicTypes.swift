@@ -795,6 +795,73 @@ public struct NodeResult: Sendable {
 
 public typealias TrashNodeResult = NodeResult
 
+public struct SDKDriveEvent: Sendable {
+    /// The unique event id; use it as the cursor for the next enumeration.
+    public let eventId: String
+    public let kind: Kind
+
+    public enum Kind: Sendable {
+        /// A node was created, updated, moved to/from trash, or made newly accessible.
+        case nodeUpdated(nodeUid: SDKNodeUid, parentNodeUid: SDKNodeUid?, isTrashed: Bool, isShared: Bool)
+        /// A node was permanently deleted or made no longer accessible to the user.
+        case nodeDeleted(nodeUid: SDKNodeUid, parentNodeUid: SDKNodeUid?)
+        /// Items shared with the current user changed; refresh the shared-with-me list.
+        case sharedWithMeUpdated
+        /// The cursor advanced without substantive data changes.
+        case cursorAdvanced
+        /// Event continuity was lost; mark local state stale and resync from the server.
+        case continuityLost
+        /// Access to the event scope was lost; stop enumerating it and usually drop its local data.
+        case scopeAccessLost
+    }
+
+    public init(eventId: String, kind: Kind) {
+        self.eventId = eventId
+        self.kind = kind
+    }
+
+    init(sdkDriveEvent: Proton_Drive_Sdk_DriveEvent) throws {
+        self.eventId = sdkDriveEvent.id
+
+        switch sdkDriveEvent.event {
+        case .nodeUpdated(let event):
+            self.kind = .nodeUpdated(
+                nodeUid: try Self.nodeUid(from: event.nodeUid),
+                parentNodeUid: try Self.parentNodeUid(event.hasParentNodeUid ? event.parentNodeUid : nil),
+                isTrashed: event.isTrashed,
+                isShared: event.isShared
+            )
+        case .nodeDeleted(let event):
+            self.kind = .nodeDeleted(
+                nodeUid: try Self.nodeUid(from: event.nodeUid),
+                parentNodeUid: try Self.parentNodeUid(event.hasParentNodeUid ? event.parentNodeUid : nil)
+            )
+        case .sharedWithMeUpdated:
+            self.kind = .sharedWithMeUpdated
+        case .cursorAdvanced:
+            self.kind = .cursorAdvanced
+        case .continuityLost:
+            self.kind = .continuityLost
+        case .scopeAccessLost:
+            self.kind = .scopeAccessLost
+        case .none:
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Invalid DriveEvent: no event kind set"))
+        }
+    }
+
+    private static func nodeUid(from identifier: String) throws -> SDKNodeUid {
+        guard let nodeUid = SDKNodeUid(sdkCompatibleIdentifier: identifier) else {
+            throw ProtonDriveSDKError(interopError: .incorrectIDFormat(id: identifier))
+        }
+        return nodeUid
+    }
+
+    private static func parentNodeUid(_ identifier: String?) throws -> SDKNodeUid? {
+        guard let identifier else { return nil }
+        return try nodeUid(from: identifier)
+    }
+}
+
 /// Describes a tag mutation for a single photo: the tags to add and the tags to remove.
 /// Tags are raw `PhotoTag` values (0-9); unknown values throw `containsUnknownPhotoTags`.
 public struct PhotoTagsUpdate: Sendable {
@@ -841,6 +908,9 @@ public typealias NodeResultCallback = @Sendable (Result<NodeResult, Error>) -> V
 
 /// Callback for device enumeration updates
 public typealias DeviceCallback = @Sendable (Result<Device, Error>) -> Void
+
+/// Callback for drive event enumeration updates
+public typealias DriveEventCallback = @Sendable (Result<SDKDriveEvent, Error>) -> Void
 
 /// Callback for photo timeline item enumeration updates
 public typealias PhotoTimelineItemCallback = @Sendable (Result<PhotoTimelineItem, Error>) -> Void

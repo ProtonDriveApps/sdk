@@ -46,6 +46,7 @@ message Request {
         DriveClientEnumerateSharedWithMeNodeUidsRequest drive_client_enumerate_shared_with_me_node_uids = 1018;
         DriveClientMoveNodesRequest drive_client_move_nodes = 1019;
         DriveClientEnumerateSharedNodeUidsRequest drive_client_enumerate_shared_node_uids = 1020;
+        DriveClientEnumerateEventsRequest drive_client_enumerate_events = 1021;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -98,6 +99,7 @@ message Request {
         DrivePhotosClientEnumerateAlbumRequest drive_photos_client_enumerate_album = 2023;
         DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest drive_photos_client_enumerate_shared_with_me_node_uids = 2024;
         DrivePhotosClientSavePhotosToTimelineRequest drive_photos_client_save_photos_to_timeline = 2025;
+        DrivePhotosClientEnumerateEventsRequest drive_photos_client_enumerate_events = 2026;
     };
 }
 
@@ -671,6 +673,47 @@ message DriveClientEnumerateSharedNodeUidsRequest {
     int64 cancellation_token_source_handle = 3;
 }
 
+// The response must not have a value, yield_action will be called for each item.
+message DriveClientEnumerateEventsRequest {
+    int64 client_handle = 1;
+    string tree_event_scope_id = 2;
+    string cursor_event_id = 3; // optional
+    int64 yield_action = 4;
+    int64 cancellation_token_source_handle = 5;
+}
+
+message DriveEvent {
+    string id = 1;
+    oneof event {
+        NodeUpdatedEvent node_updated = 2;
+        NodeDeletedEvent node_deleted = 3;
+        SharedWithMeUpdatedEvent shared_with_me_updated = 4;
+        EventsCursorAdvancedEvent cursor_advanced = 5;
+        EventsContinuityLostEvent continuity_lost = 6;
+        EventsScopeAccessLostEvent scope_access_lost = 7;
+    }
+}
+
+message NodeUpdatedEvent {
+    string node_uid = 1;
+    string parent_node_uid = 2; // optional
+    bool is_trashed = 3;
+    bool is_shared = 4;
+}
+
+message NodeDeletedEvent {
+    string node_uid = 1;
+    string parent_node_uid = 2; // optional
+}
+
+message SharedWithMeUpdatedEvent {}
+
+message EventsCursorAdvancedEvent {}
+
+message EventsContinuityLostEvent {}
+
+message EventsScopeAccessLostEvent {}
+
 enum DeviceType {
     DEVICE_TYPE_UNSPECIFIED = 0; // Invalid value
     DEVICE_TYPE_WINDOWS = 1;
@@ -1121,6 +1164,15 @@ message DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest {
     int64 client_handle = 1;
     int64 yield_action = 2;
     int64 cancellation_token_source_handle = 3;
+}
+
+// The response must not have a value, yield_action will be called for each item of type DriveEvent.
+message DrivePhotosClientEnumerateEventsRequest {
+    int64 client_handle = 1;
+    string tree_event_scope_id = 2;
+    string cursor_event_id = 3; // optional
+    int64 yield_action = 4;
+    int64 cancellation_token_source_handle = 5;
 }
 
 // The list must match the order from Telemetry/VolumeTypes to properly match it over the interop.

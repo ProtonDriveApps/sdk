@@ -104,6 +104,20 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         drivePhotosClientEnumerateTimeline = request
     }
 
+    suspend fun enumerateEvents(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientEnumerateEventsRequest,
+        yield: suspend (ProtonDriveSdk.DriveEvent) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateEvents",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.DriveEvent::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientEnumerateEvents = request
+    }
+
     suspend fun enumerateAlbumNodeUids(
         coroutineScope: ProducerScope<NodeUid>,
         request: ProtonDriveSdk.DrivePhotosClientEnumerateAlbumNodeUidsRequest,

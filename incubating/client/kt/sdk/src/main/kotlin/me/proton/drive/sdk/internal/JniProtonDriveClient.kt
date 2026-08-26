@@ -143,6 +143,20 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         driveClientEnumerateFolderChildren = request
     }
 
+    suspend fun enumerateEvents(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DriveClientEnumerateEventsRequest,
+        yield: suspend (ProtonDriveSdk.DriveEvent) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateEvents",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.DriveEvent::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientEnumerateEvents = request
+    }
+
     suspend fun trashNodes(
         coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DriveClientTrashNodesRequest,

@@ -183,6 +183,66 @@ internal static class InteropConversionExtensions
         }
     }
 
+    extension(Events.DriveEvent driveEvent)
+    {
+        public DriveEvent ToInterop()
+        {
+            var result = new DriveEvent { Id = driveEvent.Id.ToString() };
+
+            switch (driveEvent)
+            {
+                case Events.NodeUpdatedEvent nodeUpdated:
+                    result.NodeUpdated = new NodeUpdatedEvent
+                    {
+                        NodeUid = nodeUpdated.NodeUid.ToString(),
+                        IsTrashed = nodeUpdated.IsTrashed,
+                        IsShared = nodeUpdated.IsShared,
+                    };
+
+                    if (nodeUpdated.ParentNodeUid is { } updatedParentNodeUid)
+                    {
+                        result.NodeUpdated.ParentNodeUid = updatedParentNodeUid.ToString();
+                    }
+
+                    break;
+
+                case Events.NodeDeletedEvent nodeDeleted:
+                    result.NodeDeleted = new NodeDeletedEvent
+                    {
+                        NodeUid = nodeDeleted.NodeUid.ToString(),
+                    };
+
+                    if (nodeDeleted.ParentNodeUid is { } deletedParentNodeUid)
+                    {
+                        result.NodeDeleted.ParentNodeUid = deletedParentNodeUid.ToString();
+                    }
+
+                    break;
+
+                case Events.SharedWithMeUpdatedEvent:
+                    result.SharedWithMeUpdated = new SharedWithMeUpdatedEvent();
+                    break;
+
+                case Events.EventsCursorAdvancedEvent:
+                    result.CursorAdvanced = new EventsCursorAdvancedEvent();
+                    break;
+
+                case Events.EventsContinuityLostEvent:
+                    result.ContinuityLost = new EventsContinuityLostEvent();
+                    break;
+
+                case Events.EventsScopeAccessLostEvent:
+                    result.ScopeAccessLost = new EventsScopeAccessLostEvent();
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unknown drive event type: {driveEvent.GetType().Name}", nameof(driveEvent));
+            }
+
+            return result;
+        }
+    }
+
     extension(ProtonDriveError error)
     {
         public DriveError ToInterop()

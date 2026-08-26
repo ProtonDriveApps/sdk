@@ -13,6 +13,8 @@ import me.proton.drive.sdk.ProtonPhotosClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Uploader
 import me.proton.drive.sdk.entity.AlbumItem
+import me.proton.drive.sdk.entity.DriveEvent
+import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
@@ -21,6 +23,7 @@ import me.proton.drive.sdk.entity.PhotoTagsUpdate
 import me.proton.drive.sdk.entity.PhotosDownloaderRequest
 import me.proton.drive.sdk.entity.PhotosTimelineItem
 import me.proton.drive.sdk.entity.PhotosUploaderRequest
+import me.proton.drive.sdk.entity.ScopeId
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
@@ -28,6 +31,7 @@ import proton.drive.sdk.drivePhotosClientDeleteNodesRequest
 import proton.drive.sdk.drivePhotosClientEmptyTrashRequest
 import proton.drive.sdk.drivePhotosClientEnumerateAlbumNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateAlbumRequest
+import proton.drive.sdk.drivePhotosClientEnumerateEventsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateSharedNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateSharedWithMeNodeUidsRequest
 import proton.drive.sdk.drivePhotosClientEnumerateThumbnailsRequest
@@ -61,6 +65,28 @@ internal class InteropProtonPhotosClient internal constructor(
                 },
                 yield = { fileThumbnail ->
                     send(fileThumbnail.toEntity())
+                }
+            )
+        }
+    }
+
+    override fun enumerateEvents(
+        scopeId: ScopeId,
+        cursorEventId: DriveEventId?,
+    ): Flow<DriveEvent> = channelFlow {
+        log(DEBUG, "enumerateEvents")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateEvents(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientEnumerateEventsRequest {
+                    this.treeEventScopeId = scopeId.id
+                    cursorEventId?.let { this.cursorEventId = it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { event ->
+                    send(event.toEntity())
                 }
             )
         }

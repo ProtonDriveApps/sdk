@@ -28,6 +28,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
         case restoreNode(UUID)
         case emptyTrash(UUID)
         case enumerateTrash(UUID)
+        case enumerateEvents(UUID)
 
         var operationName: String {
             switch self {
@@ -43,6 +44,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             case .restoreNode: return "restoreNode"
             case .emptyTrash: return "emptyTrash"
             case .enumerateTrash: return "enumerateTrash"
+            case .enumerateEvents: return "enumerateEvents"
             }
         }
     }
@@ -743,5 +745,40 @@ extension ProtonPhotosClient {
 
     public func cancelEnumerateTrash(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .enumerateTrash(cancellationToken))
+    }
+
+    public func enumerateEvents(
+        treeEventScopeId: String,
+        cursor: String?,
+        cancellationToken: UUID,
+        onDriveEventEnumerated: @escaping DriveEventCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateEvents(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateEvents(cancellationToken))
+        }
+
+        let callbackState = DriveEventEnumerationCallbackWrapper(callback: onDriveEventEnumerated)
+        let request = Proton_Drive_Sdk_DrivePhotosClientEnumerateEventsRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.treeEventScopeID = treeEventScopeId
+            if let cursor {
+                $0.cursorEventID = cursor
+            }
+            $0.yieldAction = Int64(ObjectHandle(callback: cDriveEventEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateEvents(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateEvents(cancellationToken))
     }
 }

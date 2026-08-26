@@ -113,6 +113,9 @@ internal static class InteropMessageHandler
                         request.DriveClientEnumerateSharedNodeUids,
                         bindingsHandle).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DriveClientEnumerateEvents
+                    => await InteropProtonDriveClient.HandleEnumerateEventsAsync(request.DriveClientEnumerateEvents, bindingsHandle).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DriveClientEnumerateDevices
                     => await InteropProtonDriveClient.HandleEnumerateDevicesAsync(request.DriveClientEnumerateDevices, bindingsHandle).ConfigureAwait(false),
 
@@ -267,6 +270,10 @@ internal static class InteropMessageHandler
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateAlbum
                     => await InteropProtonPhotosClient.HandleEnumerateAlbumAsync(
                         request.DrivePhotosClientEnumerateAlbum, bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientEnumerateEvents
+                    => await InteropProtonPhotosClient.HandleEnumerateEventsAsync(
+                        request.DrivePhotosClientEnumerateEvents, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.None or _
                     => throw new ArgumentException($"Unknown request type: {request.PayloadCase}", nameof(requestBytes)),

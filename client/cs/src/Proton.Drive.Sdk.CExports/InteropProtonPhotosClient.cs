@@ -158,6 +158,26 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleEnumerateEventsAsync(DrivePhotosClientEnumerateEventsRequest request, nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var eventScopeId = new Events.DriveEventScopeId(new Volumes.VolumeId(request.TreeEventScopeId));
+        Events.DriveEventId? cursorEventId = request.HasCursorEventId
+            ? (Events.DriveEventId)request.CursorEventId
+            : null;
+
+        await foreach (var driveEvent in client.EnumerateEventsAsync(eventScopeId, cursorEventId, cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, driveEvent.ToInterop());
+        }
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleEnumerateTrashAsync(DrivePhotosClientEnumerateTrashRequest request, nint bindingsHandle)
     {
         var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);

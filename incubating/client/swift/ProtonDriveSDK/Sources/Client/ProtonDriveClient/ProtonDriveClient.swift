@@ -41,6 +41,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case leaveSharedNode(UUID)
         case enumerateSharedWithMeNodeUids(UUID)
         case enumerateSharedNodeUids(UUID)
+        case enumerateEvents(UUID)
 
         var operationName: String {
             switch self {
@@ -63,6 +64,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             case .leaveSharedNode: return "leaveSharedNode"
             case .enumerateSharedWithMeNodeUids: return "enumerateSharedWithMeNodeUids"
             case .enumerateSharedNodeUids: return "enumerateSharedNodeUids"
+            case .enumerateEvents: return "enumerateEvents"
             }
         }
     }
@@ -550,6 +552,49 @@ extension ProtonDriveClient {
 
     public func cancelEnumerateFolderChildren(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .enumerateFolderChildren(cancellationToken))
+    }
+
+    /// Enumerates remote data update events for an event scope.
+    ///
+    /// - Parameters:
+    ///   - treeEventScopeId: The scope of the tree to read events for (same as `treeEventScopeId` on nodes).
+    ///   - cursor: The event id to resume from. When `nil`, the cursor is seeded from the latest event and a
+    ///     single `.cursorAdvanced` event carrying that id is emitted.
+    ///   - cancellationToken: Token used to cancel the operation via ``cancelEnumerateEvents(cancellationToken:)``.
+    ///   - onDriveEventEnumerated: Called once per event; persist each event's `eventId` as the next cursor.
+    public func enumerateEvents(
+        treeEventScopeId: String,
+        cursor: String?,
+        cancellationToken: UUID,
+        onDriveEventEnumerated: @escaping DriveEventCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateEvents(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateEvents(cancellationToken))
+        }
+
+        let callbackState = DriveEventEnumerationCallbackWrapper(callback: onDriveEventEnumerated)
+        let request = Proton_Drive_Sdk_DriveClientEnumerateEventsRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.treeEventScopeID = treeEventScopeId
+            if let cursor {
+                $0.cursorEventID = cursor
+            }
+            $0.yieldAction = Int64(ObjectHandle(callback: cDriveEventEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateEvents(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateEvents(cancellationToken))
     }
 
     public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?, cancellationToken: UUID) async throws {
