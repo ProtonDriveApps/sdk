@@ -17,4 +17,13 @@ sealed interface Node {
     val directRole: MemberRole
     val membership: Membership?
     val errors: List<DriveError>
+
+    /**
+     * The ID of the share this node is shared with; null when it is not shared.
+     *
+     * Only exists for backward compatibility with the old Drive client setup. An application keyed by root share
+     * has to traverse to the root itself and read the value from there.
+     */
+    @Deprecated("Not part of the public API. Only for backward compatibility with the old Drive client setup.")
+    val deprecatedShareId: String?
 }

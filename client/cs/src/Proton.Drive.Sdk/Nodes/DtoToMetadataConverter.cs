@@ -251,6 +251,7 @@ internal static partial class DtoToMetadataConverter
         var ownedBy = MapOwnedBy(linkDto.OwnedBy);
         var isShared = linkDetailsDto.Sharing is not null;
         var isSharedByUrl = linkDetailsDto.Sharing?.ShareUrlId is not null;
+        var deprecatedShareId = linkDetailsDto.Sharing?.ShareId.ToString();
 
         var node = linkDetailsDto.Photo is { } photo
             ? new PhotoNode
@@ -275,6 +276,7 @@ internal static partial class DtoToMetadataConverter
                 IsSharedByUrl = isSharedByUrl,
                 DirectRole = directRole,
                 Membership = membership,
+                DeprecatedShareId = deprecatedShareId,
                 Errors = nodeErrors,
             }
             : new FileNode
@@ -294,6 +296,7 @@ internal static partial class DtoToMetadataConverter
                 IsSharedByUrl = isSharedByUrl,
                 DirectRole = directRole,
                 Membership = membership,
+                DeprecatedShareId = deprecatedShareId,
                 Errors = nodeErrors,
             };
 
@@ -410,6 +413,7 @@ internal static partial class DtoToMetadataConverter
             IsSharedByUrl = sharing?.ShareUrlId is not null,
             DirectRole = directRole,
             Membership = membership,
+            DeprecatedShareId = sharing?.ShareId.ToString(),
             Errors = nodeErrors,
         };
 

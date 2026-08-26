@@ -333,6 +333,10 @@ message FileNode {
     bool is_shared_by_url = 15;
     MemberRole direct_role = 16;
     Membership membership = 17; // optional - set only on directly-shared nodes
+
+    // ID of the share this node is shared with, empty when it is not shared. Not part of the public interface,
+    // only exists for backward compatibility with the old Drive client setup.
+    string deprecated_share_id = 18; // optional
 }
 
 message FolderNode {
@@ -350,6 +354,10 @@ message FolderNode {
     bool is_shared_by_url = 12;
     MemberRole direct_role = 13;
     Membership membership = 14; // optional - set only on directly-shared nodes
+
+    // ID of the share this node is shared with, empty when it is not shared. Not part of the public interface,
+    // only exists for backward compatibility with the old Drive client setup.
+    string deprecated_share_id = 15; // optional
 }
 
 message SignatureVerificationError {
@@ -796,6 +804,10 @@ message AlbumNode {
     int64 photo_count = 13;
     string cover_photo_node_uid = 14; // optional
     google.protobuf.Timestamp last_activity_time = 15; // optional
+
+    // ID of the share this node is shared with, empty when it is not shared. Not part of the public interface,
+    // only exists for backward compatibility with the old Drive client setup.
+    string deprecated_share_id = 18; // optional
 }
 
 message PhotoNode {
@@ -818,6 +830,10 @@ message PhotoNode {
     Membership membership = 19; // optional - set only on directly-shared nodes
     google.protobuf.Timestamp capture_time = 16;
     repeated string album_uids = 17;
+
+    // ID of the share this node is shared with, empty when it is not shared. Not part of the public interface,
+    // only exists for backward compatibility with the old Drive client setup.
+    string deprecated_share_id = 20; // optional
 }
 
 message Node {

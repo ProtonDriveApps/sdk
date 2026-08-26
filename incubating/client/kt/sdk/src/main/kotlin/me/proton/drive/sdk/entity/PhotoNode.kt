@@ -22,4 +22,6 @@ data class PhotoNode(
     override val errors: List<DriveError>,
     val captureTime: Instant,
     val albumUids: List<NodeUid>,
+    @Deprecated("Not part of the public API. Only for backward compatibility with the old Drive client setup.")
+    override val deprecatedShareId: String?,
 ) : Node

@@ -25,6 +25,7 @@ fun ProtonDriveSdk.PhotoNode.toEntity() = PhotoNode(
     directRole = directRole.toEntity(),
     membership = membership.takeIf { hasMembership() }?.toEntity(),
     errors = errorsList.map { it.toEntity() },
+    deprecatedShareId = deprecatedShareId.takeIf { it.isNotEmpty() },
     captureTime = captureTime.toInstant(),
     albumUids = albumUidsList.map(::NodeUid),
 )
