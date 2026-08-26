@@ -22,4 +22,5 @@ fun ProtonDriveSdk.FolderNode.toEntity() = FolderNode(
     directRole = directRole.toEntity(),
     membership = membership.takeIf { hasMembership() }?.toEntity(),
     errors = errorsList.map { it.toEntity() },
+    deprecatedShareId = deprecatedShareId.takeIf { it.isNotEmpty() },
 )

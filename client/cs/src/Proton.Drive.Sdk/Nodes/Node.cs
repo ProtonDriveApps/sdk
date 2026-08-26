@@ -34,4 +34,8 @@ public abstract record Node
     public Membership? Membership { get; init; }
 
     public required IReadOnlyList<ProtonDriveError> Errors { get; init; }
+
+    /// <summary>The ID of the share this node is shared with; null when it is not shared.</summary>
+    /// <remarks>Only exists for backward compatibility with the old Drive client setup.</remarks>
+    internal string? DeprecatedShareId { get; init; }
 }

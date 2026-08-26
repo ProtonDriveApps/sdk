@@ -71,6 +71,11 @@ internal static class InteropConversionExtensions
                 albumNodeProto.LastActivityTime = lastActivityTime.ToUniversalTime().ToTimestamp();
             }
 
+            if (albumNode.DeprecatedShareId is { Length: > 0 } deprecatedShareId)
+            {
+                albumNodeProto.DeprecatedShareId = deprecatedShareId;
+            }
+
             albumNodeProto.Errors.AddRange(albumNode.Errors.Select(ToInterop));
 
             return albumNodeProto;
@@ -104,6 +109,11 @@ internal static class InteropConversionExtensions
             if (photoNode.Membership is { } membership)
             {
                 photoNodeProto.Membership = membership.ToInterop();
+            }
+
+            if (photoNode.DeprecatedShareId is { Length: > 0 } deprecatedShareId)
+            {
+                photoNodeProto.DeprecatedShareId = deprecatedShareId;
             }
 
             photoNodeProto.ActiveRevision = photoNode.ActiveRevision.ToInterop();
@@ -140,6 +150,11 @@ internal static class InteropConversionExtensions
                 folderNodeProto.Membership = membership.ToInterop();
             }
 
+            if (folderNode.DeprecatedShareId is { Length: > 0 } deprecatedShareId)
+            {
+                folderNodeProto.DeprecatedShareId = deprecatedShareId;
+            }
+
             folderNodeProto.Errors.AddRange(folderNode.Errors.Select(ToInterop));
 
             return folderNodeProto;
@@ -172,6 +187,11 @@ internal static class InteropConversionExtensions
             if (fileNode.Membership is { } membership)
             {
                 fileNodeProto.Membership = membership.ToInterop();
+            }
+
+            if (fileNode.DeprecatedShareId is { Length: > 0 } deprecatedShareId)
+            {
+                fileNodeProto.DeprecatedShareId = deprecatedShareId;
             }
 
             fileNodeProto.ActiveRevision = fileNode.ActiveRevision.ToInterop();

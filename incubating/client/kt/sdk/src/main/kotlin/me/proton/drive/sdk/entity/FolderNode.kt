@@ -17,4 +17,6 @@ data class FolderNode(
     override val directRole: MemberRole,
     override val membership: Membership?,
     override val errors: List<DriveError>,
+    @Deprecated("Not part of the public API. Only for backward compatibility with the old Drive client setup.")
+    override val deprecatedShareId: String?,
 ) : Node

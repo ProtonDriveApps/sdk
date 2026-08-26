@@ -20,4 +20,6 @@ data class FileNode(
     override val isShared: Boolean,
     override val isSharedByUrl: Boolean,
     override val errors: List<DriveError>,
+    @Deprecated("Not part of the public API. Only for backward compatibility with the old Drive client setup.")
+    override val deprecatedShareId: String?,
 ) : Node

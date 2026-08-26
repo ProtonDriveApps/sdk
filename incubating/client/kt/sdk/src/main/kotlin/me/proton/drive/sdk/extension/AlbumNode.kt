@@ -26,4 +26,5 @@ fun ProtonDriveSdk.AlbumNode.toEntity() = AlbumNode(
     photoCount = photoCount,
     coverPhotoNodeUid = coverPhotoNodeUid.takeIf { hasCoverPhotoNodeUid() }?.let(::NodeUid),
     lastActivityTime = lastActivityTimeOrNull?.toInstant(),
+    deprecatedShareId = deprecatedShareId.takeIf { it.isNotEmpty() },
 )

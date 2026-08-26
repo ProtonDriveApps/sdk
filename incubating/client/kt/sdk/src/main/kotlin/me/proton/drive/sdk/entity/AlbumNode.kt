@@ -20,4 +20,6 @@ data class AlbumNode(
     val photoCount: Long,
     val coverPhotoNodeUid: NodeUid?,
     val lastActivityTime: Instant?,
+    @Deprecated("Not part of the public API. Only for backward compatibility with the old Drive client setup.")
+    override val deprecatedShareId: String?,
 ) : Node
