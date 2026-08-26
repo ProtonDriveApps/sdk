@@ -24,6 +24,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             DownloadEvent me => GetDownloadEventPayload(me),
             DecryptionErrorEvent me => GetDecryptionErrorPayload(me),
             BlockVerificationErrorEvent me => GetBlockVerificationErrorPayload(me),
+            UploadPerformanceEvent me => GetUploadPerformanceEventPayload(me),
             _ => null,
         };
 
@@ -92,6 +93,18 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
         }
 
         return payload;
+    }
+
+    private static UploadPerformanceEventPayload GetUploadPerformanceEventPayload(UploadPerformanceEvent me)
+    {
+        return new UploadPerformanceEventPayload
+        {
+            Metric = (UploadPerformanceMetric)me.Metric,
+            Value = me.Value,
+            UploadRoute = (UploadRoute)me.UploadRoute,
+            SizeClass = (UploadSizeClass)me.SizeClass,
+            BlockCount = (UploadBlockCount)me.BlockCount,
+        };
     }
 
     private static BlockVerificationErrorEventPayload GetBlockVerificationErrorPayload(BlockVerificationErrorEvent me)

@@ -184,7 +184,7 @@ internal sealed partial class RevisionWriter
 
         foreach (var (blockNumber, blockUploadResult) in blockUploadResults)
         {
-            var (plaintextSize, sha256Digest) = blockUploadResult;
+            var (plaintextSize, _, sha256Digest) = blockUploadResult;
 
             manifestStream.Write(sha256Digest);
 

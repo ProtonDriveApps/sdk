@@ -9,11 +9,24 @@ public sealed class UploadController : IAsyncDisposable
     private readonly ITaskControl _taskControl;
     private readonly Stream? _sourceStreamToDispose;
     private readonly Func<Exception, long, ValueTask>? _onFailedAsync;
-    private readonly Func<long, ValueTask>? _onSucceededAsync;
+    private readonly Func<UploadMetricsContext, ValueTask>? _onSucceededAsync;
     private readonly long? _contentByteCount;
+    private readonly TimeProvider _timeProvider;
 
     private readonly Lock _stateLock = new();
     private bool _isDisposed;
+
+    // Active and paused time are accumulated per attempt: an attempt contributes its own elapsed time to the
+    // active total, and the gap between an attempt ending and the next one starting is the paused total. All
+    // fields are only touched by the ctor, the arms of PauseOnResumableErrorAsync and
+    // ResumeAfterPreviousCompletionAsync after its first await; those run strictly sequentially along the
+    // Completion chain (attempt N's task is the completion that attempt N+1 awaits before starting), so the
+    // awaits provide the memory barriers and no lock is needed.
+    private long _attemptStartTimestamp;
+    private long _attemptEndTimestamp;
+    private bool _attemptHasEnded;
+    private TimeSpan _accumulatedActiveTime;
+    private TimeSpan _accumulatedPausedTime;
 
     internal UploadController(
         Task<RevisionDraft> revisionDraftTask,
@@ -21,8 +34,10 @@ public sealed class UploadController : IAsyncDisposable
         Func<CancellationToken, Task<UploadResult>> resumeFunction,
         Stream? sourceStreamToDispose,
         ITaskControl taskControl,
+        long startTimestamp,
+        TimeProvider timeProvider,
         Func<Exception, long, ValueTask>? onFailedAsync = null,
-        Func<long, ValueTask>? onSucceededAsync = null,
+        Func<UploadMetricsContext, ValueTask>? onSucceededAsync = null,
         long? contentByteCount = null)
     {
         _revisionDraftTask = revisionDraftTask;
@@ -32,6 +47,8 @@ public sealed class UploadController : IAsyncDisposable
         _onFailedAsync = onFailedAsync;
         _onSucceededAsync = onSucceededAsync;
         _contentByteCount = contentByteCount;
+        _timeProvider = timeProvider;
+        _attemptStartTimestamp = startTimestamp;
 
         Completion = PauseOnResumableErrorAsync(uploadTask, taskControl.Attempt);
     }
@@ -124,6 +141,13 @@ public sealed class UploadController : IAsyncDisposable
     {
         await previousCompletion.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
+        // Stamped after the previous attempt has fully finished (including its accumulation) and immediately
+        // before the new attempt starts, so the paused gap falls outside every attempt's window and is
+        // accumulated as paused time instead.
+        _attemptStartTimestamp = _timeProvider.GetTimestamp();
+        _accumulatedPausedTime += _timeProvider.GetElapsedTime(_attemptEndTimestamp, _attemptStartTimestamp);
+        _attemptHasEnded = false;
+
         return await PauseOnResumableErrorAsync(
                 _resumeFunction.Invoke(_taskControl.PauseOrCancellationToken),
                 attempt)
@@ -136,12 +160,20 @@ public sealed class UploadController : IAsyncDisposable
         {
             var result = await uploadTask.ConfigureAwait(false);
 
+            EndAttempt();
+
+            // Stamped before the success callback runs, because that is where the performance metrics are derived.
+            // Each attempt contributes only its own elapsed time, so paused intervals are excluded by construction.
+            // A stale attempt's elapsed time is accumulated exactly once, before the next attempt is stamped,
+            // which is correct: that attempt genuinely ran until then.
             await InvokeOnSucceededAsync().ConfigureAwait(false);
 
             return result;
         }
         catch (Exception) when (IsResumable())
         {
+            EndAttempt();
+
             if (_taskControl.Attempt == attempt)
             {
                 _taskControl.Pause();
@@ -151,6 +183,8 @@ public sealed class UploadController : IAsyncDisposable
         }
         catch
         {
+            EndAttempt();
+
             if (_taskControl.IsPaused)
             {
                 _taskControl.AbortPause();
@@ -158,6 +192,22 @@ public sealed class UploadController : IAsyncDisposable
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// Closes the current attempt's active-time window. Idempotent: the success arm runs the success callback
+    /// while still inside the try, so a callback that throws would otherwise have its attempt counted twice.
+    /// </summary>
+    private void EndAttempt()
+    {
+        if (_attemptHasEnded)
+        {
+            return;
+        }
+
+        _attemptHasEnded = true;
+        _attemptEndTimestamp = _timeProvider.GetTimestamp();
+        _accumulatedActiveTime += _timeProvider.GetElapsedTime(_attemptStartTimestamp, _attemptEndTimestamp);
     }
 
     private async ValueTask InvokeOnSucceededAsync()
@@ -172,13 +222,20 @@ public sealed class UploadController : IAsyncDisposable
         {
             var revisionDraft = await _revisionDraftTask.ConfigureAwait(false);
 
-            await onSucceededHandler.Invoke(revisionDraft.NumberOfPlainBytesDone).ConfigureAwait(false);
+            await onSucceededHandler.Invoke(
+                new UploadMetricsContext(
+                    revisionDraft.NumberOfPlainBytesDone,
+                    _accumulatedActiveTime,
+                    _accumulatedPausedTime,
+                    revisionDraft.GetUploadStatistics())).ConfigureAwait(false);
             return;
         }
 
         if (_contentByteCount is { } uploadedByteCount)
         {
-            await onSucceededHandler.Invoke(uploadedByteCount).ConfigureAwait(false);
+            await onSucceededHandler.Invoke(
+                new UploadMetricsContext(uploadedByteCount, _accumulatedActiveTime, _accumulatedPausedTime, Statistics: null))
+                .ConfigureAwait(false);
         }
     }
 

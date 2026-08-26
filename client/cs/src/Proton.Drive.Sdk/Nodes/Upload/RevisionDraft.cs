@@ -142,6 +142,14 @@ internal sealed partial class RevisionDraft(
         return _uploadBackend.CommitAsync(request, sha1Digest, cancellationToken);
     }
 
+    public RevisionUploadStatistics GetUploadStatistics()
+    {
+        lock (_blockUploadStatesLock)
+        {
+            return new RevisionUploadStatistics(IsSmallUpload, GetEncryptedContentSizeUnderLock(), _contentBlockStates.Count);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         Sha1.Dispose();
@@ -165,6 +173,28 @@ internal sealed partial class RevisionDraft(
         {
             LogDraftDeletionFailure(ex, Uid);
         }
+    }
+
+    // Summed on demand rather than accumulated as results arrive: SetThumbnailUploadResult overwrites by
+    // thumbnail type, so an accumulator would double count a re-uploaded thumbnail.
+    private long GetEncryptedContentSizeUnderLock()
+    {
+        var total = 0L;
+
+        foreach (var thumbnailUploadResult in _thumbnailUploadResults.Values)
+        {
+            total += thumbnailUploadResult.EncryptedSize;
+        }
+
+        foreach (var contentBlockState in _contentBlockStates)
+        {
+            if (contentBlockState.TryGetSecond(out var contentBlockUploadResult))
+            {
+                total += contentBlockUploadResult.EncryptedSize;
+            }
+        }
+
+        return total;
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Draft cleanup failed for revision {RevisionUid}")]

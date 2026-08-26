@@ -30,6 +30,10 @@ class TelemetryBridge(
                 ProtonDriveSdk.UploadEventPayload.parseFrom(data).toEvent()
             )
 
+            "type.googleapis.com/proton.drive.sdk.UploadPerformanceEventPayload" -> callback.onUploadPerformanceEvent(
+                ProtonDriveSdk.UploadPerformanceEventPayload.parseFrom(data).toEvent()
+            )
+
             "type.googleapis.com/proton.drive.sdk.VerificationErrorEventPayload" -> callback.onVerificationErrorEvent(
                 ProtonDriveSdk.VerificationErrorEventPayload.parseFrom(data).toEvent()
             )

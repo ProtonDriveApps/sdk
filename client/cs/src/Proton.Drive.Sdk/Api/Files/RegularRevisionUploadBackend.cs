@@ -64,7 +64,7 @@ internal sealed partial class RegularRevisionUploadBackend(
             var dataPacketStream = encryptionResult.EncryptedContentStream;
             await using (dataPacketStream.ConfigureAwait(false))
             {
-                var result = new BlockUploadResult((int)plainData.Stream.Length, encryptionResult.Sha256Digest);
+                var result = new BlockUploadResult((int)plainData.Stream.Length, (int)dataPacketStream.Length, encryptionResult.Sha256Digest);
 
                 var request = new BlockUploadPreparationRequest
                 {
@@ -137,7 +137,7 @@ internal sealed partial class RegularRevisionUploadBackend(
 
                 LogBlobUploaded();
 
-                return new BlockUploadResult(0, encryptionResult.Sha256Digest);
+                return new BlockUploadResult(0, (int)dataPacketStream.Length, encryptionResult.Sha256Digest);
             }
         }
     }

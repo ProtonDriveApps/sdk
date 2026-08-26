@@ -111,6 +111,9 @@ public sealed class ProtonDriveClient
 
     internal int TargetBlockSize { get; set; } = RevisionWriter.DefaultBlockSize;
 
+    // The clock behind the upload performance measurements; swapped in tests to make the timings deterministic.
+    internal TimeProvider TimeProvider { get; set; } = TimeProvider.System;
+
     internal BlockDownloader BlockDownloader { get; }
     internal BlockDownloader ThumbnailBlockDownloader { get; }
     internal RevisionUploadBackendFactory RevisionUploadBackendFactory { get; }
@@ -159,9 +162,10 @@ public sealed class ProtonDriveClient
         FileUploadMetadata metadata,
         bool overrideExistingDraftByOtherClient)
     {
+        var requestTimestamp = TimeProvider.GetTimestamp();
         var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return FileUploader.TryCreate(this, draftProvider, parentFolderUid, size, metadata);
+        return FileUploader.TryCreate(this, requestTimestamp, draftProvider, parentFolderUid, size, metadata);
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
@@ -173,9 +177,11 @@ public sealed class ProtonDriveClient
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
+        var requestTimestamp = TimeProvider.GetTimestamp();
         var draftProvider = new NewFileDraftProvider(this, parentFolderUid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await FileUploader.CreateAsync(this, draftProvider, parentFolderUid, size, metadata, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, requestTimestamp, draftProvider, parentFolderUid, size, metadata, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     [Experimental("TryTransferQueuing")]
@@ -184,9 +190,10 @@ public sealed class ProtonDriveClient
         long size,
         FileUploadMetadata metadata)
     {
+        var requestTimestamp = TimeProvider.GetTimestamp();
         var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return FileUploader.TryCreate(this, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata);
+        return FileUploader.TryCreate(this, requestTimestamp, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata);
     }
 
     public async ValueTask<FileUploader> GetFileRevisionUploaderAsync(
@@ -195,9 +202,11 @@ public sealed class ProtonDriveClient
         FileUploadMetadata metadata,
         CancellationToken cancellationToken)
     {
+        var requestTimestamp = TimeProvider.GetTimestamp();
         var draftProvider = new NewRevisionDraftProvider(this, currentActiveRevisionUid.NodeUid, currentActiveRevisionUid.RevisionId);
 
-        return await FileUploader.CreateAsync(this, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata, cancellationToken).ConfigureAwait(false);
+        return await FileUploader.CreateAsync(this, requestTimestamp, draftProvider, currentActiveRevisionUid.NodeUid, size, metadata, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     [Experimental("TryTransferQueuing")]

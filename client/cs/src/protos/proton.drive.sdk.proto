@@ -1205,6 +1205,51 @@ message BlockVerificationErrorEventPayload {
     bool retry_helped = 2;
 }
 
+// The list must match the order from Telemetry/UploadRoute.cs to properly match it over the interop.
+enum UploadRoute {
+    UPLOAD_ROUTE_UNSPECIFIED = 0;
+    UPLOAD_ROUTE_SMALL = 1;
+    UPLOAD_ROUTE_BLOCK = 2;
+}
+
+// The list must match the order from Telemetry/UploadSizeClass.cs to properly match it over the interop.
+enum UploadSizeClass {
+    UPLOAD_SIZE_CLASS_UNSPECIFIED = 0;
+    UPLOAD_SIZE_CLASS_SMALL = 1;
+    UPLOAD_SIZE_CLASS_SINGLE = 2;
+    UPLOAD_SIZE_CLASS_MULTI = 3;
+}
+
+// The list must match the order from Telemetry/UploadBlockCount.cs to properly match it over the interop.
+enum UploadBlockCount {
+    UPLOAD_BLOCK_COUNT_UNSPECIFIED = 0;
+    UPLOAD_BLOCK_COUNT_SINGLE = 1;
+    UPLOAD_BLOCK_COUNT_FEW = 2;
+    UPLOAD_BLOCK_COUNT_MANY = 3;
+}
+
+// The list must match the order from Telemetry/UploadPerformanceMetric.cs to properly match it over the interop.
+enum UploadPerformanceMetric {
+    UPLOAD_PERFORMANCE_METRIC_UNSPECIFIED = 0;
+    UPLOAD_PERFORMANCE_METRIC_SMALL_FILE_THROUGHPUT = 1;
+    UPLOAD_PERFORMANCE_METRIC_LARGE_FILE_THROUGHPUT = 2;
+    UPLOAD_PERFORMANCE_METRIC_LARGE_ROUTE_ACTIVE_TIME_SHARE = 3;
+    UPLOAD_PERFORMANCE_METRIC_SMALL_ROUTE_ACTIVE_TIME_SHARE = 4;
+}
+
+// One event per histogram observation. The SDK derives the value so that every client reports the same
+// thing; the client only has to map the metric to its registered name and attach the one label that
+// metric is registered with.
+message UploadPerformanceEventPayload {
+    UploadPerformanceMetric metric = 1;
+    // Already in the unit of the metric's registered buckets: whole percent for shares, kibibytes per
+    // second for throughput.
+    int64 value = 2;
+    UploadRoute upload_route = 3;
+    UploadSizeClass size_class = 4;
+    UploadBlockCount block_count = 5;
+}
+
 message NodeNameConflictErrorData {
     bool conflicting_node_is_file_draft = 1;
     string conflicting_node_uid = 2;

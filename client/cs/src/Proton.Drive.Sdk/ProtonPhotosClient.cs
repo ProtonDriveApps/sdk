@@ -61,11 +61,12 @@ public sealed class ProtonPhotosClient
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
+        var requestTimestamp = DriveClient.TimeProvider.GetTimestamp();
         var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken).ConfigureAwait(false);
 
         var draftProvider = new NewFileDraftProvider(DriveClient, photosRoot.Uid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return FileUploader.TryCreate(DriveClient, draftProvider, photosRoot.Uid, size, metadata);
+        return FileUploader.TryCreate(DriveClient, requestTimestamp, draftProvider, photosRoot.Uid, size, metadata);
     }
 
     public async ValueTask<FileUploader> GetFileUploaderAsync(
@@ -76,11 +77,12 @@ public sealed class ProtonPhotosClient
         bool overrideExistingDraftByOtherClient,
         CancellationToken cancellationToken)
     {
+        var requestTimestamp = DriveClient.TimeProvider.GetTimestamp();
         var photosRoot = await PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken).ConfigureAwait(false);
 
         var draftProvider = new NewFileDraftProvider(DriveClient, photosRoot.Uid, name, mediaType, overrideExistingDraftByOtherClient);
 
-        return await GetFileUploaderAsync(draftProvider, photosRoot.Uid, size, metadata, cancellationToken).ConfigureAwait(false);
+        return await GetFileUploaderAsync(requestTimestamp, draftProvider, photosRoot.Uid, size, metadata, cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask<IReadOnlyList<string>> FindDuplicatesAsync(
@@ -245,6 +247,7 @@ public sealed class ProtonPhotosClient
     }
 
     private async ValueTask<FileUploader> GetFileUploaderAsync(
+        long requestTimestamp,
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
@@ -253,6 +256,7 @@ public sealed class ProtonPhotosClient
     {
         return await FileUploader.CreateAsync(
             DriveClient,
+            requestTimestamp,
             revisionDraftProvider,
             telemetryContextNodeUid,
             size,

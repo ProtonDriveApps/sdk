@@ -13,6 +13,7 @@ public sealed partial class FileUploader : IDisposable
     private readonly IRevisionDraftProvider _revisionDraftProvider;
     private readonly NodeUid _telemetryContextNodeUid;
     private readonly FileUploadMetadata _metadata;
+    private readonly long _requestTimestamp;
     private readonly ILogger _logger;
 
     private bool _isDisposed;
@@ -24,6 +25,7 @@ public sealed partial class FileUploader : IDisposable
         NodeUid telemetryContextNodeUid,
         long size,
         FileUploadMetadata metadata,
+        long requestTimestamp,
         ILogger logger)
     {
         _client = client;
@@ -32,6 +34,7 @@ public sealed partial class FileUploader : IDisposable
         _telemetryContextNodeUid = telemetryContextNodeUid;
         FileSize = size;
         _metadata = metadata;
+        _requestTimestamp = requestTimestamp;
         _logger = logger;
     }
 
@@ -90,6 +93,7 @@ public sealed partial class FileUploader : IDisposable
 
     internal static FileUploader? TryCreate(
         ProtonDriveClient client,
+        long requestTimestamp,
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
@@ -109,11 +113,13 @@ public sealed partial class FileUploader : IDisposable
             telemetryContextNodeUid,
             size,
             metadata,
+            requestTimestamp,
             client.Telemetry.GetLogger("File uploader"));
     }
 
     internal static async ValueTask<FileUploader> CreateAsync(
         ProtonDriveClient client,
+        long requestTimestamp,
         IRevisionDraftProvider revisionDraftProvider,
         NodeUid telemetryContextNodeUid,
         long size,
@@ -133,7 +139,26 @@ public sealed partial class FileUploader : IDisposable
             telemetryContextNodeUid,
             size,
             metadata,
+            requestTimestamp,
             logger);
+    }
+
+    internal static ValueTask<FileUploader> CreateAsync(
+        ProtonDriveClient client,
+        IRevisionDraftProvider revisionDraftProvider,
+        NodeUid telemetryContextNodeUid,
+        long size,
+        FileUploadMetadata metadata,
+        CancellationToken cancellationToken)
+    {
+        return CreateAsync(
+            client,
+            client.TimeProvider.GetTimestamp(),
+            revisionDraftProvider,
+            telemetryContextNodeUid,
+            size,
+            metadata,
+            cancellationToken);
     }
 
     // Only fall back when no server write could have happened: SmallUploadNotApplicableException is raised before the upload
@@ -169,6 +194,16 @@ public sealed partial class FileUploader : IDisposable
         Message = "Small file upload failed transiently (status: {StatusCode}); falling back to regular upload (~{ApproximateSize} bytes)")]
     private static partial void LogSmallUploadFallback(ILogger logger, int? statusCode, long approximateSize);
 
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to record metric for upload event")]
+    private static partial void LogUploadEventRecordingFailure(ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Failed to record metrics for upload performance")]
+    private static partial void LogUploadPerformanceRecordingFailure(ILogger logger, Exception exception);
+
     private UploadController UploadFromStream(
         Stream contentStream,
         bool ownsContentStream,
@@ -177,6 +212,10 @@ public sealed partial class FileUploader : IDisposable
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
     {
+        // Active time is measured from here, so it covers the whole upload but not the wait for a transfer queue
+        // slot, which happens before the uploader is created.
+        var startTimestamp = _client.TimeProvider.GetTimestamp();
+
         var taskControl = new TaskControl(cancellationToken);
 
         var revisionDraftTaskCompletionSource = new TaskCompletionSource<RevisionDraft>();
@@ -197,6 +236,8 @@ public sealed partial class FileUploader : IDisposable
             uploadFunction,
             ownsContentStream ? contentStream : null,
             taskControl,
+            startTimestamp,
+            _client.TimeProvider,
             OnFailedAsync,
             OnSucceededAsync,
             FileSize);
@@ -214,15 +255,21 @@ public sealed partial class FileUploader : IDisposable
             RaiseTelemetryEvent(uploadEvent);
         }
 
-        async ValueTask OnSucceededAsync(long uploadedByteCount)
+        async ValueTask OnSucceededAsync(UploadMetricsContext metricsContext)
         {
+            // Read before the upload event is built below: that resolves the volume type, which can hit the API,
+            // and would otherwise be measured as part of the upload.
+            var elapsedSinceRequest = _client.TimeProvider.GetElapsedTime(_requestTimestamp);
+
             var uploadEvent = await TelemetryEventFactory.CreateUploadEventAsync(_client, _telemetryContextNodeUid, contentStream.Length, cancellationToken)
                 .ConfigureAwait(false);
 
-            uploadEvent.UploadedSize = uploadedByteCount;
-            uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(uploadedByteCount);
+            uploadEvent.UploadedSize = metricsContext.UploadedByteCount;
+            uploadEvent.ApproximateUploadedSize = Privacy.ReduceSizePrecision(metricsContext.UploadedByteCount);
 
             RaiseTelemetryEvent(uploadEvent);
+
+            RaiseUploadPerformanceEvents(metricsContext, elapsedSinceRequest, cancellationToken);
         }
     }
 
@@ -344,7 +391,38 @@ public sealed partial class FileUploader : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to record metric for upload event");
+            LogUploadEventRecordingFailure(_logger, ex);
+        }
+    }
+
+    private void RaiseUploadPerformanceEvents(
+        UploadMetricsContext metricsContext,
+        TimeSpan elapsedSinceRequest,
+        CancellationToken cancellationToken)
+    {
+        // The metrics cover uploads that completed and were not cancelled at this measurement point: a cancellation
+        // racing the final commit is not an upload the user perceives as done.
+        if (cancellationToken.IsCancellationRequested || metricsContext.Statistics is null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Total time spans from the moment the SDK learned of the upload, including the wait for a
+            // transfer-queue slot but excluding time spent paused (a pause reflects a user action or an error
+            // awaiting the user). Same monotonic clock as active time, anchored earlier and read later, so
+            // active <= total holds by construction even after the subtraction.
+            var totalTime = elapsedSinceRequest - metricsContext.PausedTime;
+
+            foreach (var performanceEvent in UploadPerformanceEventFactory.Create(metricsContext, totalTime))
+            {
+                _client.Telemetry.RecordMetric(performanceEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            LogUploadPerformanceRecordingFailure(_logger, ex);
         }
     }
 }

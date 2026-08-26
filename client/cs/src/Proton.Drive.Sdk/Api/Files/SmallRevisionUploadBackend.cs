@@ -121,14 +121,16 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
         var encryptedStream = encryptionResult.EncryptedContentStream;
         await using (encryptedStream.ConfigureAwait(false))
         {
+            var encryptedBytes = encryptedStream.ToArray();
+
             _contentBlock = new ContentBlock(
-                encryptedStream.ToArray(),
+                encryptedBytes,
                 encryptionResult.EncryptedSignature,
                 verificationToken.AsReadOnlyMemory());
 
             onProgress?.Invoke(plainData.Stream.Length);
 
-            return new BlockUploadResult((int)plainData.Stream.Length, encryptionResult.Sha256Digest);
+            return new BlockUploadResult((int)plainData.Stream.Length, encryptedBytes.Length, encryptionResult.Sha256Digest);
         }
     }
 
@@ -145,7 +147,8 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
         var encryptedStream = encryptionResult.EncryptedThumbnailStream;
         await using (encryptedStream.ConfigureAwait(false))
         {
-            var encryptedThumbnail = new EncryptedThumbnail((int)thumbnail.Type, encryptedStream.ToArray());
+            var encryptedBytes = encryptedStream.ToArray();
+            var encryptedThumbnail = new EncryptedThumbnail((int)thumbnail.Type, encryptedBytes);
 
             // Thumbnails upload concurrently; key by type (types are unique) under a lock so the accumulated set cannot be
             // corrupted by a racing add and stays deterministically ordered to match the manifest.
@@ -154,7 +157,7 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
                 _thumbnailBlocks[(int)thumbnail.Type] = encryptedThumbnail;
             }
 
-            return new BlockUploadResult(0, encryptionResult.Sha256Digest);
+            return new BlockUploadResult(0, encryptedBytes.Length, encryptionResult.Sha256Digest);
         }
     }
 
