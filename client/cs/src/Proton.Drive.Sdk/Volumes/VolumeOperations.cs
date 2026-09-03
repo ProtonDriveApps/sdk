@@ -45,6 +45,7 @@ internal static class VolumeOperations
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
             IsShared = false,
             IsSharedByUrl = false,
+            DirectRole = MemberRole.Admin,
             Errors = [],
         };
 
@@ -111,6 +112,7 @@ internal static class VolumeOperations
             OwnedBy = new OwnedBy(Email: defaultAddress.EmailAddress),
             IsShared = false,
             IsSharedByUrl = false,
+            DirectRole = MemberRole.Admin,
             Errors = [],
         };
 
@@ -148,6 +150,20 @@ internal static class VolumeOperations
                 return photosFolder?.Uid.VolumeId;
             },
             cancellationToken);
+    }
+
+    public static async ValueTask<bool> IsOwnVolumeAsync(ProtonDriveClient client, VolumeId volumeId, CancellationToken cancellationToken)
+    {
+        var mainVolumeId = await TryGetMainVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+
+        if (mainVolumeId is not null && volumeId == mainVolumeId.Value)
+        {
+            return true;
+        }
+
+        var photosVolumeId = await TryGetPhotosVolumeIdAsync(client, cancellationToken).ConfigureAwait(false);
+
+        return photosVolumeId is not null && volumeId == photosVolumeId.Value;
     }
 
     public static async IAsyncEnumerable<DriveEvent> EnumerateEventsAsync(

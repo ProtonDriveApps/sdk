@@ -13,6 +13,8 @@ namespace Proton.Drive.Sdk.Nodes.Cryptography;
 
 internal static class NodeCrypto
 {
+    private const string SharingInviterSigningContext = "drive.share-member.inviter";
+
     public static async ValueTask<FolderDecryptionResult> DecryptFolderAsync(
         IProtonAccountClient accountClient,
         LinkDto link,
@@ -87,6 +89,46 @@ internal static class NodeCrypto
         var hexString = contentDigest.Span.ToHexStringLower(hexBuffer);
 
         return HMACSHA256.HashData(parentFolderHashKey, hexString);
+    }
+
+    /// <summary>
+    /// Verifies the inviter's signature over the membership share-passphrase key packet.
+    /// Returns <see langword="null"/> when the signature is valid, or an
+    /// <see cref="AuthorshipVerificationFailure"/> describing why it could not be verified.
+    /// </summary>
+    public static AuthorshipVerificationFailure? VerifyMembershipInviter(
+        ReadOnlyMemory<byte>? keyPacket,
+        PgpArmoredSignature? keyPacketSignature,
+        AuthorshipClaim inviterClaim)
+    {
+        if (keyPacket is not { } packet || keyPacketSignature is not { } signature)
+        {
+            // The invitation carries no signature to verify against.
+            return new AuthorshipVerificationFailure(PgpVerificationStatus.NotSigned);
+        }
+
+        if (inviterClaim.Author == Author.Anonymous || inviterClaim.Keys is not { Count: > 0 })
+        {
+            // No inviter identity or no keys available to verify with.
+            return new AuthorshipVerificationFailure(PgpVerificationStatus.NoVerifier);
+        }
+
+        try
+        {
+            using var verificationContext = PgpVerificationContext.Create(SharingInviterSigningContext);
+
+            var verificationStatus = new PgpKeyRing(inviterClaim.Keys)
+                .Verify(packet.Span, signature.Unarmored.Span, verificationContext: verificationContext)
+                .Status;
+
+            return verificationStatus is not PgpVerificationStatus.Ok
+                ? new AuthorshipVerificationFailure(verificationStatus)
+                : null;
+        }
+        catch (Exception e)
+        {
+            return new AuthorshipVerificationFailure(PgpVerificationStatus.Failed, e.ToProtonDriveError());
+        }
     }
 
     public static Result<DecryptionOutput<ExtendedAttributes?>, ProtonDriveError> DecryptExtendedAttributes(

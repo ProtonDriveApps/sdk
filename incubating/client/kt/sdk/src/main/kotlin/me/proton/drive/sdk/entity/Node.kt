@@ -14,5 +14,7 @@ sealed interface Node {
     val ownedBy: OwnedBy
     val isShared: Boolean
     val isSharedByUrl: Boolean
+    val directRole: MemberRole
+    val membership: Membership?
     val errors: List<DriveError>
 }

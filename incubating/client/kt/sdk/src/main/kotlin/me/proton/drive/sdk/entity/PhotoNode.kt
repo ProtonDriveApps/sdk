@@ -17,6 +17,8 @@ data class PhotoNode(
     val totalStorageSize: Long,
     override val isShared: Boolean,
     override val isSharedByUrl: Boolean,
+    override val directRole: MemberRole,
+    override val membership: Membership?,
     override val errors: List<DriveError>,
     val captureTime: Instant,
     val albumUids: List<NodeUid>,

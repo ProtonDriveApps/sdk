@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Api.Photos;
+using Proton.Drive.Sdk.Api.Shares;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Drive.Sdk.Volumes;
@@ -11,7 +13,7 @@ using Proton.Sdk;
 
 namespace Proton.Drive.Sdk.Nodes;
 
-internal static class DtoToMetadataConverter
+internal static partial class DtoToMetadataConverter
 {
     public static async Task<NodeMetadataConversionResult> ConvertDtoToNodeMetadataAsync(
         ProtonDriveClient client,
@@ -24,7 +26,7 @@ internal static class DtoToMetadataConverter
         {
             LinkType.Folder => NodeMetadataConversionResult.FromFolder(
                 await ConvertFolderMetadataAsync(
-                    client.Account,
+                    client,
                     volumeId,
                     linkDetailsDto,
                     linkDetailsDto.Folder ?? throw new InvalidOperationException("Node is a folder, but folder properties are missing"),
@@ -33,7 +35,7 @@ internal static class DtoToMetadataConverter
 
             LinkType.File => NodeMetadataConversionResult.FromFile(
                 await ConvertFileMetadataAsync(
-                    client.Account,
+                    client,
                     volumeId,
                     linkDetailsDto,
                     passphraseDecryptionKey,
@@ -41,7 +43,7 @@ internal static class DtoToMetadataConverter
 
             LinkType.Album => NodeMetadataConversionResult.FromFolder(
                 await ConvertAlbumMetadataAsync(
-                    client.Account,
+                    client,
                     volumeId,
                     linkDetailsDto,
                     linkDetailsDto.Album ?? throw new InvalidOperationException("Node is an album, but album properties are missing"),
@@ -65,7 +67,7 @@ internal static class DtoToMetadataConverter
     }
 
     private static async Task<FileMetadataConversionResult> ConvertFileMetadataAsync(
-        IProtonAccountClient account,
+        ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         PgpPrivateKey passphraseDecryptionKey,
@@ -96,8 +98,10 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
+        var (directRole, membership) = await BuildMembershipInfoAsync(client, volumeId, membershipDto, cancellationToken).ConfigureAwait(false);
+
         var decryptionResult = await NodeCrypto
-            .DecryptFileAsync(account, linkDto, fileDto, activeRevisionDto, passphraseDecryptionKey, cancellationToken).ConfigureAwait(false);
+            .DecryptFileAsync(client.Account, linkDto, fileDto, activeRevisionDto, passphraseDecryptionKey, cancellationToken).ConfigureAwait(false);
 
         NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out var nameResult, out var nameSessionKey);
 
@@ -125,11 +129,13 @@ internal static class DtoToMetadataConverter
             modificationTimeResult,
             thumbnails,
             additionalMetadata,
-            membershipDto);
+            membershipDto,
+            directRole,
+            membership);
     }
 
     private static async ValueTask<FolderMetadataConversionResult> ConvertFolderMetadataAsync(
-        IProtonAccountClient account,
+        ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         FolderDto folderDto,
@@ -142,7 +148,9 @@ internal static class DtoToMetadataConverter
         var uid = new NodeUid(volumeId, linkDto.Id);
         var parentUid = linkDto.ParentId is not null ? (NodeUid?)new NodeUid(uid.VolumeId, linkDto.ParentId.Value) : null;
 
-        var decryptionResult = await NodeCrypto.DecryptFolderAsync(account, linkDto, folderDto.HashKey, parentKey, cancellationToken)
+        var (directRole, membership) = await BuildMembershipInfoAsync(client, volumeId, membershipDto, cancellationToken).ConfigureAwait(false);
+
+        var decryptionResult = await NodeCrypto.DecryptFolderAsync(client.Account, linkDto, folderDto.HashKey, parentKey, cancellationToken)
             .ConfigureAwait(false);
 
         NodeOperations.ValidateName(decryptionResult.Link.Name, out _, out var nameResult, out var nameSessionKey);
@@ -155,11 +163,13 @@ internal static class DtoToMetadataConverter
             parentUid,
             linkDto,
             linkDetailsDto.Sharing,
-            membershipDto);
+            membershipDto,
+            directRole,
+            membership);
     }
 
     private static async ValueTask<FolderMetadataConversionResult> ConvertAlbumMetadataAsync(
-        IProtonAccountClient account,
+        ProtonDriveClient client,
         VolumeId volumeId,
         LinkDetailsDto linkDetailsDto,
         AlbumDto albumDto,
@@ -170,7 +180,7 @@ internal static class DtoToMetadataConverter
         // comes from the link details and is layered onto an AlbumNode.
         var folderDto = new FolderDto { HashKey = albumDto.HashKey, ExtendedAttributes = albumDto.ExtendedAttributes };
 
-        var folderResult = await ConvertFolderMetadataAsync(account, volumeId, linkDetailsDto, folderDto, parentKey, cancellationToken)
+        var folderResult = await ConvertFolderMetadataAsync(client, volumeId, linkDetailsDto, folderDto, parentKey, cancellationToken)
             .ConfigureAwait(false);
 
         var coverPhotoUid = albumDto.CoverLinkId is { } coverLinkId ? new NodeUid(volumeId, coverLinkId) : (NodeUid?)null;
@@ -199,7 +209,9 @@ internal static class DtoToMetadataConverter
         Result<DateTime, ProtonDriveError>? modificationTimeResult,
         ReadOnlyCollection<ThumbnailHeader> thumbnails,
         ReadOnlyCollection<AdditionalMetadataProperty>? additionalMetadata,
-        ShareMembershipSummaryDto? membershipDto)
+        ShareMembershipSummaryDto? membershipDto,
+        MemberRole directRole,
+        Membership? membership)
     {
         var (nodeErrors, failedDecryptionFields) = CollectFileDecryptionFailures(
             decryptionResult,
@@ -261,6 +273,8 @@ internal static class DtoToMetadataConverter
                 OwnedBy = ownedBy,
                 IsShared = isShared,
                 IsSharedByUrl = isSharedByUrl,
+                DirectRole = directRole,
+                Membership = membership,
                 Errors = nodeErrors,
             }
             : new FileNode
@@ -278,6 +292,8 @@ internal static class DtoToMetadataConverter
                 OwnedBy = ownedBy,
                 IsShared = isShared,
                 IsSharedByUrl = isSharedByUrl,
+                DirectRole = directRole,
+                Membership = membership,
                 Errors = nodeErrors,
             };
 
@@ -360,7 +376,9 @@ internal static class DtoToMetadataConverter
         NodeUid? parentUid,
         LinkDto linkDto,
         LinkSharingDto? sharing,
-        ShareMembershipSummaryDto? membershipDto)
+        ShareMembershipSummaryDto? membershipDto,
+        MemberRole directRole,
+        Membership? membership)
     {
         var (nodeErrors, failedDecryptionFields) = CollectFolderDecryptionFailures(decryptionResult, nameResult);
 
@@ -390,6 +408,8 @@ internal static class DtoToMetadataConverter
             OwnedBy = MapOwnedBy(linkDto.OwnedBy),
             IsShared = sharing is not null,
             IsSharedByUrl = sharing?.ShareUrlId is not null,
+            DirectRole = directRole,
+            Membership = membership,
             Errors = nodeErrors,
         };
 
@@ -449,6 +469,64 @@ internal static class DtoToMetadataConverter
 
         return (nodeErrors, failedDecryptionFields);
     }
+
+    private static async Task<(MemberRole DirectRole, Membership? Membership)> BuildMembershipInfoAsync(
+        ProtonDriveClient client,
+        VolumeId volumeId,
+        ShareMembershipSummaryDto? membershipDto,
+        CancellationToken cancellationToken)
+    {
+        var logger = client.Telemetry.GetLogger("Node metadata");
+        var role = MapMemberRole(logger, membershipDto?.Permissions);
+
+        var isOnOwnVolume = await VolumeOperations.IsOwnVolumeAsync(client, volumeId, cancellationToken).ConfigureAwait(false);
+
+        var directRole = isOnOwnVolume ? MemberRole.Admin : role;
+
+        Membership? membership = null;
+        if (membershipDto is not null)
+        {
+            var inviterClaim = await AuthorshipClaim.CreateAsync(client.Account, membershipDto.InviterEmailAddress, cancellationToken).ConfigureAwait(false);
+            var verificationFailure = NodeCrypto.VerifyMembershipInviter(
+                membershipDto.MemberSharePassphraseKeyPacket,
+                membershipDto.InviterSharePassphraseKeyPacketSignature,
+                inviterClaim);
+
+            membership = new Membership
+            {
+                Role = role,
+                InviteTime = membershipDto.InviteTime,
+                SharedBy = inviterClaim.ToAuthorshipResult(verificationFailure),
+            };
+        }
+
+        return (directRole, membership);
+    }
+
+    private static MemberRole MapMemberRole(ILogger logger, ShareMemberPermissions? permissions)
+    {
+        if (permissions is null)
+        {
+            return MemberRole.Inherited;
+        }
+
+        switch (permissions.Value)
+        {
+            case ShareMemberPermissions.Read:
+                return MemberRole.Viewer;
+            case ShareMemberPermissions.Read | ShareMemberPermissions.Write:
+                return MemberRole.Editor;
+            case ShareMemberPermissions.Read | ShareMemberPermissions.Write | ShareMemberPermissions.Admin:
+                return MemberRole.Admin;
+            default:
+                // The user has access to the data, thus at minimum it can view.
+                LogUnknownSharingPermissions(logger, permissions.Value);
+                return MemberRole.Viewer;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Unknown sharing permissions: {Permissions}")]
+    private static partial void LogUnknownSharingPermissions(ILogger logger, ShareMemberPermissions permissions);
 
     private static OwnedBy MapOwnedBy(OwnedByDto? dto) => new(dto?.Email, dto?.Organization);
 }
