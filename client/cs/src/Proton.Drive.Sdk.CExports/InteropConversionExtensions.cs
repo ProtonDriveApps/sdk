@@ -47,12 +47,18 @@ internal static class InteropConversionExtensions
                 OwnedBy = albumNode.OwnedBy.ToInterop(),
                 IsShared = albumNode.IsShared,
                 IsSharedByUrl = albumNode.IsSharedByUrl,
+                DirectRole = (MemberRole)(int)albumNode.DirectRole,
                 PhotoCount = albumNode.PhotoCount,
             };
 
             if (albumNode.ParentUid != null)
             {
                 albumNodeProto.ParentUid = albumNode.ParentUid.ToString();
+            }
+
+            if (albumNode.Membership is { } membership)
+            {
+                albumNodeProto.Membership = membership.ToInterop();
             }
 
             if (albumNode.CoverPhotoUid is { } coverPhotoUid)
@@ -86,12 +92,18 @@ internal static class InteropConversionExtensions
                 OwnedBy = photoNode.OwnedBy.ToInterop(),
                 IsShared = photoNode.IsShared,
                 IsSharedByUrl = photoNode.IsSharedByUrl,
+                DirectRole = (MemberRole)(int)photoNode.DirectRole,
                 CaptureTime = photoNode.CaptureTime.ToUniversalTime().ToTimestamp(),
             };
 
             if (photoNode.ParentUid != null)
             {
                 photoNodeProto.ParentUid = photoNode.ParentUid.ToString();
+            }
+
+            if (photoNode.Membership is { } membership)
+            {
+                photoNodeProto.Membership = membership.ToInterop();
             }
 
             photoNodeProto.ActiveRevision = photoNode.ActiveRevision.ToInterop();
@@ -115,11 +127,17 @@ internal static class InteropConversionExtensions
                 OwnedBy = folderNode.OwnedBy.ToInterop(),
                 IsShared = folderNode.IsShared,
                 IsSharedByUrl = folderNode.IsSharedByUrl,
+                DirectRole = (MemberRole)(int)folderNode.DirectRole,
             };
 
             if (folderNode.ParentUid != null)
             {
                 folderNodeProto.ParentUid = folderNode.ParentUid.ToString();
+            }
+
+            if (folderNode.Membership is { } membership)
+            {
+                folderNodeProto.Membership = membership.ToInterop();
             }
 
             folderNodeProto.Errors.AddRange(folderNode.Errors.Select(ToInterop));
@@ -143,11 +161,17 @@ internal static class InteropConversionExtensions
                 OwnedBy = fileNode.OwnedBy.ToInterop(),
                 IsShared = fileNode.IsShared,
                 IsSharedByUrl = fileNode.IsSharedByUrl,
+                DirectRole = (MemberRole)(int)fileNode.DirectRole,
             };
 
             if (fileNode.ParentUid != null)
             {
                 fileNodeProto.ParentUid = fileNode.ParentUid.ToString();
+            }
+
+            if (fileNode.Membership is { } membership)
+            {
+                fileNodeProto.Membership = membership.ToInterop();
             }
 
             fileNodeProto.ActiveRevision = fileNode.ActiveRevision.ToInterop();
@@ -378,6 +402,19 @@ internal static class InteropConversionExtensions
             }
 
             return authorResult;
+        }
+    }
+
+    extension(Nodes.Membership membership)
+    {
+        public Membership ToInterop()
+        {
+            return new Membership
+            {
+                Role = (MemberRole)(int)membership.Role,
+                InviteTime = membership.InviteTime.ToUniversalTime().ToTimestamp(),
+                SharedBy = membership.SharedBy.ToInterop(),
+            };
         }
     }
 

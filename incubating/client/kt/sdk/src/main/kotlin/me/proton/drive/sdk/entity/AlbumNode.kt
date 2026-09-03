@@ -14,6 +14,8 @@ data class AlbumNode(
     override val ownedBy: OwnedBy,
     override val isShared: Boolean,
     override val isSharedByUrl: Boolean,
+    override val directRole: MemberRole,
+    override val membership: Membership?,
     override val errors: List<DriveError>,
     val photoCount: Long,
     val coverPhotoNodeUid: NodeUid?,

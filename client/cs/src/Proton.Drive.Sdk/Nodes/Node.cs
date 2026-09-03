@@ -29,5 +29,9 @@ public abstract record Node
 
     public required bool IsSharedByUrl { get; init; }
 
+    public required MemberRole DirectRole { get; init; }
+
+    public Membership? Membership { get; init; }
+
     public required IReadOnlyList<ProtonDriveError> Errors { get; init; }
 }

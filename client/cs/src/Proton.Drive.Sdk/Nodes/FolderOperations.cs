@@ -6,6 +6,7 @@ using Proton.Drive.Sdk.Api.Folders;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Serialization;
+using Proton.Drive.Sdk.Volumes;
 
 namespace Proton.Drive.Sdk.Nodes;
 
@@ -128,6 +129,8 @@ internal static class FolderOperations
 
         var author = new Author { EmailAddress = membershipAddress.EmailAddress };
 
+        var isOnOwnVolume = await VolumeOperations.IsOwnVolumeAsync(client, folderUid.VolumeId, cancellationToken).ConfigureAwait(false);
+
         return new FolderNode
         {
             Uid = folderUid,
@@ -139,6 +142,7 @@ internal static class FolderOperations
             OwnedBy = parentOwnedBy,
             IsShared = false,
             IsSharedByUrl = false,
+            DirectRole = isOnOwnVolume ? MemberRole.Admin : MemberRole.Inherited,
             Errors = [],
         };
     }

@@ -163,6 +163,10 @@ public struct FolderNode: Sendable {
     public let isShared: Bool
     /// Whether the node is shared by URL
     public let isSharedByUrl: Bool
+    /// Highest role the user has on the node; `.inherited` when not shared directly with the user.
+    public let directRole: MemberRole
+    /// Membership information when the node is shared directly with the user; `nil` otherwise.
+    public let membership: Membership?
     public let errors: [ProtonDriveSDKDriveError]
 
     public init(uid: SDKNodeUid,
@@ -175,6 +179,8 @@ public struct FolderNode: Sendable {
                 ownedBy: OwnedBy,
                 isShared: Bool,
                 isSharedByUrl: Bool,
+                directRole: MemberRole,
+                membership: Membership?,
                 errors: [ProtonDriveSDKDriveError])
     {
         self.uid = uid
@@ -187,6 +193,8 @@ public struct FolderNode: Sendable {
         self.ownedBy = ownedBy
         self.isShared = isShared
         self.isSharedByUrl = isSharedByUrl
+        self.directRole = directRole
+        self.membership = membership
         self.errors = errors
     }
 
@@ -204,6 +212,8 @@ public struct FolderNode: Sendable {
         self.ownedBy = OwnedBy(result: sdkFolderNode.ownedBy)
         self.isShared = sdkFolderNode.isShared
         self.isSharedByUrl = sdkFolderNode.isSharedByURL
+        self.directRole = try MemberRole(sdkType: sdkFolderNode.directRole)
+        self.membership = sdkFolderNode.hasMembership ? try Membership(membership: sdkFolderNode.membership) : nil
         self.errors = sdkFolderNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
     }
 }
@@ -225,6 +235,10 @@ public struct AlbumNode: Sendable {
     public let isShared: Bool
     /// Whether the node is shared by URL
     public let isSharedByUrl: Bool
+    /// Highest role the user has on the node; `.inherited` when not shared directly with the user.
+    public let directRole: MemberRole
+    /// Membership information when the node is shared directly with the user; `nil` otherwise.
+    public let membership: Membership?
     public let errors: [ProtonDriveSDKDriveError]
     /// Number of photos in the album
     public let photoCount: Int64
@@ -243,6 +257,8 @@ public struct AlbumNode: Sendable {
                 ownedBy: OwnedBy,
                 isShared: Bool,
                 isSharedByUrl: Bool,
+                directRole: MemberRole,
+                membership: Membership?,
                 errors: [ProtonDriveSDKDriveError],
                 photoCount: Int64,
                 coverPhotoNodeUid: SDKNodeUid?,
@@ -258,6 +274,8 @@ public struct AlbumNode: Sendable {
         self.ownedBy = ownedBy
         self.isShared = isShared
         self.isSharedByUrl = isSharedByUrl
+        self.directRole = directRole
+        self.membership = membership
         self.errors = errors
         self.photoCount = photoCount
         self.coverPhotoNodeUid = coverPhotoNodeUid
@@ -278,6 +296,8 @@ public struct AlbumNode: Sendable {
         self.ownedBy = OwnedBy(result: sdkAlbumNode.ownedBy)
         self.isShared = sdkAlbumNode.isShared
         self.isSharedByUrl = sdkAlbumNode.isSharedByURL
+        self.directRole = try MemberRole(sdkType: sdkAlbumNode.directRole)
+        self.membership = sdkAlbumNode.hasMembership ? try Membership(membership: sdkAlbumNode.membership) : nil
         self.errors = sdkAlbumNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
         self.photoCount = sdkAlbumNode.photoCount
         self.coverPhotoNodeUid = sdkAlbumNode.hasCoverPhotoNodeUid
@@ -330,6 +350,53 @@ public struct OwnedBy: Sendable {
     }
 }
 
+/// Role of the user on a node, granting a set of permissions.
+public enum MemberRole: Sendable {
+    /// The role is inherited from an ancestor node; the node is not shared directly with the user.
+    case inherited
+    /// The user can view the node but not modify it.
+    case viewer
+    /// The user can view and modify the node.
+    case editor
+    /// The user can view, modify and manage sharing of the node.
+    case admin
+
+    init(sdkType: Proton_Drive_Sdk_MemberRole) throws {
+        switch sdkType {
+        case .inherited: self = .inherited
+        case .viewer: self = .viewer
+        case .editor: self = .editor
+        case .admin: self = .admin
+        case .UNRECOGNIZED:
+            throw ProtonDriveSDKError(interopError: .wrongSDKResponse(message: "Unknown member role: \(sdkType)"))
+        }
+    }
+}
+
+/// Membership information of a node that is shared directly with the user.
+/// Available only on nodes with direct access; children do not inherit it.
+public struct Membership: Sendable {
+    /// Role granted to the user by this membership.
+    public let role: MemberRole
+    /// When the node was shared with the user.
+    public let inviteTime: TimeInterval
+    /// Author who shared the node with the user; `signatureVerificationError` is set when the
+    /// invitation signature could not be verified (possibly forged).
+    public let sharedBy: Author
+
+    public init(role: MemberRole, inviteTime: TimeInterval, sharedBy: Author) {
+        self.role = role
+        self.inviteTime = inviteTime
+        self.sharedBy = sharedBy
+    }
+
+    init(membership: Proton_Drive_Sdk_Membership) throws {
+        self.role = try MemberRole(sdkType: membership.role)
+        self.inviteTime = membership.inviteTime.timeIntervalSince1970
+        self.sharedBy = Author(result: membership.sharedBy)
+    }
+}
+
 public struct FileNode: Sendable {
     public let uid: SDKNodeUid
     public let parentUid: SDKNodeUid?
@@ -341,6 +408,10 @@ public struct FileNode: Sendable {
     public let keyAuthor: Author
     /// Owner of the node, either email or organization
     public let ownedBy: OwnedBy
+    /// Highest role the user has on the node; `.inherited` when not shared directly with the user.
+    public let directRole: MemberRole
+    /// Membership information when the node is shared directly with the user; `nil` otherwise.
+    public let membership: Membership?
     /// MIME type of the file
     public let mediaType: String
     /// Total size of all revisions, encrypted size on the server
@@ -353,13 +424,15 @@ public struct FileNode: Sendable {
     public let errors: [ProtonDriveSDKDriveError]
 
     public init(uid: SDKNodeUid,
-                parentUid: SDKNodeUid,
+                parentUid: SDKNodeUid?,
                 name: Result<String, ProtonDriveSDKDriveError>,
                 creationTime: TimeInterval,
                 trashTime: TimeInterval?,
                 nameAuthor: Author,
                 keyAuthor: Author,
                 ownedBy: OwnedBy,
+                directRole: MemberRole,
+                membership: Membership?,
                 mediaType: String,
                 totalStorageSize: Int64,
                 activeRevision: FileRevision,
@@ -374,6 +447,8 @@ public struct FileNode: Sendable {
         self.nameAuthor = nameAuthor
         self.keyAuthor = keyAuthor
         self.ownedBy = ownedBy
+        self.directRole = directRole
+        self.membership = membership
         self.mediaType = mediaType
         self.totalStorageSize = totalStorageSize
         self.activeRevision = activeRevision
@@ -394,6 +469,8 @@ public struct FileNode: Sendable {
         self.nameAuthor = Author(result: sdkFileNode.nameAuthor)
         self.keyAuthor = Author(result: sdkFileNode.keyAuthor)
         self.ownedBy = OwnedBy(result: sdkFileNode.ownedBy)
+        self.directRole = try MemberRole(sdkType: sdkFileNode.directRole)
+        self.membership = sdkFileNode.hasMembership ? try Membership(membership: sdkFileNode.membership) : nil
         self.mediaType = sdkFileNode.mediaType
         self.totalStorageSize = sdkFileNode.totalStorageSize
         self.activeRevision = try FileRevision(sdkFileRevision: sdkFileNode.activeRevision)
@@ -423,6 +500,10 @@ public struct PhotoNode: Sendable {
     public let isShared: Bool
     /// Whether the node is shared by URL
     public let isSharedByUrl: Bool
+    /// Highest role the user has on the node; `.inherited` when not shared directly with the user.
+    public let directRole: MemberRole
+    /// Membership information when the node is shared directly with the user; `nil` otherwise.
+    public let membership: Membership?
     public let errors: [ProtonDriveSDKDriveError]
     /// Time the photo was captured
     public let captureTime: TimeInterval
@@ -442,6 +523,8 @@ public struct PhotoNode: Sendable {
                 activeRevision: FileRevision,
                 isShared: Bool,
                 isSharedByUrl: Bool,
+                directRole: MemberRole,
+                membership: Membership?,
                 errors: [ProtonDriveSDKDriveError],
                 captureTime: TimeInterval,
                 albumUids: [SDKNodeUid]) {
@@ -458,6 +541,8 @@ public struct PhotoNode: Sendable {
         self.activeRevision = activeRevision
         self.isShared = isShared
         self.isSharedByUrl = isSharedByUrl
+        self.directRole = directRole
+        self.membership = membership
         self.errors = errors
         self.captureTime = captureTime
         self.albumUids = albumUids
@@ -480,6 +565,8 @@ public struct PhotoNode: Sendable {
         self.activeRevision = try FileRevision(sdkFileRevision: sdkPhotoNode.activeRevision)
         self.isShared = sdkPhotoNode.isShared
         self.isSharedByUrl = sdkPhotoNode.isSharedByURL
+        self.directRole = try MemberRole(sdkType: sdkPhotoNode.directRole)
+        self.membership = sdkPhotoNode.hasMembership ? try Membership(membership: sdkPhotoNode.membership) : nil
         self.errors = sdkPhotoNode.errors.map { ProtonDriveSDKDriveError(error: $0) }
         self.captureTime = sdkPhotoNode.captureTime.timeIntervalSince1970
         self.albumUids = sdkPhotoNode.albumUids.compactMap { SDKNodeUid(sdkCompatibleIdentifier: $0) }

@@ -302,6 +302,19 @@ message FileRevision {
     RevisionState state = 10;
 }
 
+enum MemberRole {
+    MEMBER_ROLE_INHERITED = 0;
+    MEMBER_ROLE_VIEWER = 1;
+    MEMBER_ROLE_EDITOR = 2;
+    MEMBER_ROLE_ADMIN = 3;
+}
+
+message Membership {
+    MemberRole role = 1;
+    google.protobuf.Timestamp invite_time = 2;
+    AuthorResult shared_by = 3;
+}
+
 message FileNode {
     string uid = 1;
     string parent_uid = 2;
@@ -318,6 +331,8 @@ message FileNode {
     repeated DriveError errors = 13;
     bool is_shared = 14;
     bool is_shared_by_url = 15;
+    MemberRole direct_role = 16;
+    Membership membership = 17; // optional - set only on directly-shared nodes
 }
 
 message FolderNode {
@@ -333,6 +348,8 @@ message FolderNode {
     repeated DriveError errors = 10;
     bool is_shared = 11;
     bool is_shared_by_url = 12;
+    MemberRole direct_role = 13;
+    Membership membership = 14; // optional - set only on directly-shared nodes
 }
 
 message SignatureVerificationError {
@@ -774,6 +791,8 @@ message AlbumNode {
     repeated DriveError errors = 10;
     bool is_shared = 11;
     bool is_shared_by_url = 12;
+    MemberRole direct_role = 16;
+    Membership membership = 17; // optional - set only on directly-shared nodes
     int64 photo_count = 13;
     string cover_photo_node_uid = 14; // optional
     google.protobuf.Timestamp last_activity_time = 15; // optional
@@ -795,6 +814,8 @@ message PhotoNode {
     repeated DriveError errors = 13;
     bool is_shared = 14;
     bool is_shared_by_url = 15;
+    MemberRole direct_role = 18;
+    Membership membership = 19; // optional - set only on directly-shared nodes
     google.protobuf.Timestamp capture_time = 16;
     repeated string album_uids = 17;
 }

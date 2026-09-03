@@ -22,5 +22,7 @@ fun ProtonDriveSdk.FileNode.toEntity() = FileNode(
     ownedBy = ownedBy.toEntity(),
     isShared = isShared,
     isSharedByUrl = isSharedByUrl,
+    directRole = directRole.toEntity(),
+    membership = membership.takeIf { hasMembership() }?.toEntity(),
     errors = errorsList.map { it.toEntity() },
 )

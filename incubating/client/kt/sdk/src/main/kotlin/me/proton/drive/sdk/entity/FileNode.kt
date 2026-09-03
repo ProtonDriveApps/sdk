@@ -13,6 +13,8 @@ data class FileNode(
     override val nameAuthor: Result<Author>,
     override val keyAuthor: Result<Author>,
     override val ownedBy: OwnedBy,
+    override val directRole: MemberRole,
+    override val membership: Membership?,
     val activeRevision: FileRevision,
     val totalStorageSize: Long,
     override val isShared: Boolean,
