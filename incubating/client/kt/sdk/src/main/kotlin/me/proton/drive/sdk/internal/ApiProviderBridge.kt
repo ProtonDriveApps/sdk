@@ -1,8 +1,10 @@
 package me.proton.drive.sdk.internal
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import me.proton.core.domain.entity.UserId
 import me.proton.core.network.data.ApiProvider
 import me.proton.core.network.data.ProtonErrorException
@@ -27,8 +29,19 @@ internal class ApiProviderBridge(
     private var httpStreams = emptyList<HttpStream>()
     private val mutex = Mutex()
 
+    @Suppress("TooGenericExceptionCaught")
     override suspend fun invoke(request: HttpRequest): HttpResponse {
         val httpStream = createHttpStream()
+        return try {
+            respond(httpStream, request)
+        } catch (throwable: Throwable) {
+            // The SDK never took ownership, so nothing else will ever release this stream.
+            withContext(NonCancellable) { releaseHttpStream(httpStream) }
+            throw throwable
+        }
+    }
+
+    private suspend fun respond(httpStream: HttpStream, request: HttpRequest): HttpResponse {
         val preparedRequest = request.prepare(httpStream)
         val apiResult = RetryAfterDelay(isEnabled = preparedRequest.isRetryEnabled) { attempt ->
             apiProvider.get<HttpSdkApi>(userId).invoke(
