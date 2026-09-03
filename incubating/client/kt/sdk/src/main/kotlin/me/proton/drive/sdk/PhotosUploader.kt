@@ -53,7 +53,11 @@ class PhotosUploader(
         ).also(controllerReference::set)
     }
 
-    override fun close() = bridge.free(handle)
+    override fun close() {
+        log(DEBUG, "close")
+        bridge.free(handle)
+        super.close()
+    }
 
     override suspend fun cancel() {
         log(INFO, "cancel")
