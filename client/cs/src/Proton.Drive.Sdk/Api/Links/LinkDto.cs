@@ -24,7 +24,6 @@ internal sealed class LinkDto
     [JsonConverter(typeof(EpochSecondsJsonConverter))]
     public required DateTime ModificationTime { get; init; }
 
-    [JsonPropertyName("Trashed")]
     [JsonConverter(typeof(EpochSecondsJsonConverter))]
     public DateTime? TrashTime { get; init; }
 
