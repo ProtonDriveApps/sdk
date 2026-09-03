@@ -56,6 +56,7 @@ class FileUploader internal constructor(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        super.close()
     }
 
     override suspend fun cancel() {
