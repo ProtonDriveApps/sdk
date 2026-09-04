@@ -47,7 +47,7 @@ const args = [
     // Include source maps for readable stack traces.
     '--sourcemap=inline',
     '--define',
-    `APP_VERSION=${JSON.stringify(`${process.env.CLI_APP_VERSION_NAME || 'external-drive-sdkclijs'}@${getVersion('cli') || '0.0.0'}`)}`,
+    `APP_VERSION=${JSON.stringify(`${process.env.CLI_APP_VERSION_NAME || 'external-drive-sdkclijs'}@${getVersion('cli')}`)}`,
     '--define',
     `SDK_VERSION=${JSON.stringify(`js@${getVersion('js')}`)}`,
     '--define',
@@ -68,7 +68,6 @@ if (code !== 0) {
 /**
  * Returns version from environment variable if set,
  * otherwise from local git repository.
- * Returns undefined if no version can be determined.
  */
 function getVersion(tagPrefix) {
     const envName = { cli: 'CLI_VERSION', js: 'JS_VERSION' }[tagPrefix];
@@ -77,12 +76,9 @@ function getVersion(tagPrefix) {
         return envVersion;
     }
     try {
-        const shortHash = getShortHash();
-        const semver = semverFromLatestTag(tagPrefix);
-        return `${semver}+${shortHash}`;
+        return `${semverFromLatestTag(tagPrefix)}+${getShortHash()}`;
     } catch (error) {
-        console.warn(`Error getting version for ${tagPrefix}:`, error);
-        return undefined;
+        throw new Error(`Cannot determine ${tagPrefix} version from git; set ${envName} to build without git`, { cause: error });
     }
 }
 
