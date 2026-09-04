@@ -297,7 +297,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
                 }
             } catch (error: CancellationException) {
                 throw error
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 withContext(Dispatchers.Unconfined) {
                     responseOnce(sdkHandle, response {
                         this@response.error = error.toProtonSdkError("Error while executing $operation")
@@ -315,7 +315,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
                 }
             }
         }
-    } catch (error: Throwable) {
+    } catch (error: Exception) {
         handleResponse(sdkHandle, response {
             this@response.error = error.toProtonSdkError(
                 "Error while scheduling $operation"
@@ -336,7 +336,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         // parsing of protobuf needs to be done serially
         val request = parser(data)
         onOperation(operation, sdkHandle, responseOnce) { block(request) }
-    } catch (error: Throwable) {
+    } catch (error: Exception) {
         responseOnce(sdkHandle, response {
             this@response.error = error.toProtonSdkError(
                 "Error while parsing request for $operation"
@@ -361,7 +361,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
                     block(value)
                 } catch (error: CancellationException) {
                     throw error
-                } catch (error: Throwable) {
+                } catch (error: Exception) {
                     logger(WARN, "Error while $callback")
                     logger(WARN, error.stackTraceToString())
                 }
@@ -373,7 +373,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         } catch (error: NoCoroutineScopeException) {
             logger(ERROR, "Error while scheduling $callback")
             logger(ERROR, error.stackTraceToString())
-        } catch (error: Throwable) {
+        } catch (error: Exception) {
             logger(ERROR, "Error while parsing value for $callback")
             logger(ERROR, error.stackTraceToString())
         }

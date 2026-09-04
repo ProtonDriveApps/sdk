@@ -5,7 +5,7 @@ import me.proton.drive.sdk.entity.Author
 open class ProtonDriveException(
     override val message: String? = null,
     override val cause: Throwable? = null,
-) : Throwable(
+) : RuntimeException(
     /* message = */ message,
     /* cause = */ cause,
     /* enableSuppression = */ true,
