@@ -42,19 +42,9 @@ const packageOverrides = {
         },
     },
     'proton-drive-sdk-account': {
-        moduleDirectories: [
-            '<rootDir>/node_modules',
-            '<rootDir>/../../../cli/node_modules',
-            'node_modules',
-        ],
-        // TODO: We do not want to depend on the CLI's node_modules, but
-        // for now it's the only way to get the single version of crypto
-        // proxy used by both the account module and CLI.
-        // SRP module requires Account API and also crypto proxy dierctly,
-        // which must be however initialized in the CLI.
         moduleNameMapper: {
-            '^@protontech/crypto$': '<rootDir>/../../../cli/node_modules/@protontech/crypto/src/index.ts',
-            '^@protontech/crypto/(.*)$': '<rootDir>/../../../cli/node_modules/@protontech/crypto/src/$1',
+            '^@protontech/crypto$': '<rootDir>/node_modules/@protontech/crypto/src/index.ts',
+            '^@protontech/crypto/(.*)$': '<rootDir>/node_modules/@protontech/crypto/src/$1',
         },
     },
 };
@@ -62,7 +52,7 @@ const packageOverrides = {
 const defaultModuleDirectories = ['<rootDir>/node_modules', 'node_modules'];
 
 module.exports.createConfig = function createConfig({ rootDir }) {
-    const { name } = require(path.join(rootDir, 'package.json'));
+    const { name } = require(path.format({ dir: rootDir, base: 'package.json' }));
     const overrides = packageOverrides[name] ?? {};
 
     return {
