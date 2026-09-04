@@ -23,7 +23,7 @@ internal sealed class HashingWriteStream(Stream underlyingStream, IncrementalHas
     public override void Write(byte[] buffer, int offset, int count)
     {
         _underlyingStream.Write(buffer, offset, count);
-        _hash.AppendData(buffer);
+        _hash.AppendData(buffer, offset, count);
     }
 
     public override void WriteByte(byte value)
@@ -37,7 +37,7 @@ internal sealed class HashingWriteStream(Stream underlyingStream, IncrementalHas
 #pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
         await _underlyingStream.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
-        _hash.AppendData(buffer);
+        _hash.AppendData(buffer, offset, count);
     }
 
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
