@@ -10,20 +10,18 @@ import {
 import type { Logger } from './logger';
 import type { SessionCredentials } from './sessionCredentials';
 import { sleepMs } from './sleep';
-import { Srp } from './srp';
+import type { Srp } from './srp';
 import { fetchTelemetryEnabled } from './telemetryPreference';
 
 export class Auth {
-    private readonly srpModule: Srp;
     constructor(
         private readonly authClientId: string,
         private readonly accountApi: AccountApi,
         private readonly credentials: SessionCredentials,
+        private readonly srpModule: Srp,
         private readonly logger: Logger,
         private readonly accountUrl: string = DEFAULT_PROTON_ACCOUNT_URL,
-    ) {
-        this.srpModule = new Srp(accountApi);
-    }
+    ) {}
 
     isLoggedIn(): boolean {
         return this.credentials.isLoggedIn();

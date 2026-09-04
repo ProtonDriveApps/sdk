@@ -6,7 +6,7 @@ import { ApiClient } from './apiClient';
 import { Auth } from './auth';
 import type { Logger } from './logger';
 import type { SessionCredentials } from './sessionCredentials';
-import { Srp } from './srp';
+import { Srp, type SrpApiInterface } from './srp';
 
 export type { AccountAddress } from './accountAddress';
 export { AccountApi, AccountApiError, AddressNotFoundError } from './accountApi';
@@ -16,6 +16,7 @@ export { ApiClient } from './apiClient';
 export { Auth } from './auth';
 export type { Logger } from './logger';
 export type { SessionCredentials, SessionInfo } from './sessionCredentials';
+export type { SrpApiInterface } from './srp';
 export { Srp } from './srp';
 
 export type InitAccountOptions = {
@@ -23,6 +24,7 @@ export type InitAccountOptions = {
     apiClient: ApiClient;
     credentials: SessionCredentials;
     cryptoProxy: CryptoApiInterface;
+    srpApi: SrpApiInterface;
     logger: Logger;
     /** Base URL used to build the web sign-in URL. Defaults to `account.proton.me`. */
     accountUrl?: string;
@@ -31,8 +33,15 @@ export type InitAccountOptions = {
 export async function initAccount(options: InitAccountOptions) {
     const accountApi = new AccountApi(options.apiClient);
     const addresses = new Addresses(accountApi, options.credentials, options.cryptoProxy, options.logger);
-    const auth = new Auth(options.authClientId, accountApi, options.credentials, options.logger, options.accountUrl);
-    const srp = new Srp(accountApi);
+    const srp = new Srp(accountApi, options.srpApi);
+    const auth = new Auth(
+        options.authClientId,
+        accountApi,
+        options.credentials,
+        srp,
+        options.logger,
+        options.accountUrl,
+    );
 
     await auth.loadSession();
 

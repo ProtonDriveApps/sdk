@@ -1,9 +1,8 @@
-import {
-    type CryptoApiInterface,
-    PrivateKeyReference,
-    PublicKeyReference,
-    VERIFICATION_STATUS,
-} from '@protontech/crypto';
+import type { CryptoApiInterface, PrivateKeyReference, PublicKeyReference } from '@protontech/crypto';
+// Imported from the leaf `constants` entry point rather than the package root:
+// the root pulls in the crypto endpoint state, which must stay a singleton
+// owned by the application (see SrpApiInterface in ./srp).
+import { VERIFICATION_STATUS } from '@protontech/crypto/constants';
 
 import type { AccountAddress } from './accountAddress';
 import { AccountApi, AddressNotFoundError } from './accountApi';
