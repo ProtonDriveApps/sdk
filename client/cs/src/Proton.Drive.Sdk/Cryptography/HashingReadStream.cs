@@ -15,8 +15,8 @@ internal sealed class HashingReadStream(Stream underlyingStream, IncrementalHash
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        var readCount = _underlyingStream.Read(buffer);
-        _hash.AppendData(buffer.AsSpan(0, readCount));
+        var readCount = _underlyingStream.Read(buffer, offset, count);
+        _hash.AppendData(buffer, offset, readCount);
         return readCount;
     }
 
@@ -36,8 +36,8 @@ internal sealed class HashingReadStream(Stream underlyingStream, IncrementalHash
 
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        var readCount = await _underlyingStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-        _hash.AppendData(buffer.AsSpan(0, readCount));
+        var readCount = await _underlyingStream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+        _hash.AppendData(buffer, offset, readCount);
         return readCount;
     }
 
