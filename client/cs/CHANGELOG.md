@@ -1,5 +1,16 @@
 # Changelog
 
+## cs/v0.25.0 (2026-08-26)
+
+### Features
+- Enumerate drive events over interop
+- Implement per-file upload performance metrics
+- Support saving photos to the timeline
+
+### Bug Fixes
+- Report socket exceptions from streaming as network errors
+
+
 ## cs/v0.24.0 (2026-08-10)
 
 ### Features
