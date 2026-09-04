@@ -1,4 +1,4 @@
-import { PrivateKeyReference } from '@protontech/crypto';
+import type { PrivateKeyReference } from '@protontech/crypto';
 
 export type AccountAddress = {
     email: string;

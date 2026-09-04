@@ -1,4 +1,5 @@
 import type { CryptoApiInterface } from '@protontech/crypto';
+import { computeKeyPassword, generateKeySalt, getRandomSrpVerifier, getSrp } from '@protontech/crypto/srp';
 import { Logger } from '@protontech/drive-sdk';
 
 import { ApiClient, initAccount } from 'proton-drive-sdk-account';
@@ -38,6 +39,9 @@ export async function initApi(
         apiClient,
         credentials,
         cryptoProxy,
+        // The account module must not import the crypto package itself, so
+        // that both it and the CLI share the endpoint initialised in init.ts.
+        srpApi: { computeKeyPassword, generateKeySalt, getRandomSrpVerifier, getSrp },
         logger,
         accountUrl: config.accountUrl,
     });
