@@ -22,7 +22,7 @@
         "outDir": "dist",
         "rootDir": "src",
         "resolveJsonModule": true,
-        "types": ["@protontech/global-types", "mocha", "jest", "node"],
+        "types": ["@protontech/global-types", "jest", "node"],
         "allowImportingTsExtensions": true,
         "rewriteRelativeImportExtensions": true
     },

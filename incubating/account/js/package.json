@@ -17,6 +17,7 @@
         "ky": "^1.14.3"
     },
     "devDependencies": {
+        "@protontech/crypto": "2.0.0",
         "@swc/core": "^1.12.3",
         "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
@@ -33,5 +34,8 @@
     },
     "peerDependencies": {
         "@protontech/crypto": "^2.0.0"
+    },
+    "patchedDependencies": {
+        "@protontech/crypto@2.0.0": "../../../config/js/patches/@protontech%2Fcrypto@2.0.0.patch"
     }
 }
