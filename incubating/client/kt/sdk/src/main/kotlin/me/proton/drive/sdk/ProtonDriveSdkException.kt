@@ -4,7 +4,7 @@ class ProtonDriveSdkException(
     override val message: String? = null,
     override val cause: Throwable? = null,
     val error: ProtonSdkError? = null
-) : Throwable(message, cause) {
+) : RuntimeException(message, cause) {
     override fun toString(): String = buildString {
         appendLine(super.toString())
         appendError(error, logMode = LogMode.Full)
