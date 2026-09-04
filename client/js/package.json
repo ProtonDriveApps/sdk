@@ -28,8 +28,8 @@
         "ttag": "^1.8.7"
     },
     "optionalDependencies": {
-        "@xmldom/xmldom": "^0.9.10",
-        "exifreader": "^4.39.1"
+        "@xmldom/xmldom": "^0.9.12",
+        "exifreader": "^4.44.0"
     },
     "devDependencies": {
         "@protontech/crypto": "^2.0.0",
@@ -39,16 +39,15 @@
         "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
         "@typescript-eslint/eslint-plugin": "^8.58.1",
-        "@web/dev-server-esbuild": "^1.0.3",
         "eslint": "^8.57.1",
         "eslint-plugin-simple-import-sort": "^13.0.0",
         "eslint-plugin-tsdoc": "^0.3.0",
-        "glob": "^11.0.3",
+        "glob": "^11.1.0",
         "jest": "^29.7.0",
         "openapi-typescript": "^7.4.1",
         "prettier": "^3.6.2",
-        "ttag-cli": "^1.10.18",
-        "typedoc": "^0.28.16",
+        "ttag-cli": "^1.12.0",
+        "typedoc": "^0.28.20",
         "typescript": "^5.9.3"
     },
     "peerDependencies": {
