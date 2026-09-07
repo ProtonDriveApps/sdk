@@ -178,7 +178,7 @@
         "Hi ha hagut un error en la verificació de la signatura: ${ errorMessage }"
       ],
       "Signature verification for ${ signatureType } failed": [
-        "No s'ha pogut verificar la signatura per a ${ signatureType }"
+        "No s'ha pogut verificar la signatura de ${ signatureType }"
       ],
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "No s'ha pogut verificar la signatura per a ${ signatureType }: ${ errorMessage }"
