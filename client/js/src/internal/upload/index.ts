@@ -30,7 +30,7 @@ export function initUploadModule(
     allowSmallFileUpload: boolean = true,
 ) {
     const api = new UploadAPIService(apiService, clientUid);
-    const cryptoService = new UploadCryptoService(telemetry, driveCrypto, nodesService, featureFlagProvider);
+    const cryptoService = new UploadCryptoService(telemetry, driveCrypto, nodesService);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new UploadManager(telemetry, api, cryptoService, nodesService, clientUid);

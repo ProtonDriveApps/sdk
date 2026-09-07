@@ -24,7 +24,6 @@ try {
         enableMetrics: !!SENTRY_DSN,
         // TODO: Configure flags via Unleash.
         flags: {
-            [FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead]: true,
             [FeatureFlags.DriveSmallFileUpload]: true,
         },
     });

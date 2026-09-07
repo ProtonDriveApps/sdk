@@ -1,6 +1,5 @@
 import { DriveCrypto } from '../../crypto';
 import {
-    FeatureFlagProvider,
     ProtonDriveAccount,
     ProtonDriveCryptoCache,
     ProtonDriveEntitiesCache,
@@ -149,11 +148,10 @@ export function initPhotoUploadModule(
     driveCrypto: DriveCrypto,
     sharesService: SharesService,
     nodesService: UploadNodesService,
-    featureFlagProvider: FeatureFlagProvider,
     clientUid?: string,
 ) {
     const api = new PhotoUploadAPIService(apiService, clientUid);
-    const cryptoService = new PhotoUploadCryptoService(telemetry, driveCrypto, nodesService, featureFlagProvider);
+    const cryptoService = new PhotoUploadCryptoService(telemetry, driveCrypto, nodesService);
 
     const uploadTelemetry = new UploadTelemetry(telemetry, sharesService);
     const manager = new PhotoUploadManager(telemetry, api, cryptoService, nodesService, clientUid);
