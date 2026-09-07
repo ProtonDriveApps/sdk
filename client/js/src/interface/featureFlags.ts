@@ -7,6 +7,5 @@ export interface FeatureFlagProvider {
 }
 
 export enum FeatureFlags {
-    DriveCryptoEncryptBlocksWithPgpAead = 'DriveCryptoEncryptBlocksWithPgpAead',
     DriveSmallFileUpload = 'DriveSmallFileUpload',
 }

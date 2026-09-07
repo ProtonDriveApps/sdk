@@ -6,8 +6,6 @@ import { DriveCrypto, PrivateKey, SessionKey } from '../../crypto';
 import { IntegrityError } from '../../errors';
 import {
     AnonymousUser,
-    FeatureFlagProvider,
-    FeatureFlags,
     Logger,
     ProtonDriveTelemetry,
     Thumbnail,
@@ -28,12 +26,10 @@ export class UploadCryptoService {
         telemetry: ProtonDriveTelemetry,
         protected driveCrypto: DriveCrypto,
         protected nodesService: NodesService,
-        protected featureFlagProvider: FeatureFlagProvider,
     ) {
         this.logger = telemetry.getLogger('upload');
         this.driveCrypto = driveCrypto;
         this.nodesService = nodesService;
-        this.featureFlagProvider = featureFlagProvider;
     }
 
     async generateFileCrypto(
@@ -41,13 +37,6 @@ export class UploadCryptoService {
         parentKeys: { key: PrivateKey; hashKey: Uint8Array<ArrayBuffer> },
         name: string,
     ): Promise<NodeCrypto> {
-        const useAeadFeatureFlag = await this.featureFlagProvider.isEnabled(
-            FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead,
-        );
-        if (useAeadFeatureFlag) {
-            this.logger.info('Generating file crypto with AEAD enabled');
-        }
-
         const signingKeys = await this.getSigningKeys({ parentNodeUid: parentUid });
 
         if (!signingKeys.nameAndPassphraseSigningKey) {
@@ -56,7 +45,7 @@ export class UploadCryptoService {
 
         const [nodeKeys, { armoredNodeName }, hash] = await Promise.all([
             this.driveCrypto.generateKey([parentKeys.key], signingKeys.nameAndPassphraseSigningKey, {
-                enableAead: useAeadFeatureFlag,
+                enableAead: true,
             }),
             this.driveCrypto.encryptNodeName(name, undefined, parentKeys.key, signingKeys.nameAndPassphraseSigningKey),
             this.driveCrypto.generateLookupHash(name, parentKeys.hashKey),

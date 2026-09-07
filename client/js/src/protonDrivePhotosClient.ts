@@ -176,7 +176,6 @@ export class ProtonDrivePhotosClient {
             cryptoModule,
             this.photoShares,
             this.nodes.access,
-            featureFlagProvider,
             fullConfig.clientUid,
         );
 

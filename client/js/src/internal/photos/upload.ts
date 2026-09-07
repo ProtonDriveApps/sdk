@@ -1,7 +1,6 @@
 import { DriveCrypto } from '../../crypto';
 import {
     AnonymousUser,
-    FeatureFlagProvider,
     PhotoTag,
     ProtonDriveTelemetry,
     Thumbnail,
@@ -220,9 +219,8 @@ export class PhotoUploadCryptoService extends UploadCryptoService {
         telemetry: ProtonDriveTelemetry,
         driveCrypto: DriveCrypto,
         nodesService: NodesService,
-        featureFlagProvider: FeatureFlagProvider,
     ) {
-        super(telemetry, driveCrypto, nodesService, featureFlagProvider);
+        super(telemetry, driveCrypto, nodesService);
     }
 
     async generateContentHash(sha1: string, parentHashKey: Uint8Array<ArrayBuffer>): Promise<string> {

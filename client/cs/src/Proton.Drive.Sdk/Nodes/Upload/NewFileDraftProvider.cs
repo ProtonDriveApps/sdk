@@ -44,9 +44,6 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
         var signingKey = await _client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
 
-        var useAeadFeatureFlag = await _client.FeatureFlagProvider.IsEnabledAsync(FeatureFlags.DriveCryptoEncryptBlocksWithPgpAead, cancellationToken)
-            .ConfigureAwait(false);
-
         var request = GetFileCreationRequest(
             intendedUploadSize,
             _client.Uid,
@@ -57,7 +54,6 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             parentHashKey,
             signingKey,
             membershipAddress.EmailAddress,
-            useAeadFeatureFlag,
             out var nodeKey,
             out var fileSecrets);
         var contentKey = fileSecrets.ContentKey ?? throw new InvalidOperationException("Generated file secrets are missing content key");
@@ -102,18 +98,15 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
         ReadOnlyMemory<byte> parentHashKey,
         PgpPrivateKey signingKey,
         string membershipEmailAddress,
-        bool useAeadFeatureFlag,
         out PgpPrivateKey nodeKey,
         out FileOperationData fileSecrets)
     {
-        var pgpProfile = useAeadFeatureFlag ? PgpProfile.ProtonAead : PgpProfile.Proton;
-
         NodeOperations.GetCommonCreationParameters(
             name,
             parentKey,
             parentHashKey.Span,
             signingKey,
-            pgpProfile,
+            PgpProfile.ProtonAead,
             out nodeKey,
             out var lockedNodeKey,
             out var nameSessionKey,
@@ -123,7 +116,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
             out var encryptedKeyPassphrase,
             out var passphraseSignature);
 
-        var contentKey = useAeadFeatureFlag ? PgpSessionKey.GenerateForAead() : PgpSessionKey.Generate();
+        var contentKey = PgpSessionKey.GenerateForAead();
         var contentKeyPacket = nodeKey.EncryptSessionKey(contentKey);
 
         fileSecrets = new FileOperationData
