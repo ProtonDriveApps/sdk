@@ -1,3 +1,5 @@
+import { ValidationError } from '@protontech/drive-sdk';
+
 import { TransferSummary } from './transferSummary';
 
 function summaryAsJson(summary: TransferSummary) {
@@ -6,6 +8,14 @@ function summaryAsJson(summary: TransferSummary) {
     const result = JSON.parse(logSpy.mock.calls[0]![0] as string);
     logSpy.mockRestore();
     return result;
+}
+
+function summaryConsoleOutput(summary: TransferSummary): string[] {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation();
+    summary.print({ json: false });
+    const lines = logSpy.mock.calls.map((call) => call[0] as string);
+    logSpy.mockRestore();
+    return lines;
 }
 
 describe('TransferSummary', () => {
@@ -40,6 +50,48 @@ describe('TransferSummary', () => {
         uploadSummary.recordFailure('bad.txt', new Error('network error'));
         uploadSummary.setQueuedCount(1);
         expect(uploadSummary.formatProgressLine()).toBe('Uploaded 1 | Failed 1 | Queued 1');
+    });
+
+    it('records error codes for ValidationError failures', () => {
+        const summary = new TransferSummary('upload');
+        summary.recordFailure('big.bin', new ValidationError('Storage quota exceeded', 200002));
+        summary.recordFailure('bad.txt', new Error('network error'));
+
+        expect(summary.hasFailureWithErrorCode(new Set([200002]))).toBe(true);
+        expect(summary.hasFailureWithErrorCode(new Set([2011]))).toBe(false);
+    });
+
+    it('formats failure messages when printing json output', () => {
+        const summary = new TransferSummary('upload');
+        summary.recordFailure('bad.txt', new Error('network error'));
+        summary.recordFailure('remote.txt', 'checksum mismatch');
+
+        expect(summaryAsJson(summary)).toEqual({
+            transferredItems: 0,
+            transferredBytes: 0,
+            skippedItems: 0,
+            failedItems: 2,
+            failures: [
+                { name: 'bad.txt', error: 'Error: network error' },
+                { name: 'remote.txt', error: 'checksum mismatch' },
+            ],
+        });
+    });
+
+    it('prints human-readable transfer summary to the console', () => {
+        const summary = new TransferSummary('upload');
+        summary.recordSuccess(1024);
+        summary.recordSkip('skipped.txt', 'uid-1');
+        summary.recordFailure('bad.txt', new Error('network error'));
+
+        expect(summaryConsoleOutput(summary)).toEqual([
+            'Transfer summary:',
+            '  Uploaded: 1 items (1.00 KiB)',
+            '  Skipped: 1 items',
+            '  - skipped.txt (uid-1)',
+            '  Failed: 1 items',
+            '  - bad.txt: Error: network error',
+        ]);
     });
 
     it('includes skipped only when there are skipped items', () => {

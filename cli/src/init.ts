@@ -77,6 +77,7 @@ export async function init(configOptions: InitConfig) {
     const paths = new Paths(sdk, photosSdk, auth, eventsManager);
 
     return {
+        config,
         logger: logger as Logger,
         auth,
         addresses,

@@ -1,3 +1,5 @@
+import { ValidationError } from '@protontech/drive-sdk';
+
 import { formatSize, sanitizeTerminalText } from '../../cli/formatters';
 
 type TransferSkip = {
@@ -8,7 +10,7 @@ type TransferSkip = {
 type TransferFailure = {
     name: string;
     nodeUid?: string;
-    error: string;
+    error: unknown;
 };
 
 export class TransferSummary {
@@ -22,6 +24,15 @@ export class TransferSummary {
 
     get failureCount(): number {
         return this.failures.length;
+    }
+
+    hasFailureWithErrorCode(errorCodes: ReadonlySet<number>): boolean {
+        return this.failures.some(
+            (failure) =>
+                failure.error instanceof ValidationError &&
+                failure.error.code !== undefined &&
+                errorCodes.has(failure.error.code),
+        );
     }
 
     setQueuedCount(count: number): void {
@@ -38,8 +49,7 @@ export class TransferSummary {
     }
 
     recordFailure(name: string, error: unknown, nodeUid?: string): void {
-        const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-        this.failures.push({ name, nodeUid, error: message });
+        this.failures.push({ name, nodeUid, error });
     }
 
     formatProgressLine(): string {
@@ -63,7 +73,11 @@ export class TransferSummary {
                     transferredBytes: this.transferredBytes,
                     skippedItems: this.skipped.length,
                     failedItems: this.failures.length,
-                    failures: this.failures,
+                    failures: this.failures.map((failure) => ({
+                        name: failure.name,
+                        nodeUid: failure.nodeUid,
+                        error: formatTransferErrorMessage(failure.error),
+                    })),
                 }),
             );
             return;
@@ -87,9 +101,13 @@ export class TransferSummary {
             for (const failure of this.failures) {
                 const uidPart = failure.nodeUid ? ` (${failure.nodeUid})` : '';
                 console.log(
-                    `  - ${sanitizeTerminalText(failure.name)}${uidPart}: ${sanitizeTerminalText(failure.error)}`,
+                    `  - ${sanitizeTerminalText(failure.name)}${uidPart}: ${sanitizeTerminalText(formatTransferErrorMessage(failure.error))}`,
                 );
             }
         }
     }
+}
+
+function formatTransferErrorMessage(error: unknown): string {
+    return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
