@@ -5,6 +5,7 @@ import { Diagnostic } from '@protontech/drive-sdk/diagnostic';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { Auth } from '../api';
+import type { Config } from '../config';
 import type { Manager } from '../events';
 import type { CliMetrics } from '../telemetry';
 import { Paths } from './paths';
@@ -31,6 +32,7 @@ export type Option = ParseArgsOptionDescriptor & {
 };
 
 export interface ActionArgs {
+    config: Config;
     logger: Logger;
     auth: Auth;
     sdk: ProtonDriveClient;

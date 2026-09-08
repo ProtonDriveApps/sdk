@@ -10,6 +10,7 @@ import { type ActionArgs, type Command, Options } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
 import { createUploadProgressCallback, getFileMetadata } from '../fileSystem/commandFileSystemUpload';
 import { getLocalFileMediaType } from '../fileSystem/mediaType';
+import { showUpsellWhenInsufficientQuota } from '../fileSystem/storageQuotaUpsell';
 import {
     ConflictChoice,
     ConflictTargetKind,
@@ -51,6 +52,7 @@ export class CommandPhotoUpload implements Command {
     };
 
     async action({
+        config,
         logger,
         photosSdk,
         metrics,
@@ -115,6 +117,7 @@ export class CommandPhotoUpload implements Command {
         }
 
         if (summary.failureCount > 0) {
+            showUpsellWhenInsufficientQuota(config, summary, { json });
             throw new ValidationError(`${summary.failureCount} item(s) failed to upload`);
         }
     }

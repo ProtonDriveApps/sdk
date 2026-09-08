@@ -13,6 +13,7 @@ import type { CliMetrics } from '../../telemetry';
 import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
 import { getLocalFileMediaType } from './mediaType';
+import { showUpsellWhenInsufficientQuota } from './storageQuotaUpsell';
 import {
     ConflictChoice,
     ConflictTargetKind,
@@ -112,6 +113,7 @@ export class CommandFileSystemUpload implements Command {
     };
 
     async action({
+        config,
         logger,
         sdk,
         paths,
@@ -188,6 +190,7 @@ export class CommandFileSystemUpload implements Command {
         }
 
         if (summary.failureCount > 0) {
+            showUpsellWhenInsufficientQuota(config, summary, { json });
             throw new ValidationError(`${summary.failureCount} item(s) failed to upload`);
         }
     }
