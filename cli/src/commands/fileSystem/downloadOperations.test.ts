@@ -16,6 +16,7 @@ import { getSha1 } from './digest';
 import {
     createLocalFolder,
     type DownloadContext,
+    type DownloadFileData,
     downloadRemoteFile,
     ensureDirectory,
 } from './downloadOperations';
@@ -227,8 +228,8 @@ describe('downloadRemoteFile', () => {
 
     function fileItem(
         name: string,
-        overrides: Partial<QueueItemFile<{ remoteNode: NodeEntity }>> = {},
-    ): QueueItemFile<{ remoteNode: NodeEntity }> {
+        overrides: Partial<QueueItemFile<DownloadFileData>> = {},
+    ): QueueItemFile<DownloadFileData> {
         const localPath = path.join(downloadRoot, name);
         return {
             kind: 'file',
@@ -237,6 +238,7 @@ describe('downloadRemoteFile', () => {
             remoteNode: mockFileNode(name, 'remote-file', {
                 mediaType: 'text/plain',
                 activeRevision: {
+                    uid: 'remote-file~revision-1',
                     claimedSize: 512,
                     claimedDigests: {
                         sha1: 'abc123',
@@ -267,7 +269,7 @@ describe('downloadRemoteFile', () => {
             logger: getMockLogger(),
             conflictResolver: createConflictResolver({ forcedFileStrategy: ConflictChoice.DeleteLocal }),
             downloadRoot,
-            getFileDownloader: jest.fn(async () => mockDownloader()),
+            getFileRevisionDownloader: jest.fn(async () => mockDownloader()),
             ...overrides,
         };
     }
@@ -314,12 +316,33 @@ describe('downloadRemoteFile', () => {
 
         await expect(downloadRemoteFile({ ...ctx, metrics }, item)).resolves.toBe(512);
 
-        expect(ctx.getFileDownloader).toHaveBeenCalledWith(item.remoteNode);
+        expect(ctx.getFileRevisionDownloader).toHaveBeenCalledWith('remote-file~revision-1');
         expect(getSha1Mock).toHaveBeenCalledWith(item.localPath);
         expect(metrics.reportDownloadVerifierAttempt).toHaveBeenCalledWith({
             result: 'success',
             fileSize: 512,
             checksumVerified: true,
+        });
+    });
+
+    it('downloads a specific revision and verifies it against that revision', async () => {
+        const item = fileItem('report.txt', {
+            revision: {
+                uid: 'remote-file~revision-2',
+                claimedSize: 256,
+                claimedDigests: { sha1: 'def456', sha1Verified: false },
+            } as NodeEntity['activeRevision'],
+        });
+        const ctx = downloadContext();
+        const metrics = mockMetrics();
+
+        await expect(downloadRemoteFile({ ...ctx, metrics }, item)).resolves.toBe(512);
+
+        expect(ctx.getFileRevisionDownloader).toHaveBeenCalledWith('remote-file~revision-2');
+        expect(metrics.reportDownloadVerifierAttempt).toHaveBeenCalledWith({
+            result: 'failure',
+            fileSize: 256,
+            checksumVerified: false,
         });
     });
 
@@ -401,10 +424,7 @@ describe('downloadRemoteFile', () => {
         const item = fileItem('report.txt');
 
         await expect(
-            downloadRemoteFile(
-                downloadContext({ getFileDownloader: jest.fn(async () => downloader) }),
-                item,
-            ),
+            downloadRemoteFile(downloadContext({ getFileRevisionDownloader: jest.fn(async () => downloader) }), item),
         ).rejects.toThrow('network error');
 
         expect(unlinkMock).toHaveBeenCalledWith(item.localPath);

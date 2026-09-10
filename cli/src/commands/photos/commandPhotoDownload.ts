@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { Logger, NodeEntity, NodeType, ValidationError } from '@protontech/drive-sdk';
+import { makeNodeUidFromRevisionUid } from '@protontech/drive-sdk/internal/uids';
 import { ProtonDrivePhotosClient } from '@protontech/drive-sdk/protonDrivePhotosClient';
 
 import { type ActionArgs, type Command, getName, Options, Paths, PathType } from '../../cli';
@@ -83,7 +84,10 @@ export class CommandPhotoDownload implements Command {
             conflictResolver,
             downloadRoot,
             metrics,
-            getFileDownloader: (node) => photosSdk.getFileDownloader(node),
+            getFileRevisionDownloader: (revisionUid) => {
+                const nodeUid = makeNodeUidFromRevisionUid(revisionUid);
+                return photosSdk.getFileDownloader(nodeUid);
+            },
         };
 
         const downloadQueue = new PhotosDownloadQueue(logger, summary, photosSdk, {

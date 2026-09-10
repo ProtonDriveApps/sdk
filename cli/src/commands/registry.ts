@@ -33,6 +33,7 @@ import { CommandSharingRemove } from './sharing/commandSharingRemove';
 import { CommandSharingRemoveUrl } from './sharing/commandSharingRemoveUrl';
 import { CommandSharingSetUrl } from './sharing/commandSharingSetUrl';
 import { CommandSharingStatus } from './sharing/commandSharingStatus';
+import { CommandTakeoutRun } from './takeout/commandTakeoutRun';
 
 export const COMMANDS = applyDefaultCliOptions([
     new CommandAuthLogin(),
@@ -73,4 +74,7 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandPhotoTimeline(),
     new CommandPhotoUpload(),
     new CommandPhotoDownload(),
+
+    // Takeout commands
+    new CommandTakeoutRun(),
 ]);

@@ -13,6 +13,19 @@ type TransferFailure = {
     error: unknown;
 };
 
+export type TransferCounters = {
+    transferredItems: number;
+    transferredBytes: number;
+    skippedItems: number;
+    failedItems: number;
+};
+
+export type TransferFailureDetail = {
+    name: string;
+    nodeUid?: string;
+    error: string;
+};
+
 export class TransferSummary {
     private successCount = 0;
     private transferredBytes = 0;
@@ -24,6 +37,23 @@ export class TransferSummary {
 
     get failureCount(): number {
         return this.failures.length;
+    }
+
+    getCounters(): TransferCounters {
+        return {
+            transferredItems: this.successCount,
+            transferredBytes: this.transferredBytes,
+            skippedItems: this.skipped.length,
+            failedItems: this.failures.length,
+        };
+    }
+
+    getFailureDetails(): TransferFailureDetail[] {
+        return this.failures.map((failure) => ({
+            name: failure.name,
+            nodeUid: failure.nodeUid,
+            error: formatTransferErrorMessage(failure.error),
+        }));
     }
 
     hasFailureWithErrorCode(errorCodes: ReadonlySet<number>): boolean {
@@ -69,15 +99,8 @@ export class TransferSummary {
         if (options.json) {
             console.log(
                 JSON.stringify({
-                    transferredItems: this.successCount,
-                    transferredBytes: this.transferredBytes,
-                    skippedItems: this.skipped.length,
-                    failedItems: this.failures.length,
-                    failures: this.failures.map((failure) => ({
-                        name: failure.name,
-                        nodeUid: failure.nodeUid,
-                        error: formatTransferErrorMessage(failure.error),
-                    })),
+                    ...this.getCounters(),
+                    failures: this.getFailureDetails(),
                 }),
             );
             return;
@@ -108,6 +131,6 @@ export class TransferSummary {
     }
 }
 
-function formatTransferErrorMessage(error: unknown): string {
+export function formatTransferErrorMessage(error: unknown): string {
     return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
