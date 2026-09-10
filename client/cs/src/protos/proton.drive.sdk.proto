@@ -31,7 +31,6 @@ message Request {
         DriveClientGetFileRevisionUploaderRequest drive_client_get_file_revision_uploader = 1003;
         DriveClientGetFileDownloaderRequest drive_client_get_file_downloader = 1004;
         DriveClientGetAvailableNameRequest drive_client_get_available_name = 1005;
-        DriveClientRenameRequest drive_client_rename = 1006;
         DriveClientCreateFolderRequest drive_client_create_folder = 1007;
         DriveClientTrashNodesRequest drive_client_trash_nodes = 1008;
         DriveClientEnumerateFolderChildrenRequest drive_client_enumerate_folder_children = 1009;
@@ -571,15 +570,6 @@ message DriveClientGetAvailableNameRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
-// The response must not have a value.
-message DriveClientRenameRequest {
-    int64 client_handle = 1;
-    string node_uid = 2;
-    string new_name = 3;
-    string new_media_type = 4; // optional
-    int64 cancellation_token_source_handle = 5;
-}
-
 // The response message must be of type FolderNode
 message DriveClientCreateFolderRequest {
     int64 client_handle = 1;
@@ -597,11 +587,19 @@ message DriveClientTrashNodesRequest {
     int64 yield_action = 4;
 }
 
+message NodeMoveItem {
+    string node_uid = 1;
+    string current_parent_uid = 2;
+    string current_name = 3;
+    string target_name = 4;
+    string new_media_type = 5; // optional
+}
+
 // The response message must be of type NodeResultListResponse
 message DriveClientMoveNodesRequest {
     int64 client_handle = 1;
-    repeated string node_uids = 2;
-    string new_parent_folder_uid = 3;
+    repeated NodeMoveItem items = 2;
+    string target_parent_folder_uid = 3;
     int64 cancellation_token_source_handle = 4;
 }
 

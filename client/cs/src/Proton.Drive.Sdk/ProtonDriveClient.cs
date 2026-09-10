@@ -11,11 +11,11 @@ using Proton.Drive.Sdk.Events;
 using Proton.Drive.Sdk.Http;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
+using Proton.Drive.Sdk.Nodes.Move;
 using Proton.Drive.Sdk.Nodes.Upload;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Shares;
 using Proton.Drive.Sdk.Volumes;
-using Proton.Sdk;
 using Proton.Sdk.Api;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Configuration;
@@ -226,33 +226,19 @@ public sealed class ProtonDriveClient
         return NodeOperations.GetAvailableNameAsync(this, parentUid, name, cancellationToken);
     }
 
-    public async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> MoveNodesAsync(
-        IEnumerable<NodeUid> uids,
-        NodeUid newParentFolderUid,
+    /// <summary>
+    /// Moves multiple nodes, setting their parent folder and names to the target values.
+    /// </summary>
+    /// <param name="requestItems">Items for each node involved in the operation, describing their current and target values.</param>
+    /// <param name="targetParentUid">The unique identifier of the parent folder that the nodes should have after the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An asynchronous stream of <see cref="NodeMoveResult"/> objects, which indicate the success or failure of each move operation.</returns>
+    public IAsyncEnumerable<NodeMoveResult> MoveNodesAsync(
+        IEnumerable<NodeMoveItem> requestItems,
+        NodeUid targetParentUid,
         CancellationToken cancellationToken)
     {
-        // FIXME: finalize the implementation that uses the batch move endpoint, and use it instead of this naïve code
-        var results = new Dictionary<NodeUid, Result<Exception>>();
-
-        foreach (var uid in uids)
-        {
-            try
-            {
-                await NodeOperations.MoveSingleAsync(this, uid, newParentFolderUid, newName: null, cancellationToken).ConfigureAwait(false);
-                results[uid] = Result<Exception>.Success;
-            }
-            catch (Exception exception) when (exception is not OperationCanceledException)
-            {
-                results[uid] = exception;
-            }
-        }
-
-        return results;
-    }
-
-    public ValueTask RenameNodeAsync(NodeUid uid, string newName, string? newMediaType, CancellationToken cancellationToken)
-    {
-        return NodeOperations.RenameAsync(this, uid, newName, newMediaType, cancellationToken);
+        return NodeMoveOperation.MoveMultipleAsync(this, requestItems, targetParentUid, cancellationToken);
     }
 
     public IAsyncEnumerable<NodeUid> EnumerateSharedNodeUidsAsync(CancellationToken cancellationToken = default)

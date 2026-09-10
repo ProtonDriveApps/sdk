@@ -4,7 +4,7 @@ using Proton.Sdk.Serialization;
 
 namespace Proton.Drive.Sdk.Api.Links;
 
-internal sealed class MoveMultipleLinksItem
+internal sealed record MoveMultipleLinksItem
 {
     [JsonPropertyName("LinkID")]
     public required LinkId LinkId { get; init; }
@@ -16,11 +16,11 @@ internal sealed class MoveMultipleLinksItem
 
     [JsonPropertyName("Hash")]
     [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
-    public required ReadOnlyMemory<byte> NameHashDigest { get; init; }
+    public required ReadOnlyMemory<byte> TargetNameDigest { get; init; }
 
     [JsonPropertyName("OriginalHash")]
     [JsonConverter(typeof(ForgivingBytesToHexJsonConverter))]
-    public required ReadOnlyMemory<byte> OriginalNameHashDigest { get; init; }
+    public required ReadOnlyMemory<byte> CurrentNameDigest { get; init; }
 
     [JsonPropertyName("NodePassphraseSignature")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

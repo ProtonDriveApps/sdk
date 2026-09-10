@@ -24,6 +24,7 @@ internal static class ValidationResponseCode
         or DriveApiResponseCodes.AlreadyMemberOfShareInVolumeWithAnotherAddress
         or DriveApiResponseCodes.TooManyChildren
         or DriveApiResponseCodes.NestingTooDeep
+        or DriveApiResponseCodes.IncompatibleState
         or DriveApiResponseCodes.InsufficientInvitationQuota
         or DriveApiResponseCodes.InsufficientShareQuota
         or DriveApiResponseCodes.InsufficientShareJoinedQuota

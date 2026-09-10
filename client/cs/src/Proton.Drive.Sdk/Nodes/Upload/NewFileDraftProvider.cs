@@ -167,7 +167,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
 
                 result = draftRevisionUid;
             }
-            catch (ProtonApiException<RevisionErrorResponse> e)
+            catch (ProtonApiException<DetailedApiResponse> e)
                 when (RevisionConflict.FromErrorResponse(e.Response) is { LinkId: { } conflictingLinkId, RevisionId: null, DraftRevisionId: not null } conflict
                     && (conflict.DraftClientUid == _client.Uid || _overrideExistingDraftByOtherClient)
                     && remainingNumberOfAttempts-- > 0)
@@ -187,7 +187,7 @@ internal sealed class NewFileDraftProvider : IRevisionDraftProvider
                     throw deletionException;
                 }
             }
-            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
+            catch (ProtonApiException<DetailedApiResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
             {
                 throw new NodeWithSameNameExistsException(_parentUid.VolumeId, e);
             }

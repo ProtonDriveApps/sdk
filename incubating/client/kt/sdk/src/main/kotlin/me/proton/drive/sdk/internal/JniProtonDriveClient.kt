@@ -83,12 +83,6 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         driveClientGetAvailableName = request
     }
 
-    suspend fun rename(
-        request: ProtonDriveSdk.DriveClientRenameRequest,
-    ): Unit = executeOnce("rename", UnitResponseCallback) {
-        driveClientRename = request
-    }
-
     suspend fun moveNodes(
         request: ProtonDriveSdk.DriveClientMoveNodesRequest,
     ): ProtonDriveSdk.NodeResultListResponse =

@@ -19,7 +19,7 @@ public sealed class RevisionDraftConflictException : ProtonDriveException
     {
     }
 
-    internal RevisionDraftConflictException(ProtonApiException<RevisionErrorResponse> innerException)
+    internal RevisionDraftConflictException(ProtonApiException<DetailedApiResponse> innerException)
         : base(innerException.Message, innerException)
     {
     }

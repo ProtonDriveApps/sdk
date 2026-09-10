@@ -9,19 +9,18 @@ public sealed class NodeNotFoundException : ValidationException
     }
 
     public NodeNotFoundException(string? message)
-        : base(message)
+        : this(message, innerException: null)
     {
     }
 
     public NodeNotFoundException(string? message, Exception? innerException)
-        : base(message, innerException)
+        : this(nodeUid: null, message, innerException)
     {
     }
 
-    internal NodeNotFoundException(NodeUid? nodeUid, string? message = null)
-        : base(message ?? "Node not found")
+    internal NodeNotFoundException(NodeUid? nodeUid, string? message = null, Exception? innerException = null)
+        : base(message ?? "Node not found", innerException, DriveApiResponseCodes.DoesNotExist)
     {
-        Code = DriveApiResponseCodes.DoesNotExist;
         NodeUid = nodeUid;
     }
 

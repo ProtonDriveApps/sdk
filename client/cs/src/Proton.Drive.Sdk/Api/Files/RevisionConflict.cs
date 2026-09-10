@@ -19,7 +19,7 @@ internal sealed class RevisionConflict
     [JsonPropertyName("ConflictDraftClientUID")]
     public string? DraftClientUid { get; init; }
 
-    public static RevisionConflict? FromErrorResponse(RevisionErrorResponse? errorResponse)
+    public static RevisionConflict? FromErrorResponse(DetailedApiResponse? errorResponse)
     {
         return errorResponse?.Code is DriveApiResponseCodes.AlreadyExists
             ? errorResponse.Details?.Deserialize(DriveApiSerializerContext.Default.RevisionConflict)

@@ -170,211 +170,6 @@ internal static class NodeOperations
         GetNameParameters(name, parentFolderKey, parentFolderHashKey, nameSessionKey, signingKey, out encryptedName, out nameHashDigest);
     }
 
-    public static async ValueTask MoveSingleAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        NodeUid newParentUid,
-        string? newName,
-        CancellationToken cancellationToken)
-    {
-        if (newName is not null)
-        {
-            ValidateNodeName(newName);
-        }
-
-        // FIXME: try to get the information from cache first
-        var membershipAddress = await GetMembershipAddressAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
-
-        using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
-
-        var (destinationKey, destinationHashKey) =
-            await FolderOperations.GetKeyAndHashKeyAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
-
-        if (uid == newParentUid)
-        {
-            throw new InvalidOperationException($"Node {uid} cannot be moved onto itself");
-        }
-
-        if (uid.VolumeId != newParentUid.VolumeId)
-        {
-            throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
-        }
-
-        var originMetadata = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
-
-        var (originNode, originOperationData, _, originNameHashDigest) = originMetadata;
-
-        var originName = originNode.Name.GetValueOrThrow();
-
-        var originNameSessionKey = originOperationData.NameSessionKey
-            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
-
-        var originPassphraseSessionKey = originOperationData.PassphraseSessionKey
-            ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
-
-        GetNameParameters(
-            newName ?? originName,
-            destinationKey,
-            destinationHashKey.Span,
-            originNameSessionKey,
-            signingKey,
-            out var encryptedName,
-            out var nameHashDigest);
-
-        var passphraseKeyPacket = destinationKey.EncryptSessionKey(originPassphraseSessionKey);
-
-        ReadOnlyMemory<byte>? passphraseSignature = null;
-        string? signatureEmailAddress = null;
-
-        if (originOperationData.PassphraseForAnonymousMove is not null)
-        {
-            passphraseSignature = signingKey.Sign(originOperationData.PassphraseForAnonymousMove.Value.Span);
-            signatureEmailAddress = membershipAddress.EmailAddress;
-        }
-
-        var request = new MoveSingleLinkRequest
-        {
-            Name = encryptedName,
-            Passphrase = passphraseKeyPacket,
-            NameHashDigest = nameHashDigest,
-            ParentLinkId = newParentUid.LinkId,
-            OriginalNameHashDigest = originNameHashDigest,
-            NameSignatureEmailAddress = membershipAddress.EmailAddress,
-            PassphraseSignature = passphraseSignature,
-            SignatureEmailAddress = signatureEmailAddress,
-        };
-
-        await client.Api.Links.MoveAsync(newParentUid.VolumeId, uid.LinkId, request, cancellationToken).ConfigureAwait(false);
-    }
-
-    // For future use
-    public static async Task MoveMultipleAsync(
-        ProtonDriveClient client,
-        IEnumerable<NodeUid> uids,
-        NodeUid newParentUid,
-        string? newName,
-        CancellationToken cancellationToken)
-    {
-        if (newName is not null)
-        {
-            ValidateNodeName(newName);
-        }
-
-        // FIXME: try to get the information from cache first
-        var membershipAddress = await GetMembershipAddressAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
-
-        using var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
-
-        var (destinationKey, destinationHashKey) =
-            await FolderOperations.GetKeyAndHashKeyAsync(client, newParentUid, cancellationToken).ConfigureAwait(false);
-
-        var batch = new List<MoveMultipleLinksItem>();
-
-        foreach (var uid in uids)
-        {
-            if (uid.VolumeId != newParentUid.VolumeId)
-            {
-                throw new InvalidOperationException($"Node {uid} cannot have destination node {newParentUid} as parent as they are not on the same volume");
-            }
-
-            // FIXME: Try to use the degraded node if it has enough for the move to be successful
-            var (originNode, originSecrets, _, originNameHashDigest) = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
-
-            var originName = originNode.Name.GetValueOrThrow();
-
-            var originNameSessionKey = originSecrets.NameSessionKey
-                ?? throw new InvalidOperationException($"Name session key not available for {uid}");
-
-            var originPassphraseSessionKey = originSecrets.PassphraseSessionKey
-                ?? throw new InvalidOperationException($"Passphrase session key not available for {uid}");
-
-            GetNameParameters(
-                newName ?? originName,
-                destinationKey,
-                destinationHashKey.Span,
-                originNameSessionKey,
-                signingKey,
-                out var encryptedName,
-                out var nameHashDigest);
-
-            var passphraseKeyPacket = destinationKey.EncryptSessionKey(originPassphraseSessionKey);
-
-            var itemRequest = new MoveMultipleLinksItem
-            {
-                LinkId = uid.LinkId,
-                Passphrase = passphraseKeyPacket,
-                Name = encryptedName,
-                NameHashDigest = nameHashDigest,
-                OriginalNameHashDigest = originNameHashDigest,
-                PassphraseSignature = null, // FIXME: sign with parent node key if anonymously-uploaded file
-            };
-
-            batch.Add(itemRequest);
-        }
-
-        var batchRequest = new MoveMultipleLinksRequest
-        {
-            ParentLinkId = newParentUid.LinkId,
-            Batch = batch,
-            NameSignatureEmailAddress = membershipAddress.EmailAddress,
-            SignatureEmailAddress = null, // FIXME: specify for anonymously-uploaded files
-        };
-
-        await client.Api.Links.MoveMultipleAsync(newParentUid.VolumeId, batchRequest, cancellationToken).ConfigureAwait(false);
-    }
-
-    // TODO: remove this function after refactoring move implementation
-    public static async ValueTask RenameAsync(
-        ProtonDriveClient client,
-        NodeUid uid,
-        string newName,
-        string? newMediaType,
-        CancellationToken cancellationToken)
-    {
-        ValidateNodeName(newName);
-
-        // This incurs a round-trip, but this is a temporary implementation until the rename function is replaced by an all-purpose move function.
-        var nodeMetadata = await GetNodeMetadataAsync(client, uid, cancellationToken).ConfigureAwait(false);
-
-        // Root nodes are renamed differently (their name is encrypted with the context share key and is not hashed).
-        // Such renames belong to the owning feature (e.g. devices), not to the generic node rename path.
-        if (nodeMetadata.Node.ParentUid is not { } parentUid)
-        {
-            throw new InvalidOperationException("Cannot rename root node");
-        }
-
-        var membershipAddress = await GetMembershipAddressAsync(client, uid, cancellationToken).ConfigureAwait(false);
-
-        var signingKey = await client.Account.GetAddressPrimaryPrivateKeyAsync(membershipAddress.Id, cancellationToken).ConfigureAwait(false);
-
-        var nameSessionKey = nodeMetadata.OperationData.NameSessionKey
-            ?? throw new InvalidOperationException($"Name session key not available for {uid}");
-
-        var (parentKey, parentHashKey) = await FolderOperations
-            .GetKeyAndHashKeyAsync(client, parentUid, cancellationToken)
-            .ConfigureAwait(false);
-
-        GetNameParameters(
-            newName,
-            parentKey,
-            parentHashKey.Span,
-            nameSessionKey,
-            signingKey,
-            out var encryptedName,
-            out var nameHashDigest);
-
-        var parameters = new RenameLinkRequest
-        {
-            Name = encryptedName,
-            NameHashDigest = nameHashDigest,
-            NameSignatureEmailAddress = membershipAddress.EmailAddress,
-            MediaType = newMediaType,
-            OriginalNameHashDigest = nodeMetadata.NameHashDigest,
-        };
-
-        await client.Api.Links.RenameAsync(uid.VolumeId, uid.LinkId, parameters, cancellationToken).ConfigureAwait(false);
-    }
-
     public static async ValueTask<IReadOnlyDictionary<NodeUid, Result<Exception>>> DeleteDraftAsync(
         ProtonDriveClient client,
         IEnumerable<NodeUid> uids,
@@ -545,18 +340,20 @@ internal static class NodeOperations
     /// Mirrors the JavaScript SDK's <c>validateNodeName</c>.
     /// </summary>
     /// <param name="name">The name provided by the caller.</param>
-    /// <exception cref="ValidationException">Thrown when the name is empty or longer than <see cref="MaxNodeNameLength"/> characters.</exception>
-    public static void ValidateNodeName(string name)
+    /// <returns><see cref="ValidationException"/> when the name is empty or longer than <see cref="MaxNodeNameLength"/> characters, <c>null</c> otherwise.</returns>
+    public static Exception? ValidateName(string name)
     {
         if (string.IsNullOrEmpty(name))
         {
-            throw new ValidationException("Name must not be empty");
+            return new ValidationException("Name must not be empty");
         }
 
         if (name.Length > MaxNodeNameLength)
         {
-            throw new ValidationException($"Name must be {MaxNodeNameLength} characters long at most");
+            return new ValidationException($"Name must be {MaxNodeNameLength} characters long at most");
         }
+
+        return null;
     }
 
     public static bool ValidateName(
@@ -580,13 +377,10 @@ internal static class NodeOperations
 
         // A name coming from the server must not fail the whole conversion: validate with the same
         // rules as caller-supplied names, but capture any violation as a per-node error instead of throwing.
-        try
+        var nameValidationException = ValidateName(name);
+        if (nameValidationException != null)
         {
-            ValidateNodeName(name);
-        }
-        catch (ValidationException e)
-        {
-            nameResult = new InvalidNameError(name, e.Message);
+            nameResult = new InvalidNameError(name, nameValidationException.Message);
             return false;
         }
 
@@ -607,6 +401,32 @@ internal static class NodeOperations
         var (_, hashKey) = await FolderOperations.GetKeyAndHashKeyAsync(client, parentUid, cancellationToken).ConfigureAwait(false);
 
         return hashKey;
+    }
+
+    // TODO: move to dedicated class for cryptography
+    public static void GetNameParameters(
+        string name,
+        PgpPrivateKey parentFolderKey,
+        ReadOnlySpan<byte> parentFolderHashKey,
+        PgpSessionKey nameSessionKey,
+        PgpPrivateKey signingKey,
+        out ArraySegment<byte> encryptedName,
+        out ArraySegment<byte> nameHashDigest)
+    {
+        var maxNameByteLength = Encoding.UTF8.GetMaxByteCount(name.Length);
+        var nameBytes = MemoryPolicy.GetRentedHeapMemoryIfTooLargeForStack<byte>(maxNameByteLength, out var nameHeapMemoryOwner)
+            ? nameHeapMemoryOwner.Memory.Span
+            : stackalloc byte[maxNameByteLength];
+
+        using (nameHeapMemoryOwner)
+        {
+            var nameByteLength = Encoding.UTF8.GetBytes(name, nameBytes);
+            nameBytes = nameBytes[..nameByteLength];
+
+            encryptedName = PgpEncrypter.EncryptAndSignText(name, new EncryptionSecrets(parentFolderKey, nameSessionKey), signingKey);
+
+            nameHashDigest = HMACSHA256.HashData(parentFolderHashKey, nameBytes);
+        }
     }
 
     private static async ValueTask<FolderNode?> GetFreshExistingMyFilesFolderAsync(ProtonDriveClient client, CancellationToken cancellationToken)
@@ -651,30 +471,5 @@ internal static class NodeOperations
         var (_, _, folderNode) = await VolumeOperations.CreateVolumeAsync(client, cancellationToken).ConfigureAwait(false);
 
         return folderNode;
-    }
-
-    private static void GetNameParameters(
-        string name,
-        PgpPrivateKey parentFolderKey,
-        ReadOnlySpan<byte> parentFolderHashKey,
-        PgpSessionKey nameSessionKey,
-        PgpPrivateKey signingKey,
-        out ArraySegment<byte> encryptedName,
-        out ArraySegment<byte> nameHashDigest)
-    {
-        var maxNameByteLength = Encoding.UTF8.GetMaxByteCount(name.Length);
-        var nameBytes = MemoryPolicy.GetRentedHeapMemoryIfTooLargeForStack<byte>(maxNameByteLength, out var nameHeapMemoryOwner)
-            ? nameHeapMemoryOwner.Memory.Span
-            : stackalloc byte[maxNameByteLength];
-
-        using (nameHeapMemoryOwner)
-        {
-            var nameByteLength = Encoding.UTF8.GetBytes(name, nameBytes);
-            nameBytes = nameBytes[..nameByteLength];
-
-            encryptedName = PgpEncrypter.EncryptAndSignText(name, new EncryptionSecrets(parentFolderKey, nameSessionKey), signingKey);
-
-            nameHashDigest = HMACSHA256.HashData(parentFolderHashKey, nameBytes);
-        }
     }
 }

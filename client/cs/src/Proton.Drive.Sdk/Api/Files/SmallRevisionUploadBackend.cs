@@ -204,7 +204,7 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
                     thumbnailBlocks,
                     cancellationToken).ConfigureAwait(false);
             }
-            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
+            catch (ProtonApiException<DetailedApiResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
             {
                 throw new NodeWithSameNameExistsException(newFile.ParentVolumeId, e);
             }
@@ -240,7 +240,7 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
                 thumbnailBlocks,
                 cancellationToken).ConfigureAwait(false);
         }
-        catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
+        catch (ProtonApiException<DetailedApiResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
         {
             throw new RevisionDraftConflictException(e);
         }

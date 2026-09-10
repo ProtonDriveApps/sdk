@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
@@ -25,18 +26,13 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
             .GetAsync($"volumes/{volumeId}/links/{linkId}/context", cancellationToken).ConfigureAwait(false);
     }
 
-    public async ValueTask<ApiResponse> MoveAsync(VolumeId volumeId, LinkId linkId, MoveSingleLinkRequest request, CancellationToken cancellationToken)
+    public async ValueTask<AggregateApiResponse<LinkIdResponsePair<DetailedApiResponse>>> MoveMultipleAsync(
+        VolumeId volumeId,
+        MoveMultipleLinksRequest request,
+        CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
-            .PutAsync($"v2/volumes/{volumeId}/links/{linkId}/move", request, DriveApiSerializerContext.Default.MoveSingleLinkRequest, cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    public async ValueTask<ApiResponse> MoveMultipleAsync(VolumeId volumeId, MoveMultipleLinksRequest request, CancellationToken cancellationToken)
-    {
-        return await _httpClient
-            .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
+            .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePairDetailedApiResponse)
             .PutAsync($"volumes/{volumeId}/links/move-multiple", request, DriveApiSerializerContext.Default.MoveMultipleLinksRequest, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -49,13 +45,13 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
             .ConfigureAwait(false);
     }
 
-    public async ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
+    public async ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> DeleteMultipleAsync(
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
         CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePair)
+            .Expecting(DriveApiSerializerContext.Default.AggregateApiResponseLinkIdResponsePairApiResponse)
             .PostAsync(
                 $"v2/volumes/{volumeId}/delete_multiple",
                 new MultipleLinksNullaryRequest { LinkIds = linkIds },
