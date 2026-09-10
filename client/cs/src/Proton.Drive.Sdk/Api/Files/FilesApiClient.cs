@@ -18,7 +18,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
     public async ValueTask<FileCreationResponse> CreateFileAsync(VolumeId volumeId, FileCreationRequest request, CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.FileCreationResponse, DriveApiSerializerContext.Default.RevisionErrorResponse)
+            .Expecting(DriveApiSerializerContext.Default.FileCreationResponse, DriveApiSerializerContext.Default.DetailedApiResponse)
             .PostAsync($"v2/volumes/{volumeId}/files", request, DriveApiSerializerContext.Default.FileCreationRequest, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -30,7 +30,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         CancellationToken cancellationToken)
     {
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.RevisionErrorResponse)
+            .Expecting(DriveApiSerializerContext.Default.RevisionCreationResponse, DriveApiSerializerContext.Default.DetailedApiResponse)
             .PostAsync(
                 $"v2/volumes/{volumeId}/files/{linkId}/revisions",
                 request,
@@ -209,7 +209,7 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         requestMessage.SetRequestType(HttpRequestType.StorageUpload);
 
         return await _httpClient
-            .Expecting(DriveApiSerializerContext.Default.SmallUploadResponse, DriveApiSerializerContext.Default.RevisionErrorResponse)
+            .Expecting(DriveApiSerializerContext.Default.SmallUploadResponse, DriveApiSerializerContext.Default.DetailedApiResponse)
             .SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -94,14 +94,14 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
 
                 revisionId = revisionResponse.Identity.RevisionId;
             }
-            catch (ProtonApiException<RevisionErrorResponse> e)
+            catch (ProtonApiException<DetailedApiResponse> e)
                 when (RevisionConflict.FromErrorResponse(e.Response) is { DraftRevisionId: { } draftRevisionId } conflict
                     && (conflict.DraftClientUid == _client.Uid)
                     && remainingNumberOfAttempts-- > 0)
             {
                 await _client.Api.Files.DeleteRevisionAsync(_fileUid.VolumeId, _fileUid.LinkId, draftRevisionId, cancellationToken).ConfigureAwait(false);
             }
-            catch (ProtonApiException<RevisionErrorResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
+            catch (ProtonApiException<DetailedApiResponse> e) when (e.Code is DriveApiResponseCodes.AlreadyExists)
             {
                 throw new RevisionDraftConflictException("A new version of this file is already being uploaded", e);
             }

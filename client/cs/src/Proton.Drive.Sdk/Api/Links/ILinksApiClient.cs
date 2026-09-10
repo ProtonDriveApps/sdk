@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Volumes;
 using Proton.Sdk.Api;
 
@@ -9,13 +10,14 @@ internal interface ILinksApiClient
 
     ValueTask<ContextShareResponse> GetContextShareAsync(VolumeId volumeId, LinkId linkId, CancellationToken cancellationToken);
 
-    ValueTask<ApiResponse> MoveAsync(VolumeId volumeId, LinkId linkId, MoveSingleLinkRequest request, CancellationToken cancellationToken);
-
-    ValueTask<ApiResponse> MoveMultipleAsync(VolumeId volumeId, MoveMultipleLinksRequest request, CancellationToken cancellationToken);
+    ValueTask<AggregateApiResponse<LinkIdResponsePair<DetailedApiResponse>>> MoveMultipleAsync(
+        VolumeId volumeId,
+        MoveMultipleLinksRequest request,
+        CancellationToken cancellationToken);
 
     ValueTask<ApiResponse> RenameAsync(VolumeId volumeId, LinkId linkId, RenameLinkRequest request, CancellationToken cancellationToken);
 
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
+    ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> DeleteMultipleAsync(
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
         CancellationToken cancellationToken);

@@ -23,7 +23,6 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
 
     private enum OperationIdentifier: Hashable {
         case createFolder(UUID)
-        case rename(UUID)
         case moveNodes(UUID)
         case getAvailableName(UUID)
         case getNode(UUID)
@@ -46,7 +45,6 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         var operationName: String {
             switch self {
             case .createFolder: return "createFolder"
-            case .rename: return "rename"
             case .moveNodes: return "moveNodes"
             case .getAvailableName: return "getAvailableName"
             case .getNode: return "getNode"
@@ -597,30 +595,7 @@ extension ProtonDriveClient {
         try await cancelOperation(identifier: .enumerateEvents(cancellationToken))
     }
 
-    public func rename(nodeUid: SDKNodeUid, newName: String, newMediaType: String?, cancellationToken: UUID) async throws {
-        let cancellationTokenSource = try await createCancellationTokenSource(.rename(cancellationToken), logger)
-        defer {
-            freeCancellationTokenSourceIfNeeded(identifier: .rename(cancellationToken))
-        }
-
-        let cancellationHandle = cancellationTokenSource.handle
-        let renameRequest = Proton_Drive_Sdk_DriveClientRenameRequest.with {
-            $0.clientHandle = Int64(clientHandle)
-            $0.nodeUid = nodeUid.sdkCompatibleIdentifier
-            $0.newName = newName
-            if let newMediaType {
-                $0.newMediaType = newMediaType
-            }
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
-        }
-        let _: Void = try await SDKRequestHandler.send(renameRequest, logger: logger)
-    }
-
-    public func cancelRename(cancellationToken: UUID) async throws {
-        try await cancelOperation(identifier: .rename(cancellationToken))
-    }
-
-    public func moveNodes(nodeUids: [SDKNodeUid], newParentFolderUid: SDKNodeUid, cancellationToken: UUID) async throws -> [NodeResult] {
+    public func moveNodes(items: [NodeMoveItem], targetParentFolderUid: SDKNodeUid, cancellationToken: UUID) async throws -> [NodeResult] {
         let cancellationTokenSource = try await createCancellationTokenSource(.moveNodes(cancellationToken), logger)
         defer {
             freeCancellationTokenSourceIfNeeded(identifier: .moveNodes(cancellationToken))
@@ -629,8 +604,18 @@ extension ProtonDriveClient {
         let cancellationHandle = cancellationTokenSource.handle
         let moveRequest = Proton_Drive_Sdk_DriveClientMoveNodesRequest.with {
             $0.clientHandle = Int64(clientHandle)
-            $0.nodeUids = nodeUids.map { $0.sdkCompatibleIdentifier }
-            $0.newParentFolderUid = newParentFolderUid.sdkCompatibleIdentifier
+            $0.items = items.map { item in
+                Proton_Drive_Sdk_NodeMoveItem.with {
+                    $0.nodeUid = item.nodeUid.sdkCompatibleIdentifier
+                    $0.currentParentUid = item.currentParentUid.sdkCompatibleIdentifier
+                    $0.currentName = item.currentName
+                    $0.targetName = item.targetName
+                    if let newMediaType = item.newMediaType {
+                        $0.newMediaType = newMediaType
+                    }
+                }
+            }
+            $0.targetParentFolderUid = targetParentFolderUid.sdkCompatibleIdentifier
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
         let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(moveRequest, logger: logger)

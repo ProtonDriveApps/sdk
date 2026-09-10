@@ -21,6 +21,28 @@ public struct SDKNodeUid: Sendable {
     }
 }
 
+public struct NodeMoveItem: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let currentParentUid: SDKNodeUid
+    public let currentName: String
+    public let targetName: String
+    public let newMediaType: String?
+
+    public init(
+        nodeUid: SDKNodeUid,
+        currentParentUid: SDKNodeUid,
+        currentName: String,
+        targetName: String,
+        newMediaType: String? = nil
+    ) {
+        self.nodeUid = nodeUid
+        self.currentParentUid = currentParentUid
+        self.currentName = currentName
+        self.targetName = targetName
+        self.newMediaType = newMediaType
+    }
+}
+
 public struct SDKRevisionUid: Sendable {
     public let volumeID: String
     public let nodeID: String

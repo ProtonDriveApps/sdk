@@ -22,6 +22,7 @@ import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.FolderNode
 import me.proton.drive.sdk.entity.Node
+import me.proton.drive.sdk.entity.NodeMoveItem
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.ScopeId
@@ -47,7 +48,7 @@ import proton.drive.sdk.driveClientGetNodeRequest
 import proton.drive.sdk.driveClientLeaveSharedNodeRequest
 import proton.drive.sdk.driveClientMoveNodesRequest
 import proton.drive.sdk.driveClientRenameDeviceRequest
-import proton.drive.sdk.driveClientRenameRequest
+import proton.drive.sdk.nodeMoveItem
 import proton.drive.sdk.driveClientRestoreNodesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
 import java.time.Instant
@@ -94,34 +95,23 @@ internal class InteropProtonDriveClient internal constructor(
         }
     }
 
-    override suspend fun rename(
-        nodeUid: NodeUid,
-        name: String,
-        mediaType: String?,
-    ): Unit = cancellationCoroutineScope { source ->
-        log(INFO, "rename")
-        bridge.rename(
-            driveClientRenameRequest {
-                this.nodeUid = nodeUid.value
-                newName = name
-                mediaType?.let {
-                    newMediaType = mediaType
-                }
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        )
-    }
-
     override suspend fun moveNodes(
-        nodeUids: List<NodeUid>,
-        newParentFolderUid: NodeUid,
+        items: List<NodeMoveItem>,
+        targetParentFolderUid: NodeUid,
     ): List<NodeResultPair> = cancellationCoroutineScope { source ->
-        log(INFO, "moveNodes(${nodeUids.size} nodes)")
+        log(INFO, "moveNodes(${items.size} nodes)")
         bridge.moveNodes(
             driveClientMoveNodesRequest {
-                this.nodeUids += nodeUids.map { it.value }
-                this.newParentFolderUid = newParentFolderUid.value
+                this.items += items.map { item ->
+                    nodeMoveItem {
+                        nodeUid = item.nodeUid.value
+                        currentParentUid = item.currentParentUid.value
+                        currentName = item.currentName
+                        targetName = item.targetName
+                        item.newMediaType?.let { newMediaType = it }
+                    }
+                }
+                this.targetParentFolderUid = targetParentFolderUid.value
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

@@ -96,8 +96,8 @@ internal static partial class DeviceOperations
     /// <summary>
     /// Renames the root folder of a device. A device's name lives on its root folder, which—being a root node—is
     /// renamed differently from a regular node: its name is encrypted with the device's share key and is not hashed
-    /// (root nodes have no siblings). This is intentionally kept separate from <see cref="NodeOperations.RenameAsync"/>,
-    /// which only renames non-root nodes.
+    /// (root nodes have no siblings). This is intentionally kept separate from <see cref="Proton.Drive.Sdk.Nodes.Move.NodeMoveOperation.MoveMultipleAsync"/>,
+    /// which can only rename non-root nodes.
     /// </summary>
     private static async ValueTask RenameRootFolderAsync(
         ProtonDriveClient client,

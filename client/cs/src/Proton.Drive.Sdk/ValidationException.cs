@@ -16,5 +16,11 @@ public class ValidationException : ProtonDriveException
     {
     }
 
-    public int? Code { get; protected init; }
+    public ValidationException(string? message, Exception? innerException, int? code)
+        : base(message, innerException)
+    {
+        Code = code;
+    }
+
+    public int? Code { get; }
 }

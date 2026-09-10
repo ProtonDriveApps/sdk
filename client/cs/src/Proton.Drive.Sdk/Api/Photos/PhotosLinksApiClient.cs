@@ -1,3 +1,4 @@
+using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Serialization;
 using Proton.Drive.Sdk.Volumes;
@@ -29,12 +30,10 @@ internal sealed class PhotosLinksApiClient(HttpClient httpClient) : ILinksApiCli
         return _driveImplementation.GetContextShareAsync(volumeId, linkId, cancellationToken);
     }
 
-    public ValueTask<ApiResponse> MoveAsync(VolumeId volumeId, LinkId linkId, MoveSingleLinkRequest request, CancellationToken cancellationToken)
-    {
-        return _driveImplementation.MoveAsync(volumeId, linkId, request, cancellationToken);
-    }
-
-    public ValueTask<ApiResponse> MoveMultipleAsync(VolumeId volumeId, MoveMultipleLinksRequest request, CancellationToken cancellationToken)
+    public ValueTask<AggregateApiResponse<LinkIdResponsePair<DetailedApiResponse>>> MoveMultipleAsync(
+        VolumeId volumeId,
+        MoveMultipleLinksRequest request,
+        CancellationToken cancellationToken)
     {
         return _driveImplementation.MoveMultipleAsync(volumeId, request, cancellationToken);
     }
@@ -44,7 +43,7 @@ internal sealed class PhotosLinksApiClient(HttpClient httpClient) : ILinksApiCli
         return _driveImplementation.RenameAsync(volumeId, linkId, request, cancellationToken);
     }
 
-    public ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
+    public ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> DeleteMultipleAsync(
         VolumeId volumeId,
         IEnumerable<LinkId> linkIds,
         CancellationToken cancellationToken)

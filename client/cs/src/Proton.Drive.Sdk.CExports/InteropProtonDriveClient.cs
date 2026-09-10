@@ -4,6 +4,7 @@ using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
+using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Configuration;
 using Proton.Sdk.Telemetry;
@@ -257,21 +258,6 @@ internal static class InteropProtonDriveClient
         return new Int64Value { Value = fileDownloader is null ? 0 : Interop.AllocHandle(fileDownloader) };
     }
 
-    public static async ValueTask<IMessage?> HandleRenameAsync(DriveClientRenameRequest request)
-    {
-        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
-
-        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
-
-        await client.RenameNodeAsync(
-            NodeUid.Parse(request.NodeUid),
-            request.NewName,
-            request.HasNewMediaType ? request.NewMediaType : null,
-            cancellationToken).ConfigureAwait(false);
-
-        return null;
-    }
-
     public static async ValueTask<IMessage?> HandleTrashNodesAsync(DriveClientTrashNodesRequest request, nint bindingsHandle)
     {
         var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
@@ -295,10 +281,20 @@ internal static class InteropProtonDriveClient
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var results = await client.MoveNodesAsync(
-            request.NodeUids.Select(NodeUid.Parse),
-            NodeUid.Parse(request.NewParentFolderUid),
-            cancellationToken).ConfigureAwait(false);
+        var results = new Dictionary<NodeUid, Result<Exception>>();
+
+        await foreach (var moveResult in client.MoveNodesAsync(
+            request.Items.Select(item => new Nodes.Move.NodeMoveItem(
+                NodeUid.Parse(item.NodeUid),
+                NodeUid.Parse(item.CurrentParentUid),
+                item.CurrentName,
+                item.TargetName,
+                item.HasNewMediaType ? item.NewMediaType : null)),
+            NodeUid.Parse(request.TargetParentFolderUid),
+            cancellationToken).ConfigureAwait(false))
+        {
+            results[moveResult.NodeUid] = moveResult.Result;
+        }
 
         return results.ToInterop();
     }

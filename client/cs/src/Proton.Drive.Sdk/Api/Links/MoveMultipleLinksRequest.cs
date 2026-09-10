@@ -5,10 +5,10 @@ namespace Proton.Drive.Sdk.Api.Links;
 internal sealed class MoveMultipleLinksRequest
 {
     [JsonPropertyName("ParentLinkID")]
-    public required LinkId ParentLinkId { get; init; }
+    public required LinkId NewParentLinkId { get; init; }
 
     [JsonPropertyName("Links")]
-    public required IReadOnlyList<MoveMultipleLinksItem> Batch { get; init; }
+    public required IEnumerable<MoveMultipleLinksItem> Batch { get; init; }
 
     [JsonPropertyName("NameSignatureEmail")]
     public required string NameSignatureEmailAddress { get; init; }

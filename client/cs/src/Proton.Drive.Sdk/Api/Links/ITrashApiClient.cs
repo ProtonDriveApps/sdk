@@ -8,17 +8,17 @@ internal interface ITrashApiClient
 {
     ValueTask<VolumeTrashResponse> GetTrashAsync(VolumeId volumeId, int pageSize, int pageIndex, CancellationToken cancellationToken);
 
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> TrashMultipleAsync(
+    ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> TrashMultipleAsync(
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
         CancellationToken cancellationToken);
 
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> RestoreMultipleAsync(
+    ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> RestoreMultipleAsync(
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
         CancellationToken cancellationToken);
 
-    ValueTask<AggregateApiResponse<LinkIdResponsePair>> DeleteMultipleAsync(
+    ValueTask<AggregateApiResponse<LinkIdResponsePair<ApiResponse>>> DeleteMultipleAsync(
         VolumeId volumeId,
         MultipleLinksNullaryRequest request,
         CancellationToken cancellationToken);

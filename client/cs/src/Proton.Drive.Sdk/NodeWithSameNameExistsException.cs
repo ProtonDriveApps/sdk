@@ -11,25 +11,33 @@ public sealed class NodeWithSameNameExistsException : ValidationException
     {
     }
 
-    public NodeWithSameNameExistsException(string message)
+    public NodeWithSameNameExistsException(string? message)
         : base(message)
     {
     }
 
-    public NodeWithSameNameExistsException(string message, Exception innerException)
+    public NodeWithSameNameExistsException(string? message, Exception? innerException)
         : base(message, innerException)
     {
     }
 
-    internal NodeWithSameNameExistsException(VolumeId volumeId, ProtonApiException<RevisionErrorResponse> innerException)
-        : base(innerException.Message, innerException)
+    internal NodeWithSameNameExistsException(VolumeId volumeId, ProtonApiException<DetailedApiResponse> innerException)
+        : this(volumeId, innerException.Response)
     {
-        if (innerException.Response is not { } response)
+    }
+
+    internal NodeWithSameNameExistsException(VolumeId volumeId, DetailedApiResponse? response)
+        : this(volumeId, response, innerException: null)
+    {
+    }
+
+    private NodeWithSameNameExistsException(VolumeId volumeId, DetailedApiResponse? response = null, Exception? innerException = null)
+        : base(response?.ErrorMessage, innerException, response?.Code)
+    {
+        if (response is null)
         {
             return;
         }
-
-        Code = response.Code;
 
         var conflict = RevisionConflict.FromErrorResponse(response);
 
