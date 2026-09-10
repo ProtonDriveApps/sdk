@@ -22,5 +22,6 @@ interface ProtonPhotosClient : ProtonSdkClient {
     suspend fun uploader(request: PhotosUploaderRequest): Uploader
     suspend fun findPhotoDuplicates(name: String, generateSha1: suspend () -> ByteArray): List<NodeUid>
     fun updatePhotos(updates: List<PhotoTagsUpdate>): Flow<NodeResultPair>
+    fun savePhotosToTimeline(photoUids: List<NodeUid>): Flow<NodeResultPair>
 }
 

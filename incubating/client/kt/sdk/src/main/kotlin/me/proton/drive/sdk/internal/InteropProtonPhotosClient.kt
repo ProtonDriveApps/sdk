@@ -40,6 +40,7 @@ import proton.drive.sdk.drivePhotosClientEnumerateTrashRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import proton.drive.sdk.drivePhotosClientLeaveSharedNodeRequest
 import proton.drive.sdk.drivePhotosClientRestoreNodesRequest
+import proton.drive.sdk.drivePhotosClientSavePhotosToTimelineRequest
 import proton.drive.sdk.drivePhotosClientTrashNodesRequest
 import proton.drive.sdk.drivePhotosClientUpdatePhotosRequest
 
@@ -226,6 +227,26 @@ internal class InteropProtonPhotosClient internal constructor(
                 coroutineScope = this@channelFlow,
                 drivePhotosClientUpdatePhotosRequest {
                     this.updates += updates.map { it.toProto() }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
+    }
+
+    override fun savePhotosToTimeline(
+        photoUids: List<NodeUid>,
+    ): Flow<NodeResultPair> = channelFlow {
+        log(INFO, "savePhotosToTimeline(${photoUids.size} photos)")
+        cancellationCoroutineScope { source ->
+            bridge.savePhotosToTimeline(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientSavePhotosToTimelineRequest {
+                    this.photoUids += photoUids.map { it.value }
                     clientHandle = handle
                     cancellationTokenSourceHandle = source.handle
                     yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()

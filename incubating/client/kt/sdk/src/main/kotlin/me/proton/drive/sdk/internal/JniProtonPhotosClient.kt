@@ -21,6 +21,7 @@ import proton.drive.sdk.ProtonDriveSdk.MetricEvent
 import proton.drive.sdk.drivePhotosClientCreateRequest
 import proton.drive.sdk.drivePhotosClientFindDuplicatesRequest
 import proton.drive.sdk.drivePhotosClientFreeRequest
+import proton.drive.sdk.drivePhotosClientSavePhotosToTimelineRequest
 import proton.drive.sdk.httpClient
 import proton.drive.sdk.protonDriveClientOptions
 import proton.drive.sdk.request
@@ -290,6 +291,20 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
             }
         },
     )
+
+    suspend fun savePhotosToTimeline(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientSavePhotosToTimelineRequest,
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "savePhotosToTimeline",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope }
+    ) {
+        drivePhotosClientSavePhotosToTimeline = request
+    }
 
     fun free(handle: Long) {
         dispatch("free") {
