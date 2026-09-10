@@ -6,11 +6,11 @@ import {
     IntegrityError,
     type Logger,
     NodeEntity,
+    Revision,
     ValidationError,
 } from '@protontech/drive-sdk';
 import { isProtonDocument, isProtonSheet } from '@protontech/drive-sdk/internal/nodes/mediaTypes';
 
-import { getClaimedSize } from '../../cli';
 import type { CliMetrics } from '../../telemetry';
 import { getSha1 } from './digest';
 import { assertDownloadDestination, assertValidPathSegment } from './downloadPathValidation';
@@ -28,8 +28,19 @@ export type DownloadContext = {
     conflictResolver: TransferConflictResolver;
     downloadRoot: string;
     metrics?: CliMetrics;
-    getFileDownloader: (node: NodeEntity) => Promise<FileDownloader>;
+    getFileRevisionDownloader: (revisionUid: string) => Promise<FileDownloader>;
 };
+
+/**
+ * Remote data of a file item. A revision is set only when a specific revision
+ * is downloaded instead of the active one.
+ */
+export type DownloadFileData = { remoteNode: NodeEntity; revision?: Revision };
+
+/** Proton Docs and Sheets have no downloadable content. */
+export function isUnsupportedForDownload(node: NodeEntity): boolean {
+    return isProtonDocument(node.mediaType) || isProtonSheet(node.mediaType);
+}
 
 export async function createLocalFolder(
     ctx: Pick<DownloadContext, 'downloadRoot' | 'conflictResolver'>,
@@ -73,10 +84,9 @@ export async function createLocalFolder(
 
 export async function downloadRemoteFile(
     ctx: DownloadContext,
-    item: QueueItemFile<{ remoteNode: NodeEntity }>,
+    item: QueueItemFile<DownloadFileData>,
 ): Promise<number | false> {
-    if (isProtonDocument(item.remoteNode.mediaType) || isProtonSheet(item.remoteNode.mediaType)
-    ) {
+    if (isUnsupportedForDownload(item.remoteNode)) {
         return false;
     }
 
@@ -87,6 +97,12 @@ export async function downloadRemoteFile(
     assertDownloadDestination(ctx.downloadRoot, parentPath);
 
     await ensureDirectory(parentPath);
+
+    const revision = item.revision ?? item.remoteNode.activeRevision;
+    if (!revision) {
+        // This should never happen as we do not enqueue files without a revision (drafts).
+        throw new Error('No revision to download');
+    }
 
     while (true) {
         assertValidPathSegment(name);
@@ -110,14 +126,13 @@ export async function downloadRemoteFile(
             }
         }
 
-        const claimedDigests = item.remoteNode.activeRevision?.claimedDigests;
         const verification = {
-            expectedSha1: claimedDigests?.sha1,
-            sha1Verified: !!claimedDigests?.sha1Verified,
-            fileSize: getClaimedSize(item.remoteNode) ?? 0,
+            expectedSha1: revision.claimedDigests?.sha1,
+            sha1Verified: !!revision.claimedDigests?.sha1Verified,
+            fileSize: revision.claimedSize ?? 0,
         };
 
-        const downloader = await ctx.getFileDownloader(item.remoteNode);
+        const downloader = await ctx.getFileRevisionDownloader(revision.uid);
         const fileSize = await downloadToPath(ctx, item, downloader, targetPath, verification);
         return fileSize;
     }
@@ -125,7 +140,7 @@ export async function downloadRemoteFile(
 
 async function downloadToPath(
     ctx: DownloadContext,
-    item: QueueItemFile<{ remoteNode: NodeEntity }>,
+    item: QueueItemFile<DownloadFileData>,
     downloader: FileDownloader,
     localPath: string,
     verification: { expectedSha1?: string; sha1Verified: boolean; fileSize: number },

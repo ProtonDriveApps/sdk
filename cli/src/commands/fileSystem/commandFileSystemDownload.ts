@@ -87,7 +87,7 @@ export class CommandFileSystemDownload implements Command {
             conflictResolver,
             downloadRoot,
             metrics,
-            getFileDownloader: (node) => sdk.getFileDownloader(node),
+            getFileRevisionDownloader: (revisionUid) => sdk.getFileRevisionDownloader(revisionUid),
         };
 
         const downloadQueue = new DownloadQueue(logger, summary, sdk, {
