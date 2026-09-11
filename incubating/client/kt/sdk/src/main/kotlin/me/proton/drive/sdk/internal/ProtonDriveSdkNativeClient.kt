@@ -219,6 +219,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         operation = "featureEnabled",
         data = data,
         parser = { buffer -> buffer.decodeToString() },
+        fallback = { 0L },
     ) { name ->
         runCatching {
             if (featureEnabled(name)) 1L else 0L
@@ -230,7 +231,7 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
     }
 
     @Suppress("TooGenericExceptionCaught", "unused") // Called by JNI
-    fun onSha1(output: ByteBuffer): Unit = onFunction(operation = "sha1Provider") {
+    fun onSha1(output: ByteBuffer): Unit = onFunction(operation = "sha1Provider", fallback = { }) {
         runCatching {
             val sha1 = sha1Provider()
             if (output.capacity() < sha1.size) {
@@ -253,21 +254,38 @@ class ProtonDriveSdkNativeClient<E> internal constructor(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun <R> onFunction(
         operation: String,
+        fallback: () -> R,
         block: suspend () -> R
     ): R = runBlocking(Dispatchers.Unconfined) {
-        coroutineScope(operation).async { block() }.await()
+        // The scope can be cancelled while the call is in flight, and this returns into JNI.
+        try {
+            coroutineScope(operation).async { block() }.await()
+        } catch (error: Exception) {
+            logger(WARN, "Error while $operation")
+            logger(WARN, error.stackTraceToString())
+            fallback()
+        }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun <T, R> onFunction(
         operation: String,
         data: ByteBuffer,
         parser: (ByteBuffer) -> T,
+        fallback: () -> R,
         block: suspend (T) -> R
     ): R = runBlocking(Dispatchers.Unconfined) {
-        val value = parser(data)
-        coroutineScope(operation).async { block(value) }.await()
+        try {
+            val value = parser(data)
+            coroutineScope(operation).async { block(value) }.await()
+        } catch (error: Exception) {
+            logger(WARN, "Error while $operation")
+            logger(WARN, error.stackTraceToString())
+            fallback()
+        }
     }
 
     private inner class ResponseOnce(private val operation: String) {

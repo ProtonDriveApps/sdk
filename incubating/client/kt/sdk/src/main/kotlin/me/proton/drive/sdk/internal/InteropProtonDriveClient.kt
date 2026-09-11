@@ -1,5 +1,7 @@
 package me.proton.drive.sdk.internal
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import me.proton.drive.sdk.Downloader
@@ -56,6 +58,7 @@ import java.time.Instant
 internal class InteropProtonDriveClient internal constructor(
     internal val handle: Long,
     private val bridge: JniProtonDriveClient,
+    private val clientScope: CoroutineScope,
 ) : SdkNode(null), ProtonDriveClient {
 
     override suspend fun getAvailableName(
@@ -457,6 +460,7 @@ internal class InteropProtonDriveClient internal constructor(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        clientScope.cancel()
         super.close()
     }
 

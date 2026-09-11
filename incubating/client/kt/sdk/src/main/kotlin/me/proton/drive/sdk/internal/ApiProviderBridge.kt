@@ -42,12 +42,13 @@ internal class ApiProviderBridge(
     }
 
     private suspend fun respond(httpStream: HttpStream, request: HttpRequest): HttpResponse {
-        val preparedRequest = request.prepare(httpStream)
-        val apiResult = RetryAfterDelay(isEnabled = preparedRequest.isRetryEnabled) { attempt ->
-            apiProvider.get<HttpSdkApi>(userId).invoke(
-                forceNoRetryOnConnectionErrors = true
-            ) {
-                execute(preparedRequest, attempt)
+        val apiResult = request.withOutgoing(httpStream) { outgoing ->
+            RetryAfterDelay(isEnabled = outgoing.isRetryEnabled) { attempt ->
+                apiProvider.get<HttpSdkApi>(userId).invoke(
+                    forceNoRetryOnConnectionErrors = true
+                ) {
+                    execute(outgoing, attempt)
+                }
             }
         }
         if (apiResult is ApiResult.Error) {
@@ -89,9 +90,7 @@ internal class ApiProviderBridge(
 
     private suspend fun createHttpStream(): HttpStream {
         val jniHttpStream = JniHttpStream()
-        val httpStream = HttpStream(
-            bridge = jniHttpStream
-        )
+        val httpStream = InteropHttpStream(bridge = jniHttpStream)
         mutex.withLock {
             httpStreams += httpStream
         }
@@ -121,7 +120,7 @@ internal class ApiProviderBridge(
     }
 
     private suspend fun HttpSdkApi.execute(
-        request: PreparedRequest,
+        request: OutgoingRequest,
         attempt: Int,
     ): Response<ResponseBody> = executeLogged(request, attempt) {
         with(request) {
@@ -142,9 +141,9 @@ internal class ApiProviderBridge(
 
     @Suppress("TooGenericExceptionCaught")
     suspend fun HttpSdkApi.executeLogged(
-        request: PreparedRequest,
+        request: OutgoingRequest,
         attempt: Int,
-        block: suspend HttpSdkApi.(PreparedRequest) -> Response<ResponseBody>,
+        block: suspend HttpSdkApi.(OutgoingRequest) -> Response<ResponseBody>,
     ) = with(request) {
         val attemptSuffix = if (attempt > 0) " [retry $attempt]" else ""
         try {

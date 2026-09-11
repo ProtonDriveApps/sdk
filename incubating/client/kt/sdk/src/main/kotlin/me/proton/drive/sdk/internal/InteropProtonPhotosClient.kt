@@ -1,5 +1,7 @@
 package me.proton.drive.sdk.internal
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -47,6 +49,7 @@ import proton.drive.sdk.drivePhotosClientUpdatePhotosRequest
 internal class InteropProtonPhotosClient internal constructor(
     internal val handle: Long,
     private val bridge: JniProtonPhotosClient,
+    private val clientScope: CoroutineScope,
 ) : SdkNode(null), ProtonPhotosClient {
 
     override fun enumerateThumbnails(
@@ -392,6 +395,7 @@ internal class InteropProtonPhotosClient internal constructor(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        clientScope.cancel()
         super.close()
     }
 

@@ -15,7 +15,8 @@ import me.proton.drive.sdk.internal.JniNativeLibrary
 import me.proton.drive.sdk.internal.JniProtonDriveClient
 import me.proton.drive.sdk.internal.JniProtonPhotosClient
 import me.proton.drive.sdk.internal.ProtonDriveSdkNativeClient
-import me.proton.drive.sdk.internal.cancellationCoroutineScope
+import me.proton.drive.sdk.internal.cancelOnFailure
+import me.proton.drive.sdk.internal.clientScope
 
 object ProtonDriveSdk {
     init {
@@ -38,20 +39,26 @@ object ProtonDriveSdk {
         featureEnabled: suspend (String) -> Boolean = { false },
     ): ProtonDriveClient = JniProtonDriveClient().run {
         clientLogger(DEBUG, "ProtonDriveSdk protonDriveClientCreate(${userId.id.take(8)})")
-        InteropProtonDriveClient(
+        val clientScope = clientScope(coroutineScope)
+        val handle = clientScope.cancelOnFailure {
             create(
-                coroutineScope = coroutineScope,
+                coroutineScope = clientScope,
                 request = request,
                 httpResponseReadPointer = ProtonDriveSdkNativeClient.getHttpResponseReadPointer(),
                 onHttpClientRequest = ApiProviderBridge(
                     userId = userId,
                     apiProvider = apiProvider,
-                    coroutineScope = coroutineScope,
+                    coroutineScope = clientScope,
                 ),
                 onAccountRequest = AccountClientBridge(userAddressResolver, publicAddressResolver),
                 onRecordMetric = metricCallback?.let(::TelemetryBridge) ?: {},
-                onFeatureEnabled = featureEnabled
-            ), this
+                onFeatureEnabled = featureEnabled,
+            )
+        }
+        InteropProtonDriveClient(
+            handle = handle,
+            bridge = this,
+            clientScope = clientScope,
         )
     }
 
@@ -66,20 +73,26 @@ object ProtonDriveSdk {
         featureEnabled: suspend (String) -> Boolean = { false },
     ): ProtonPhotosClient = JniProtonPhotosClient().run {
         clientLogger(DEBUG, "ProtonDriveSdk protonPhotosClientCreate(${userId.id.take(8)})")
-        InteropProtonPhotosClient(
+        val clientScope = clientScope(coroutineScope)
+        val handle = clientScope.cancelOnFailure {
             create(
-                coroutineScope = coroutineScope,
+                coroutineScope = clientScope,
                 request = request,
                 httpResponseReadPointer = ProtonDriveSdkNativeClient.getHttpResponseReadPointer(),
                 onHttpClientRequest = ApiProviderBridge(
                     userId = userId,
                     apiProvider = apiProvider,
-                    coroutineScope = coroutineScope,
+                    coroutineScope = clientScope,
                 ),
                 onAccountRequest = AccountClientBridge(userAddressResolver, publicAddressResolver),
                 onRecordMetric = metricCallback?.let(::TelemetryBridge) ?: {},
-                onFeatureEnabled = featureEnabled
-            ), this
+                onFeatureEnabled = featureEnabled,
+            )
+        }
+        InteropProtonPhotosClient(
+            handle = handle,
+            bridge = this,
+            clientScope = clientScope,
         )
     }
 
