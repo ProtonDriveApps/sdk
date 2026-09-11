@@ -3,12 +3,12 @@ package me.proton.drive.sdk
 import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
-import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.extension.seek
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniDownloadController
 import me.proton.drive.sdk.internal.JniFileDownloader
+import me.proton.drive.sdk.internal.ownedCancellationTokenSource
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
@@ -24,7 +24,7 @@ class FileDownloader internal constructor(
     override suspend fun downloadToStream(
         coroutineScope: CoroutineScope,
         channel: WritableByteChannel,
-    ): DownloadController = cancellationTokenSource().let { source ->
+    ): DownloadController = ownedCancellationTokenSource { source ->
         log(INFO, "downloadToStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
         val controllerReference = AtomicReference<CommonDownloadController>()
@@ -58,6 +58,7 @@ class FileDownloader internal constructor(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        cancellationTokenSource.close()
         super.close()
     }
 

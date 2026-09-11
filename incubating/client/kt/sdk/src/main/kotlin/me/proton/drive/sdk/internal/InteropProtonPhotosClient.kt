@@ -336,7 +336,7 @@ internal class InteropProtonPhotosClient internal constructor(
         request: PhotosDownloaderRequest,
     ): Downloader {
         log(INFO, "downloader")
-        return cancellationCoroutineScope { source ->
+        return ownedCancellationTokenSource { source ->
             factory(JniPhotosDownloader()) {
                 PhotosDownloader(
                     client = this@InteropProtonPhotosClient,
@@ -356,7 +356,7 @@ internal class InteropProtonPhotosClient internal constructor(
         request: PhotosUploaderRequest,
     ): Uploader {
         log(INFO, "photosUploader")
-        return cancellationCoroutineScope { source ->
+        return ownedCancellationTokenSource { source ->
             JniPhotosUploader().run {
                 PhotosUploader(
                     client = this@InteropProtonPhotosClient,
