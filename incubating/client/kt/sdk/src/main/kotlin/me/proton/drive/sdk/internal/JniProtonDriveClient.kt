@@ -37,7 +37,7 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         onAccountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
         onRecordMetric: suspend (MetricEvent) -> Unit,
         onFeatureEnabled: suspend (String) -> Boolean,
-    ) = executePersistent(clientBuilder = { continuation ->
+    ) = executePersistent(name = "create", clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(
             name = method("create"),
             response = continuation.toLongResponse().asClientResponseCallback(),
@@ -280,11 +280,10 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     }
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             driveClientFree = driveClientFreeRequest {
                 clientHandle = handle
             }
         }
-        releaseAll()
     }
 }

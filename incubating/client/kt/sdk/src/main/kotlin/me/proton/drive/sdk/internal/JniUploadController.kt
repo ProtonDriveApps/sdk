@@ -47,11 +47,10 @@ class JniUploadController internal constructor() : JniBaseProtonDriveSdk() {
     }
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             uploadControllerFree = uploadControllerFreeRequest {
                 uploadControllerHandle = handle
             }
         }
-        releaseAll()
     }
 }

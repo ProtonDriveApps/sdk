@@ -37,7 +37,7 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         onAccountRequest: suspend (ProtonDriveSdk.AccountRequest) -> Any,
         onRecordMetric: suspend (MetricEvent) -> Unit,
         onFeatureEnabled: suspend (String) -> Boolean,
-    ) = executePersistent(clientBuilder = { continuation ->
+    ) = executePersistent(name = "create", clientBuilder = { continuation ->
         ProtonDriveSdkNativeClient(
             name = method("create"),
             response = continuation.toLongResponse().asClientResponseCallback(),
@@ -271,6 +271,7 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         sha1Provider: suspend () -> ByteArray,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): List<String> = executeOnce(
+        name = "findPhotoDuplicates",
         clientBuilder = { continuation, asClientResponseCallback ->
             ProtonDriveSdkNativeClient(
                 name = method("findPhotoDuplicates"),
@@ -307,11 +308,10 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     }
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             drivePhotosClientFree = drivePhotosClientFreeRequest {
                 clientHandle = handle
             }
         }
-        releaseAll()
     }
 }

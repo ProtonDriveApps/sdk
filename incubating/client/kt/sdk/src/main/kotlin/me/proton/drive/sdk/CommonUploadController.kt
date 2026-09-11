@@ -48,12 +48,16 @@ class CommonUploadController internal constructor(
                 }
                 throw error
             }
-            if (isPaused()) {
+            val isPausedResult = runCatching { isPaused() }
+                .onFailure { if (it is CancellationException) throw it }
+            if (isPausedResult.getOrDefault(false)) {
                 log(INFO, "paused")
                 throw error
             }
             log(INFO, "aborted")
-            throw UploadAbortedException(error)
+            throw UploadAbortedException(error).also { aborted ->
+                isPausedResult.exceptionOrNull()?.let { aborted.addSuppressed(it) }
+            }
         }.getOrThrow()
     }
 

@@ -29,6 +29,7 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
+        name = "downloadToStream",
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
                 name = method("downloadToStream"),
@@ -59,9 +60,8 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
     )
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             fileDownloaderFree = fileDownloaderFreeRequest { fileDownloaderHandle = handle }
         }
-        releaseAll()
     }
 }

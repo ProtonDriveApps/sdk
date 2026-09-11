@@ -35,6 +35,7 @@ class JniHttpStream internal constructor(
         handle: Long,
         buffer: ByteBuffer,
     ): Int = executeOnce(
+        name = "read",
         clientBuilder = { continuation, asClientResponseCallback ->
             ProtonDriveSdkNativeClient(
                 name = method("read"),
@@ -56,6 +57,7 @@ class JniHttpStream internal constructor(
     fun release() {
         client?.release()
         client = null
+        releaseAll()
     }
 
 }
