@@ -87,6 +87,7 @@ class CommonUploadController internal constructor(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        cancellationTokenSource.close()
         super.close()
     }
 

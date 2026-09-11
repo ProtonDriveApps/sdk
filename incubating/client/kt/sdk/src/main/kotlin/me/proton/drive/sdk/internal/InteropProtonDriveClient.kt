@@ -398,7 +398,7 @@ internal class InteropProtonDriveClient internal constructor(
         request: FileDownloaderRequest,
     ): Downloader {
         log(INFO, "downloader")
-        return cancellationCoroutineScope { source ->
+        return ownedCancellationTokenSource { source ->
             factory(JniFileDownloader()) {
                 FileDownloader(
                     client = this@InteropProtonDriveClient,
@@ -418,7 +418,7 @@ internal class InteropProtonDriveClient internal constructor(
         request: FileUploaderRequest,
     ): Uploader {
         log(INFO, "fileUploader")
-        return cancellationCoroutineScope { source ->
+        return ownedCancellationTokenSource { source ->
             JniFileUploader().run {
                 FileUploader(
                     client = this@InteropProtonDriveClient,
@@ -438,7 +438,7 @@ internal class InteropProtonDriveClient internal constructor(
         request: FileRevisionUploaderRequest,
     ): Uploader {
         log(INFO, "fileRevisionUploader")
-        return cancellationCoroutineScope { source ->
+        return ownedCancellationTokenSource { source ->
             JniFileUploader().run {
                 FileUploader(
                     client = this@InteropProtonDriveClient,

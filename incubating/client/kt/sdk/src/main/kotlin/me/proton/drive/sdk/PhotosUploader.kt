@@ -3,12 +3,12 @@ package me.proton.drive.sdk
 import kotlinx.coroutines.CoroutineScope
 import me.proton.drive.sdk.LoggerProvider.Level.DEBUG
 import me.proton.drive.sdk.LoggerProvider.Level.INFO
-import me.proton.drive.sdk.ProtonDriveSdk.cancellationTokenSource
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toPercentageString
 import me.proton.drive.sdk.internal.JniPhotosUploader
 import me.proton.drive.sdk.internal.JniUploadController
+import me.proton.drive.sdk.internal.ownedCancellationTokenSource
 import me.proton.drive.sdk.internal.toLogId
 import java.nio.channels.ReadableByteChannel
 import java.util.concurrent.atomic.AtomicReference
@@ -25,7 +25,7 @@ class PhotosUploader(
         channel: ReadableByteChannel,
         thumbnails: Map<ThumbnailType, ByteArray>,
         sha1Provider: (() -> ByteArray)?,
-    ): UploadController = cancellationTokenSource().let { source ->
+    ): UploadController = ownedCancellationTokenSource { source ->
         log(INFO, "uploadFromStream")
         val coroutineScopeReference = AtomicReference(coroutineScope)
         val controllerReference = AtomicReference<CommonUploadController>()
@@ -56,6 +56,7 @@ class PhotosUploader(
     override fun close() {
         log(DEBUG, "close")
         bridge.free(handle)
+        cancellationTokenSource.close()
         super.close()
     }
 
