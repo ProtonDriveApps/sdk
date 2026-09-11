@@ -36,6 +36,5 @@ class HttpStream internal constructor(
 
     override fun close() {
         bridge.release()
-        bridge.releaseAll()
     }
 }

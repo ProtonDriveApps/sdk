@@ -45,11 +45,10 @@ class JniDownloadController internal constructor() : JniBaseProtonDriveSdk() {
         }
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             downloadControllerFree = downloadControllerFreeRequest {
                 downloadControllerHandle = handle
             }
         }
-        releaseAll()
     }
 }

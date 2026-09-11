@@ -1,6 +1,7 @@
 package me.proton.drive.sdk.extension
 
 import kotlinx.coroutines.CancellableContinuation
+import kotlin.coroutines.resumeWithException
 import me.proton.drive.sdk.converter.BooleanConverter
 import me.proton.drive.sdk.converter.IntConverter
 import me.proton.drive.sdk.converter.LongConverter
@@ -38,3 +39,7 @@ fun CancellableContinuation<String>.toStringResponse(): ResponseCallback =
 
 val StringResponseCallback: (CancellableContinuation<String>) -> ResponseCallback =
     CancellableContinuation<String>::toStringResponse
+
+fun <T> CancellableContinuation<T>.resumeWithReleaseException(operation: String) {
+    resumeWithException(IllegalStateException("Cannot $operation after release"))
+}

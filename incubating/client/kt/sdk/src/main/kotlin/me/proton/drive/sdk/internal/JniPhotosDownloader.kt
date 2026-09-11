@@ -28,6 +28,7 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
         onProgress: suspend (ProtonDriveSdk.ProgressUpdate) -> Unit,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
+        name = "downloadToStream",
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
                 name = method("downloadToStream"),
@@ -58,11 +59,10 @@ class JniPhotosDownloader internal constructor() : JniBaseProtonDriveSdk() {
     )
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             drivePhotosClientDownloaderFree = drivePhotosClientDownloaderFreeRequest {
                 fileDownloaderHandle = handle
             }
         }
-        releaseAll()
     }
 }

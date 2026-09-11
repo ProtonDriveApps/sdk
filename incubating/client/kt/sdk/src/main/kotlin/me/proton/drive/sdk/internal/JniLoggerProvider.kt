@@ -19,6 +19,7 @@ class JniLoggerProvider internal constructor(
     }
 
     suspend fun create(): Long = executePersistent(
+        name = "create",
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
                 name = method("create"),

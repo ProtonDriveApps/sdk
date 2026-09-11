@@ -38,6 +38,7 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
         sha1Provider: (() -> ByteArray)?,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
+        name = "uploadFromStream",
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
                 name = method("uploadFromStream"),
@@ -89,10 +90,9 @@ class JniPhotosUploader internal constructor() : JniBaseProtonDriveSdk() {
     }
 */
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             drivePhotosClientUploaderFree =
                 drivePhotosClientUploaderFreeRequest { fileUploaderHandle = handle }
         }
-        releaseAll()
     }
 }

@@ -21,11 +21,10 @@ class JniCancellationTokenSource internal constructor() : JniBaseProtonDriveSdk(
     }
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             cancellationTokenSourceFree = cancellationTokenSourceFreeRequest {
                 cancellationTokenSourceHandle = handle
             }
         }
-        releaseAll()
     }
 }

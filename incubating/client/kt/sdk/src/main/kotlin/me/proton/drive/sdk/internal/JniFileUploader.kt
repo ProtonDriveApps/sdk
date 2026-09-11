@@ -45,6 +45,7 @@ class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
         sha1Provider: (() -> ByteArray)?,
         coroutineScopeProvider: CoroutineScopeProvider,
     ): Long = executePersistent(
+        name = "uploadFromStream",
         clientBuilder = { continuation ->
             ProtonDriveSdkNativeClient(
                 name = method("uploadFromStream"),
@@ -85,9 +86,8 @@ class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
     )
 
     fun free(handle: Long) {
-        dispatch("free") {
+        dispatchAndRelease("free") {
             fileUploaderFree = fileUploaderFreeRequest { fileUploaderHandle = handle }
         }
-        releaseAll()
     }
 }
