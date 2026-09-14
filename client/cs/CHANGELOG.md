@@ -1,5 +1,26 @@
 # Changelog
 
+## cs/v0.26.0 (2026-09-14)
+
+### Features
+- Report node move results one at a time as they finish
+- Save photos to timeline over interop
+- Support moving multiple nodes at a time
+- Carry the share a node is the root of, as JavaScript does
+- Add directRole and membership to nodes
+
+### Bug Fixes
+- Harden the HTTP stream upload path
+- Free the cancellation token source of every sdk call
+- Serialize native requests against the release of their      handle
+- Let fatal JVM errors propagate
+- Prevent wrong checksum when reading into a partial buffer
+- Unregister uploaders from their parent node on close
+- Release the http stream when a request fails
+- Use proper field name for deserializing node trash time from back-end API
+- Release jni local references in native callbacks
+
+
 ## cs/v0.25.0 (2026-08-26)
 
 ### Features
