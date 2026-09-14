@@ -595,13 +595,18 @@ extension ProtonDriveClient {
         try await cancelOperation(identifier: .enumerateEvents(cancellationToken))
     }
 
-    public func moveNodes(items: [NodeMoveItem], targetParentFolderUid: SDKNodeUid, cancellationToken: UUID) async throws -> [NodeResult] {
+    public func moveNodes(
+        items: [NodeMoveItem],
+        targetParentFolderUid: SDKNodeUid,
+        cancellationToken: UUID,
+        onNodeResult: @escaping NodeResultCallback
+    ) async throws {
         let cancellationTokenSource = try await createCancellationTokenSource(.moveNodes(cancellationToken), logger)
         defer {
             freeCancellationTokenSourceIfNeeded(identifier: .moveNodes(cancellationToken))
         }
 
-        let cancellationHandle = cancellationTokenSource.handle
+        let callbackState = NodeResultEnumerationCallbackWrapper(callback: onNodeResult)
         let moveRequest = Proton_Drive_Sdk_DriveClientMoveNodesRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.items = items.map { item in
@@ -616,10 +621,17 @@ extension ProtonDriveClient {
                 }
             }
             $0.targetParentFolderUid = targetParentFolderUid.sdkCompatibleIdentifier
-            $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeResultEnumerationCallback))
         }
-        let result: Proton_Drive_Sdk_NodeResultListResponse = try await SDKRequestHandler.send(moveRequest, logger: logger)
-        return result.results.compactMap { NodeResult(sdkNodeResult: $0) }
+
+        let _: Void = try await SDKRequestHandler.send(
+            moveRequest,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
     }
 
     public func cancelMoveNodes(cancellationToken: UUID) async throws {
@@ -628,7 +640,7 @@ extension ProtonDriveClient {
 
 }
 
-// MARK: - Trash 
+// MARK: - Trash
 extension ProtonDriveClient {
     public func trash(nodes: [SDKNodeUid], cancellationToken: UUID, onNodeResult: @escaping NodeResultCallback) async throws {
         let cancellationTokenSource = try await createCancellationTokenSource(.trashNode(cancellationToken), logger)

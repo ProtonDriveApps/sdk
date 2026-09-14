@@ -84,11 +84,18 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
     }
 
     suspend fun moveNodes(
+        coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DriveClientMoveNodesRequest,
-    ): ProtonDriveSdk.NodeResultListResponse =
-        executeOnce("moveNodes", NodeResultListResponseConverter().asCallback) {
-            driveClientMoveNodes = request
-        }
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "moveNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientMoveNodes = request
+    }
 
     suspend fun enumerateThumbnails(
         coroutineScope: CoroutineScope,

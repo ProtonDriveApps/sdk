@@ -64,7 +64,7 @@ internal static class InteropMessageHandler
                     => await InteropProtonDriveClient.HandleTrashNodesAsync(request.DriveClientTrashNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientMoveNodes
-                    => await InteropProtonDriveClient.HandleMoveNodesAsync(request.DriveClientMoveNodes).ConfigureAwait(false),
+                    => await InteropProtonDriveClient.HandleMoveNodesAsync(request.DriveClientMoveNodes, bindingsHandle).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientDeleteNodes
                     => await InteropProtonDriveClient.HandleDeleteNodesAsync(request.DriveClientDeleteNodes, bindingsHandle).ConfigureAwait(false),

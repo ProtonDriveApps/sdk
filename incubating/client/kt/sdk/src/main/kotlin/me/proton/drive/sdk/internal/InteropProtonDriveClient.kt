@@ -98,27 +98,34 @@ internal class InteropProtonDriveClient internal constructor(
         }
     }
 
-    override suspend fun moveNodes(
+    override fun moveNodes(
         items: List<NodeMoveItem>,
         targetParentFolderUid: NodeUid,
-    ): List<NodeResultPair> = cancellationCoroutineScope { source ->
+    ): Flow<NodeResultPair> = channelFlow {
         log(INFO, "moveNodes(${items.size} nodes)")
-        bridge.moveNodes(
-            driveClientMoveNodesRequest {
-                this.items += items.map { item ->
-                    nodeMoveItem {
-                        nodeUid = item.nodeUid.value
-                        currentParentUid = item.currentParentUid.value
-                        currentName = item.currentName
-                        targetName = item.targetName
-                        item.newMediaType?.let { newMediaType = it }
+        cancellationCoroutineScope { source ->
+            bridge.moveNodes(
+                coroutineScope = this@channelFlow,
+                driveClientMoveNodesRequest {
+                    this.items += items.map { item ->
+                        nodeMoveItem {
+                            nodeUid = item.nodeUid.value
+                            currentParentUid = item.currentParentUid.value
+                            currentName = item.currentName
+                            targetName = item.targetName
+                            item.newMediaType?.let { newMediaType = it }
+                        }
                     }
+                    this.targetParentFolderUid = targetParentFolderUid.value
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
                 }
-                this.targetParentFolderUid = targetParentFolderUid.value
-                clientHandle = handle
-                cancellationTokenSourceHandle = source.handle
-            }
-        ).toEntity()
+            )
+        }
     }
 
     override suspend fun createFolder(
