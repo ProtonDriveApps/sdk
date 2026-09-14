@@ -1,10 +1,61 @@
 import Foundation
-import ProtonCoreDataModel
 import SwiftProtobuf
 
+public struct AccountClientAddress: Sendable {
+    public enum Status: Sendable {
+        case enabled
+        case disabled
+    }
+    
+    public struct Key: Sendable {
+        let addressID: String
+        let addressKeyID: String
+        let isActive: Bool
+        let isAllowedForEncryption: Bool
+        let isAllowedForVerification: Bool
+        
+        public init(
+            addressID: String,
+            addressKeyID: String,
+            isActive: Bool,
+            isAllowedForEncryption: Bool,
+            isAllowedForVerification: Bool
+        ) {
+            self.addressID = addressID
+            self.addressKeyID = addressKeyID
+            self.isActive = isActive
+            self.isAllowedForEncryption = isAllowedForEncryption
+            self.isAllowedForVerification = isAllowedForVerification
+        }
+    }
+    
+    let addressID: String
+    let order: Int32
+    let emailAddress: String
+    let status: Status
+    let primaryKeyIndex: Int32
+    let keys: [Key]
+    
+    public init(
+        addressID: String,
+        order: Int32,
+        emailAddress: String,
+        status: Status,
+        primaryKeyIndex: Int32,
+        keys: [Key]
+    ) {
+        self.addressID = addressID
+        self.order = order
+        self.emailAddress = emailAddress
+        self.status = status
+        self.primaryKeyIndex = primaryKeyIndex
+        self.keys = keys
+    }
+}
+
 public protocol AccountClientProtocol: Sendable {
-    func getAddress(addressId: String) -> Address?
-    func getDefaultAddress() -> Address?
+    func getAddress(addressId: String) -> AccountClientAddress?
+    func getDefaultAddress() -> AccountClientAddress?
     func getAddressPrimaryPrivateKey(addressId: String) -> Data?
     func getAddressPrivateKeys(addressId: String) -> [Data]?
     func getAddressPublicKeysRequest(emailAddress: String) -> [Data]
@@ -81,12 +132,12 @@ let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePoint
     }
 }
 
-extension ProtonCoreDataModel.Address {
+extension AccountClientAddress {
     func makeProtoAddress() -> Proton_Drive_Sdk_Address {
         return Proton_Drive_Sdk_Address.with {
             $0.addressID = addressID
             $0.order = Int32(order)
-            $0.emailAddress = email
+            $0.emailAddress = emailAddress
             let addressStatus: Proton_Drive_Sdk_AddressStatus = {
                 switch status {
                 case .disabled:
@@ -96,26 +147,16 @@ extension ProtonCoreDataModel.Address {
                 }
             }()
             $0.status = addressStatus
-            $0.primaryKeyIndex = Int32(keys.firstIndex(where: { $0.primary == 1 }) ?? 0)
+            $0.primaryKeyIndex = primaryKeyIndex
             $0.keys = keys.map { key in
                 Proton_Drive_Sdk_AddressKey.with {
                     $0.addressID = addressID
-                    $0.addressKeyID = key.keyID
-                    $0.isActive = key.active == 1
-                    $0.isAllowedForEncryption = key.isAllowedForEncryption //TODO double check
+                    $0.addressKeyID = key.addressKeyID
+                    $0.isActive = key.isActive
+                    $0.isAllowedForEncryption = key.isAllowedForEncryption
                     $0.isAllowedForVerification = key.isAllowedForVerification
                 }
             }
         }
-    }
-}
-
-fileprivate extension Key {
-    var isAllowedForEncryption: Bool {
-        KeyFlags(rawValue: UInt8(truncating: keyFlags as NSNumber)).contains(.encryptNewData)
-    }
-
-    var isAllowedForVerification: Bool {
-        KeyFlags(rawValue: UInt8(truncating: keyFlags as NSNumber)).contains(.verifySignatures)
     }
 }
