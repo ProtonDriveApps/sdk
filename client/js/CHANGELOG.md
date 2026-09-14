@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.21.1 (2026-09-14)
+
+### Features
+- Support new calculation of folder node size
+
+
 ## js/v0.21.0 (2026-08-11)
 
 ### Features
