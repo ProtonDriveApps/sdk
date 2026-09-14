@@ -4,7 +4,6 @@ using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
 using Proton.Drive.Sdk.Nodes.Download;
 using Proton.Drive.Sdk.Nodes.Upload;
-using Proton.Sdk;
 using Proton.Sdk.Caching;
 using Proton.Sdk.Configuration;
 using Proton.Sdk.Telemetry;
@@ -275,15 +274,14 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static async ValueTask<IMessage> HandleMoveNodesAsync(DriveClientMoveNodesRequest request)
+    public static async ValueTask<IMessage?> HandleMoveNodesAsync(DriveClientMoveNodesRequest request, nint bindingsHandle)
     {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
 
         var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
 
-        var results = new Dictionary<NodeUid, Result<Exception>>();
-
-        await foreach (var moveResult in client.MoveNodesAsync(
+        var results = client.MoveNodesAsync(
             request.Items.Select(item => new Nodes.Move.NodeMoveItem(
                 NodeUid.Parse(item.NodeUid),
                 NodeUid.Parse(item.CurrentParentUid),
@@ -291,12 +289,14 @@ internal static class InteropProtonDriveClient
                 item.TargetName,
                 item.HasNewMediaType ? item.NewMediaType : null)),
             NodeUid.Parse(request.TargetParentFolderUid),
-            cancellationToken).ConfigureAwait(false))
+            cancellationToken);
+
+        await foreach (var result in results.ConfigureAwait(false))
         {
-            results[moveResult.NodeUid] = moveResult.Result;
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
         }
 
-        return results.ToInterop();
+        return null;
     }
 
     public static async ValueTask<IMessage?> HandleDeleteNodesAsync(DriveClientDeleteNodesRequest request, nint bindingsHandle)

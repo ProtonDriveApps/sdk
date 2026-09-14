@@ -595,12 +595,13 @@ message NodeMoveItem {
     string new_media_type = 5; // optional
 }
 
-// The response message must be of type NodeResultListResponse
+// The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DriveClientMoveNodesRequest {
     int64 client_handle = 1;
     repeated NodeMoveItem items = 2;
     string target_parent_folder_uid = 3;
     int64 cancellation_token_source_handle = 4;
+    int64 yield_action = 5;
 }
 
 message NodeResultPair {
