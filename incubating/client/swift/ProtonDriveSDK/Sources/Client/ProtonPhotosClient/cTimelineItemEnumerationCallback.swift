@@ -12,15 +12,13 @@ final class TimelineItemEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cTimelineItemEnumerationCallback: CCallback = { statePointer, byteArray in
+let cTimelineItemEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<TimelineItemEnumerationCallbackWrapper>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cTimelineItemEnumerationCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper = box.state
 
     let protoItem = Proton_Drive_Sdk_PhotosTimelineItem(byteArray: byteArray)
     guard let item = PhotoTimelineItem(item: protoItem) else { return }

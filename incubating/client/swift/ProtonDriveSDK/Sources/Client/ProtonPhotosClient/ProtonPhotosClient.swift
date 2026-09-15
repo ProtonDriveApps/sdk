@@ -103,19 +103,16 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             }
         }
 
-        // we pass the weak reference as the state because we don't want the interop layer
-        // to prolong the client object existence
-        // owner is nil: the client creation callback must outlive the client because C# may
-        // invoke secondary callbacks (log, telemetry, etc.) during teardown of operations that
-        // race with the client's deinit. SDKClientProvider.client is weak, so callbacks bail
-        // out safely once the client is gone; the small leak of the box is acceptable.
+        // The registry retains the provider, which holds this client weakly. This client's
+        // deinit removes all registrations keyed by that provider, including response buffers.
+        // Registry tokens allow late callbacks to fail safely after that cleanup.
         self.sdkClientProvider = SDKClientProvider(client: self)
         let handle: Proton_Drive_Sdk_DrivePhotosClientCreateRequest.CallResultType = try await SDKRequestHandler
             .sendInteropRequest(
                 clientCreateRequest,
                 state: sdkClientProvider,
-                scope: .indefinite,
-                owner: nil,
+                scope: .ownerManaged,
+                owner: sdkClientProvider,
                 logger: logger
             )
 

@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Mime;
+using Google.Protobuf;
 using Proton.Drive.Sdk.CExports.Tasks;
 using Proton.Sdk.Api.Http;
 using Proton.Sdk.Cryptography;
@@ -48,10 +50,9 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var interopHttpRequest = await ConvertHttpRequestToInteropAsync(request, cancellationToken).ConfigureAwait(false);
             var taskCompletionSource = new ValueTaskCompletionSource<HttpResponse>();
             var taskCompletionSourceHandle = Interop.AllocHandle(taskCompletionSource);
-
-            var interopHttpRequest = await ConvertHttpRequestToInteropAsync(request, cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -83,6 +84,17 @@ internal sealed class InteropHttpClientFactory : IHttpClientFactory
             var interopHttpRequest = new HttpRequest { Url = url, Method = request.Method.Method, Type = (HttpRequestType)request.GetRequestType() };
 
             var headers = request.Headers.AsEnumerable();
+
+            if (request.Content is MultipartContent multipartContent
+                && multipartContent.FirstOrDefault(content =>
+                    string.Equals(
+                        content.Headers.ContentType?.MediaType,
+                        MediaTypeNames.Application.Json,
+                        StringComparison.OrdinalIgnoreCase)) is { } firstJsonContent)
+            {
+                interopHttpRequest.FirstMultipartJsonContent = ByteString.CopyFrom(
+                    await firstJsonContent.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false));
+            }
 
             if (request.Content is not null)
             {

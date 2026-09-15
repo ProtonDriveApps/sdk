@@ -19,6 +19,19 @@ public protocol HttpClientProtocol: AnyObject, Sendable {
         headers: [(String, [String])]
     ) async -> Result<HttpClientResponse, NSError>
 
+    /// Temporary native-binding API pending a common HTTP-client interface.
+    /// Required for small-upload metadata delivery and its distinct retry policy.
+    /// Content is complete opaque multipart data starting at byte zero.
+    /// Do not automatically resend it after a timeout, lost connection, or server error.
+    /// Metadata is exact side-channel JSON, may contain plaintext, and must not be logged or recovered from content.
+    func requestSmallUpload(
+        method: String,
+        url: String,
+        content: Data,
+        metadata: Data,
+        headers: [(String, [String])]
+    ) async -> Result<HttpClientResponse, NSError>
+
     func requestDownloadFromStorage(
         method: String,
         url: String,

@@ -2,20 +2,12 @@ import Foundation
 
 enum HttpClientRequestProcessor {
     static let cCompatibleHttpRequest: CCallbackWithCallbackPointerAndObjectPointerReturn = { statePointer, byteArray, callbackPointer in
-        guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-            SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleHttpRequest.statePointer was nil",
-                                                     callbackPointer: callbackPointer)
+        guard let provider = SDKClientProvider.resolve(statePointer) else {
+            SDKResponseHandler.sendInteropErrorToSDK(message: "Client callback state has been released",
+                                                     callbackPointer: callbackPointer, assert: false)
             return -1
         }
-        let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
-        let provider: SDKClientProvider = stateTypedPointer.takeUnretainedValue().state
-
-        guard
-            let driveClient = provider.get(callbackPointer: callbackPointer, releaseBox: {
-                // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-                // stateTypedPointer.release()
-            })
-        else { return -1 }
+        guard let driveClient = provider.get(callbackPointer: callbackPointer) else { return -1 }
 
         let httpRequestData = Proton_Drive_Sdk_HttpRequest(byteArray: byteArray)
         
@@ -58,6 +50,13 @@ enum HttpClientRequestProcessor {
             )
         case .storageUpload:
             try await uploadToStorage(
+                client: client,
+                httpRequestData: httpRequestData,
+                callbackPointer: callbackPointer,
+                provider: provider
+            )
+        case .smallUpload:
+            try await smallUpload(
                 client: client,
                 httpRequestData: httpRequestData,
                 callbackPointer: callbackPointer,
@@ -119,28 +118,7 @@ enum HttpClientRequestProcessor {
 
         // the API calls are performed in a non-streaming way, we have whole data cached in-memory,
         // so we prepare a buffer that holds everything and wrap it into offset-keeping box
-        let bindingsHandle: Int?
-        if let data = response.data, !data.isEmpty {
-            let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
-            uploadBuffer.copyBytes(from: data)
-            let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
-            bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
-        } else {
-            bindingsHandle = nil
-        }
-        let httpResponse = Proton_Drive_Sdk_HttpResponse.with {
-            $0.headers = response.headers.map { header in
-                Proton_Drive_Sdk_HttpHeader.with {
-                    $0.name = header.0
-                    $0.values = header.1
-                }
-            }
-            if let bindingsHandle {
-                $0.bindingsContentHandle = Int64(bindingsHandle)
-            }
-            $0.statusCode = Int32(response.statusCode)
-        }
-        SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)
+        sendBufferedResponse(response, callbackPointer: callbackPointer, provider: provider, logger: client.logger)
     }
 
     /// the storage upload calls are using stream to upload request body, but cache the whole response in memory
@@ -178,12 +156,87 @@ enum HttpClientRequestProcessor {
             headers: headers
         ).get()
 
+        sendBufferedResponse(response, callbackPointer: callbackPointer, provider: provider, logger: client.logger)
+    }
+
+    fileprivate static func smallUpload(
+        client: ProtonSDKClient,
+        httpRequestData: Proton_Drive_Sdk_HttpRequest,
+        callbackPointer: Int,
+        provider: SDKClientProvider
+    ) async throws {
+        let response = try await performSmallUpload(
+            request: httpRequestData,
+            httpClient: client.httpClient,
+            bufferLength: client.configuration.httpTransferBufferSize,
+            read: { try await SDKRequestHandler.send($0, logger: client.logger) }
+        )
+        sendBufferedResponse(response, callbackPointer: callbackPointer, provider: provider, logger: client.logger)
+    }
+
+    static func performSmallUpload(
+        request: Proton_Drive_Sdk_HttpRequest,
+        httpClient: any HttpClientProtocol,
+        bufferLength: Int,
+        read: (Proton_Drive_Sdk_StreamReadRequest) async throws -> Int32
+    ) async throws -> HttpClientResponse {
+        if Task.isCancelled { throw URLError(.cancelled) }
+        guard !request.firstMultipartJsonContent.isEmpty else {
+            throw ProtonDriveSDKError(interopError: .wrongResult(message: "Upload details are missing."))
+        }
+        guard request.hasSdkContentHandle, request.sdkContentHandle != 0 else {
+            throw ProtonDriveSDKError(interopError: .wrongResult(message: "Upload data is unavailable."))
+        }
+        let maximumBodySize = 16 * 1024 * 1024
+        guard bufferLength > 0 else {
+            throw ProtonDriveSDKError(interopError: .wrongResult(message: "The upload configuration is invalid."))
+        }
+        let bufferLength = min(bufferLength, maximumBodySize)
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferLength)
+        defer { buffer.deallocate() }
+        var content = Data()
+        let readRequest = Proton_Drive_Sdk_StreamReadRequest.with {
+            $0.streamHandle = request.sdkContentHandle
+            $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(buffer)))
+            $0.bufferLength = Int32(bufferLength)
+        }
+        while true {
+            if Task.isCancelled { throw URLError(.cancelled) }
+            let count = try await read(readRequest)
+            if Task.isCancelled { throw URLError(.cancelled) }
+            guard count >= 0, count <= bufferLength else {
+                throw ProtonDriveSDKError(interopError: .wrongResult(message: "The upload data could not be read correctly."))
+            }
+            if count == 0 { break }
+            guard content.count <= maximumBodySize - Int(count) else {
+                throw ProtonDriveSDKError(interopError: .wrongResult(message: "The upload exceeds the supported size."))
+            }
+            content.append(buffer, count: Int(count))
+        }
+        return try await httpClient.requestSmallUpload(
+            method: request.method,
+            url: request.url,
+            content: content,
+            metadata: request.firstMultipartJsonContent,
+            headers: request.headers.map { ($0.name, $0.values) }
+        ).get()
+    }
+
+    private static func sendBufferedResponse(
+        _ response: HttpClientResponse,
+        callbackPointer: Int,
+        provider: SDKClientProvider,
+        logger: Logger
+    ) {
         let bindingsHandle: Int?
         if let data = response.data, !data.isEmpty {
-            let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: client.logger)
+            let uploadBuffer = BoxedRawBuffer(bufferSize: data.count, logger: logger)
             uploadBuffer.copyBytes(from: data)
-            let bytesOrStream = BoxedStreamingData(uploadBuffer: uploadBuffer, logger: client.logger)
-            bindingsHandle = CallbackHandleRegistry.shared.register(bytesOrStream, scope: .ownerManaged, owner: provider)
+            bindingsHandle = CallbackHandleRegistry.shared.register(
+                BoxedStreamingData(uploadBuffer: uploadBuffer, logger: logger),
+                scope: .ownerManaged,
+                owner: provider
+            )
         } else {
             bindingsHandle = nil
         }
@@ -194,9 +247,7 @@ enum HttpClientRequestProcessor {
                     $0.values = header.1
                 }
             }
-            if let bindingsHandle {
-                $0.bindingsContentHandle = Int64(bindingsHandle)
-            }
+            if let bindingsHandle { $0.bindingsContentHandle = Int64(bindingsHandle) }
             $0.statusCode = Int32(response.statusCode)
         }
         SDKResponseHandler.send(callbackPointer: callbackPointer, message: httpResponse)

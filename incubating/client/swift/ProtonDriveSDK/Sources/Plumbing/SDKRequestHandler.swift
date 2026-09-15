@@ -93,10 +93,9 @@ enum SDKRequestHandler {
 
             // Switch to InteropTypes.BoxedStateType once we use it for all requests
             let boxedState = BoxedCompletionBlock(completionBlock, state: state)
-            let pointer = Unmanaged.passRetained(boxedState)
-            boxedState.registryHandleId = CallbackHandleRegistry.shared.register(boxedState, scope: scope, owner: owner)
-            let bindingsHandle = Int(rawPointer: pointer.toOpaque())
-            proton_drive_sdk_handle_request(requestArray, bindingsHandle, sdkResponseCallbackWithState)
+            let registryId = CallbackHandleRegistry.shared.register(boxedState, scope: scope, owner: owner)
+            // The native SDK treats this handle as opaque and returns it unchanged to every callback.
+            proton_drive_sdk_handle_request(requestArray, registryId, sdkResponseCallbackWithState)
         } catch {
             completionBlock(.failure(error))
         }
@@ -104,25 +103,12 @@ enum SDKRequestHandler {
 }
 
 /// C-compatible callback function for SDK responses.
-let sdkResponseCallbackWithState: CCallback = { statePointer, responseArray in
-    guard let sdkPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("If the pointer is not Resumable, we cannot get the continuation")
-        return
-    }
+let sdkResponseCallbackWithState: CCallback = { stateHandle, responseArray in
 
-    let rawBox = Unmanaged<AnyObject>.fromOpaque(sdkPointer).takeRetainedValue()
-
-    // Release the registry reference for operation-scoped entries only.
-    // ownerManaged entries are cleaned up by the owner's deinit via removeAll(ownedBy:).
-    // indefinite entries intentionally outlive every owner.
-    if let managed = rawBox as? RegistryTracking, let handleId = managed.registryHandleId {
-        if CallbackHandleRegistry.shared.scope(for: handleId) == .operation {
-            CallbackHandleRegistry.shared.remove(handleId)
-        }
-    }
+    guard let rawBox = CallbackHandleRegistry.shared.resolveResponse(stateHandle) else { return }
 
     guard let box = rawBox as? any Resumable else {
-        assertionFailure("If the pointer is not Resumable, we cannot get the continuation")
+        assertionFailure("If the callback state is not Resumable, we cannot get the continuation")
         return
     }
 

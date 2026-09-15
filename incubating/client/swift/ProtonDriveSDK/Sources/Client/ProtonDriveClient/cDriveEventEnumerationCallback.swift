@@ -13,15 +13,13 @@ final class DriveEventEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cDriveEventEnumerationCallback: CCallback = { statePointer, byteArray in
+let cDriveEventEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DriveEventEnumerationCallbackWrapper>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cDriveEventEnumerationCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper = box.state
 
     let sdkDriveEvent = Proton_Drive_Sdk_DriveEvent(byteArray: byteArray)
     do {

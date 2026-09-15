@@ -22,6 +22,7 @@ internal sealed class InteropStream : Stream
         long? length,
         nint bindingsHandle,
         InteropFunction<nint, InteropArray<byte>, nint, nint>? readFunction,
+        InteropAction<nint, InteropArray<byte>, nint>? seekAction = null,
         InteropAction<nint>? cancelAction = null,
         InteropAction<nint>? disposeAction = null)
     {
@@ -29,6 +30,7 @@ internal sealed class InteropStream : Stream
         _bindingsHandle = bindingsHandle;
         _readFunction = readFunction;
         _writeFunction = null;
+        _seekAction = seekAction;
         _cancelAction = cancelAction;
         _disposeAction = disposeAction;
     }
@@ -119,6 +121,8 @@ internal sealed class InteropStream : Stream
 
     public override long Seek(long offset, SeekOrigin origin)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (_seekAction is null)
         {
             throw new NotSupportedException("Seeking not supported");

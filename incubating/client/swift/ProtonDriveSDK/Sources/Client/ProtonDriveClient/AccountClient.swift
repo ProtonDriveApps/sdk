@@ -62,20 +62,12 @@ public protocol AccountClientProtocol: Sendable {
 }
 
 let cCompatibleAccountClientRequest: CCallbackWithCallbackPointer = { statePointer, byteArray, callbackPointer in
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        SDKResponseHandler.sendInteropErrorToSDK(message: "cCompatibleAccountClientRequest.statePointer is null",
-                                                 callbackPointer: callbackPointer)
+    guard let provider = SDKClientProvider.resolve(statePointer) else {
+        SDKResponseHandler.sendInteropErrorToSDK(message: "Client callback state has been released",
+                                                 callbackPointer: callbackPointer, assert: false)
         return
     }
-    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
-    let provider: SDKClientProvider = stateTypedPointer.takeUnretainedValue().state
-
-    guard
-        let driveClient = provider.get(callbackPointer: callbackPointer, releaseBox: {
-            // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-            // stateTypedPointer.release()
-        })
-    else { return }
+    guard let driveClient = provider.get(callbackPointer: callbackPointer) else { return }
 
     Task { [driveClient] in
         let accountClient = driveClient.accountClient

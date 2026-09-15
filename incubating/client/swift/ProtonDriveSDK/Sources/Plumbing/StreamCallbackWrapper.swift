@@ -52,19 +52,18 @@ final class StreamDownloadState: @unchecked Sendable {
 /// C-compatible callback for writing data to the output stream.
 /// The SDK calls this with data that should be written to the stream.
 /// Returns an operation handle that can be used to cancel the operation.
-let cStreamWriteCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { statePointer, byteArray, callbackPointer in
+let cStreamWriteCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { stateHandle, byteArray, callbackPointer in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<StreamDownloadState>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         SDKResponseHandler.sendInteropErrorToSDK(
-            message: "cStreamWriteCallback.statePointer is nil",
-            callbackPointer: callbackPointer
+            message: "cStreamWriteCallback state is unavailable",
+            callbackPointer: callbackPointer,
+            assert: false
         )
         return 0
     }
-
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper: WeakReference<StreamDownloadState> = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper: WeakReference<StreamDownloadState> = box.state
 
     guard let state = weakWrapper.value else {
         SDKResponseHandler.sendInteropErrorToSDK(
@@ -97,19 +96,18 @@ let cStreamWriteCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = {
 /// C-compatible callback for seeking in the output stream.
 /// The SDK calls this with a StreamSeekRequest containing offset and origin.
 /// Returns an operation handle that can be used to cancel the operation.
-let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { statePointer, byteArray, callbackPointer in
+let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { stateHandle, byteArray, callbackPointer in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<StreamDownloadState>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         SDKResponseHandler.sendInteropErrorToSDK(
-            message: "cStreamSeekCallback.statePointer is nil",
-            callbackPointer: callbackPointer
+            message: "cStreamSeekCallback state is unavailable",
+            callbackPointer: callbackPointer,
+            assert: false
         )
         return 0
     }
-
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper: WeakReference<StreamDownloadState> = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper: WeakReference<StreamDownloadState> = box.state
 
     guard let state = weakWrapper.value else {
         SDKResponseHandler.sendInteropErrorToSDK(
@@ -143,7 +141,7 @@ let cStreamSeekCallback: CCallbackWithCallbackPointerAndObjectPointerReturn = { 
 
 /// C-compatible callback for progress updates during stream download.
 /// The SDK calls this with progress information.
-let cStreamProgressCallback: CCallback = { statePointer, byteArray in
+let cStreamProgressCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<StreamDownloadState>>
     let progressUpdate = Proton_Drive_Sdk_ProgressUpdate(byteArray: byteArray)
     let progress = FileOperationProgress(
@@ -151,12 +149,10 @@ let cStreamProgressCallback: CCallback = { statePointer, byteArray in
         bytesTotal: progressUpdate.hasBytesInTotal ? progressUpdate.bytesInTotal : nil
     )
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cStreamProgressCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper: WeakReference<StreamDownloadState> = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper: WeakReference<StreamDownloadState> = box.state
     weakWrapper.value?.handleProgress(progress)
 }
 
@@ -171,11 +167,9 @@ let cStreamCancelCallback: CCallbackWithoutByteArray = { callbackHandle in
 let cStreamDisposeCallback: CCallbackWithoutByteArray = { bindingsHandle in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<StreamDownloadState>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: bindingsHandle) else {
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(bindingsHandle) else {
         return
     }
-
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper: WeakReference<StreamDownloadState> = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper: WeakReference<StreamDownloadState> = box.state
     weakWrapper.value?.dispose()
 }
