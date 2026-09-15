@@ -324,8 +324,6 @@ internal sealed partial class RevisionWriter
                 continue;
             }
 
-            ReserveAdditionalBlocks(1);
-
             await WaitForUploadSlotAsync(uploadTasks, cancellationToken).ConfigureAwait(false);
 
             var uploadTask = UploadThumbnailBlockAsync(thumbnail, cancellationToken).AsTask();
@@ -471,14 +469,6 @@ internal sealed partial class RevisionWriter
             }
 
             await _client.UploadQueue.EnqueueBlockAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    private void ReserveAdditionalBlocks(int count)
-    {
-        if (!_draft.IsSmallUpload)
-        {
-            _client.UploadQueue.IncreaseFileBlockCount(_queueToken, count);
         }
     }
 

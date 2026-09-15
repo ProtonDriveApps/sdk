@@ -6,7 +6,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 
 internal sealed record NewRevisionUploadBackendRequest(
     long IntendedUploadSize,
-    IReadOnlyList<Thumbnail> Thumbnails,
+    IEnumerable<Thumbnail> Thumbnails,
     bool ContentCanSeek,
     NodeUid FileUid,
     RevisionId CurrentRevisionId,

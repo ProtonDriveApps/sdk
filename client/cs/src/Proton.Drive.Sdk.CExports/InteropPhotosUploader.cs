@@ -23,7 +23,7 @@ internal static class InteropPhotosUploader
                 var thumbnailType = (Nodes.ThumbnailType)t.Type;
                 return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
-        });
+        }).ToList();
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
 
@@ -51,7 +51,7 @@ internal static class InteropPhotosUploader
                 var thumbnailType = (Nodes.ThumbnailType)t.Type;
                 return new Nodes.Thumbnail(thumbnailType, new InteropArray<byte>((byte*)t.DataPointer, (nint)t.DataLength).ToArray());
             }
-        });
+        }).ToList();
 
         var progressAction = new InteropAction<nint, InteropArray<byte>>(request.ProgressAction);
         var expectedSha1Provider = request.HasSha1Function ?

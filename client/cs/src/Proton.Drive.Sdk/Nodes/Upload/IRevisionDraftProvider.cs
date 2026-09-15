@@ -4,7 +4,7 @@ internal interface IRevisionDraftProvider
 {
     ValueTask<RevisionDraft> GetDraftAsync(
         long intendedUploadSize,
-        IReadOnlyList<Thumbnail> thumbnails,
+        IEnumerable<Thumbnail> thumbnails,
         bool contentCanSeek,
         bool allowSmallUpload,
         CancellationToken cancellationToken);
