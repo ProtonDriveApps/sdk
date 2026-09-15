@@ -162,10 +162,13 @@ public sealed partial class FileUploader : IDisposable
     }
 
     // Only fall back when no server write could have happened: SmallUploadNotApplicableException is raised before the upload
-    // POST, a 429 is rejected before processing, and an AlreadyExists conflict is a clean rejection (the server committed
-    // nothing). Ambiguous post-POST failures (5xx / 424 / dropped connections) are NOT retried, because the small upload
+    // POST, and an AlreadyExists conflict is a clean rejection (the server committed
+    // nothing). Ambiguous post-POST failures (5xx / dropped connections) are NOT retried, because the small upload
     // creates and commits the revision atomically and is not idempotent — re-running it could duplicate state or report
     // failure after the server already succeeded.
+    //
+    // A 429 follows the HTTP client's normal rate-limit policy; it does not select a different upload path.
+    // A 424 can disable uploading or sharing for both paths, so it is not a small-upload fallback signal.
     //
     // The conflict cases fall back so the regular path can recover: its draft creation deletes a stale own-draft left by a
     // prior interrupted upload and retries, or re-surfaces NodeWithSameNameExistsException for a genuine name collision. The
@@ -174,7 +177,6 @@ public sealed partial class FileUploader : IDisposable
         ex switch
         {
             SmallUploadNotApplicableException => true,
-            TooManyRequestsException => true,
             NodeWithSameNameExistsException => true,
             RevisionDraftConflictException => true,
             _ => false,
@@ -191,7 +193,7 @@ public sealed partial class FileUploader : IDisposable
 
     [LoggerMessage(
         Level = LogLevel.Warning,
-        Message = "Small file upload failed transiently (status: {StatusCode}); falling back to regular upload (~{ApproximateSize} bytes)")]
+        Message = "Small file upload failed (status: {StatusCode}); falling back to regular upload (~{ApproximateSize} bytes)")]
     private static partial void LogSmallUploadFallback(ILogger logger, int? statusCode, long approximateSize);
 
     [LoggerMessage(
@@ -321,6 +323,8 @@ public sealed partial class FileUploader : IDisposable
             }
             catch (Exception ex) when (IsSmallUploadFallbackException(ex))
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 LogSmallUploadFallback(_logger, GetTransportStatusCode(ex), Privacy.ReduceSizePrecision(FileSize));
 
                 contentStream.Seek(0, SeekOrigin.Begin);

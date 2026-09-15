@@ -13,15 +13,13 @@ final class NodeUidEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cNodeUidEnumerationCallback: CCallback = { statePointer, byteArray in
+let cNodeUidEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<NodeUidEnumerationCallbackWrapper>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cNodeUidEnumerationCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper = box.state
 
     let stringValue = Google_Protobuf_StringValue(byteArray: byteArray)
     let rawValue = stringValue.value

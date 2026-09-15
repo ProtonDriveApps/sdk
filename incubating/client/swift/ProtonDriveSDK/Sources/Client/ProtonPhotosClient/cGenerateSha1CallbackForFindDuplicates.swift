@@ -16,16 +16,13 @@ final class FindDuplicatesState: Sendable {
 
 /// C callback matching `void generate_sha1(intptr_t bindings_handle, ByteArray output_buffer)`.
 /// Writes the precomputed 20-byte SHA-1 digest into the buffer provided by the SDK.
-let cGenerateSha1CallbackForFindDuplicates: CCallback = { statePointer, byteArray in
+let cGenerateSha1CallbackForFindDuplicates: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<[String], WeakReference<FindDuplicatesState>>
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cGenerateSha1CallbackForFindDuplicates.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
     guard
-        let sha1 = stateTypedPointer.takeUnretainedValue().state.value?.sha1,
+        let sha1 = box.state.value?.sha1,
         let destBase = byteArray.pointer
     else { return }
 

@@ -3,21 +3,8 @@ import Foundation
 public typealias FeatureFlagProviderCallback = @Sendable (String, (Bool) -> Void) -> Void
 
 let cCompatibleFeatureFlagProviderCallback: CCallbackWithIntReturn = { statePointer, byteArray in
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        let message = "cCompatibleFeatureFlagProviderCallback.statePointer is nil"
-        assertionFailure(message)
-        // there is no way we can inform the SDK back about the issue
-        return 0
-    }
-
-    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
-    let provider = stateTypedPointer.takeUnretainedValue().state
-
-    guard let driveClient = provider.get() else {
-        // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-        // stateTypedPointer.release()
-        return 0
-    }
+    guard let provider = SDKClientProvider.resolve(statePointer),
+          let driveClient = provider.get() else { return 0 }
 
     // Convert ByteArray to String
     guard let pointer = byteArray.pointer else { return 0 }

@@ -148,18 +148,16 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
             cancellationToken).ConfigureAwait(false);
     }
 
-    private static MultipartFormDataContent BuildSmallUploadContent<TMetadata>(
-        TMetadata metadata,
-        JsonTypeInfo<TMetadata> metadataTypeInfo,
+    private static MultipartContent BuildSmallUploadContent(
+        byte[] metadataJson,
         byte[]? contentBlock,
         IReadOnlyList<EncryptedThumbnail>? thumbnailBlocks)
     {
-        var multipartContent = new MultipartFormDataContent();
+        var multipartContent = new MultipartContent("form-data");
 
         try
         {
-            var metadataJson = JsonSerializer.Serialize(metadata, metadataTypeInfo);
-            var metadataContent = new StringContent(metadataJson);
+            var metadataContent = new ByteArrayContent(metadataJson);
             metadataContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "Metadata", FileName = "Metadata" };
             metadataContent.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Application.Json);
             multipartContent.Add(metadataContent);
@@ -204,9 +202,10 @@ internal sealed class FilesApiClient(HttpClient httpClient) : IFilesApiClient
         IReadOnlyList<EncryptedThumbnail>? thumbnailBlocks,
         CancellationToken cancellationToken)
     {
-        using var multipartContent = BuildSmallUploadContent(metadata, metadataTypeInfo, contentBlock, thumbnailBlocks);
+        var metadataJson = JsonSerializer.SerializeToUtf8Bytes(metadata, metadataTypeInfo);
+        using var multipartContent = BuildSmallUploadContent(metadataJson, contentBlock, thumbnailBlocks);
         using var requestMessage = HttpRequestMessageFactory.Create(HttpMethod.Post, url, multipartContent);
-        requestMessage.SetRequestType(HttpRequestType.StorageUpload);
+        requestMessage.SetRequestType(HttpRequestType.SmallUpload);
 
         return await _httpClient
             .Expecting(DriveApiSerializerContext.Default.SmallUploadResponse, DriveApiSerializerContext.Default.DetailedApiResponse)

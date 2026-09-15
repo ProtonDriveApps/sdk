@@ -188,6 +188,7 @@ enum HttpRequestType {
     HTTP_REQUEST_TYPE_REGULAR_API = 0;
     HTTP_REQUEST_TYPE_STORAGE_DOWNLOAD = 1;
     HTTP_REQUEST_TYPE_STORAGE_UPLOAD = 2;
+    HTTP_REQUEST_TYPE_SMALL_UPLOAD = 3;
 }
 
 message HttpHeader {
@@ -202,6 +203,7 @@ message HttpRequest {
     string method = 3;
     repeated HttpHeader headers = 4;
     int64 sdk_content_handle = 5; // Optional, to be used with StreamReadRequest
+    bytes first_multipart_json_content = 6; // Optional, first application/json part; may contain plaintext and must not be logged
 }
 
 message HttpResponse {
@@ -515,6 +517,7 @@ message UploadFromStreamRequest {
     int64 cancel_action = 6; // Optional, C signature: void on_cancel(intptr_t bindings_handle); Signals the bindings to cancel the current stream operation.
     int64 sha1_function = 7; // Optional - C signature: void write_expected_sha1(intptr_t bindings_handle, ByteArray output_buffer); writes SHA-1 digest bytes into output_buffer (20 bytes).
     int64 dispose_action = 8; // Optional, C signature: void on_stream_dispose(intptr_t bindings_handle); Signals the bindings to dispose or clean up their stream.
+    int64 seek_action = 9; // Optional, C signature: void on_seek(intptr_t bindings_handle, ByteArray request, intptr_t sdk_handle);
 }
 
 // The response value must be an Int64Value carrying a handle to an instance of UploadController.

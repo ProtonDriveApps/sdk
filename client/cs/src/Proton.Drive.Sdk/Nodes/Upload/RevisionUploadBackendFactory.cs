@@ -69,7 +69,6 @@ internal sealed partial class RevisionUploadBackendFactory(ProtonDriveClient cli
         try
         {
             var response = await client.Api.Links.GetDetailsAsync(fileUid.VolumeId, [fileUid.LinkId], cancellationToken).ConfigureAwait(false);
-
             var contentKeyPacket = response.Links.FirstOrDefault()?.File?.ContentKeyPacket;
             if (contentKeyPacket is null)
             {
@@ -81,7 +80,9 @@ internal sealed partial class RevisionUploadBackendFactory(ProtonDriveClient cli
         }
         catch (Exception e) when (e is ProtonApiException or HttpRequestException or TooManyRequestsException)
         {
-            LogContentKeyPacketUnavailable(client.Telemetry.GetLogger("Small revision upload backend"), fileUid, e.Message);
+            cancellationToken.ThrowIfCancellationRequested();
+            LogContentKeyPacketUnavailable(
+                client.Telemetry.GetLogger("Small revision upload backend"), fileUid, error: e.GetType().Name);
             return null;
         }
     }

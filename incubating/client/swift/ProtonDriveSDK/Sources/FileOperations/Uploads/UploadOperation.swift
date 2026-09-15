@@ -259,16 +259,13 @@ final class UploadOperationState: Sendable {
     }
 }
 
-let cExpectedSha1CallbackForUpload: CCallback = { statePointer, byteArray in
+let cExpectedSha1CallbackForUpload: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<UploadOperationState>>
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cExpectedSha1CallbackForUpload.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
     guard
-        let expectedSHA1 = stateTypedPointer.takeUnretainedValue().state.value?.expectedSHA1,
+        let expectedSHA1 = box.state.value?.expectedSHA1,
         let destBase = byteArray.pointer
     else { return }
 

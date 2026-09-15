@@ -26,21 +26,8 @@ extension LogLevel {
 }
 
 let cCompatibleLogCallback: CCallback = { statePointer, byteArray in
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        let message = "cCompatibleLogCallback.statePointer is nil"
-        assertionFailure(message)
-        // there is no way we can inform the SDK back about the issue
-        return
-    }
-    
-    let stateTypedPointer = Unmanaged<BoxedCompletionBlock<Int, SDKClientProvider>>.fromOpaque(stateRawPointer)
-    let provider = stateTypedPointer.takeUnretainedValue().state
-
-    guard let driveClient = provider.get() else {
-        // we don't release the stateTypedPointer by design — there might be some calls coming from the SDK racing with the client deallocation
-        // stateTypedPointer.release()
-        return
-    }
+    guard let provider = SDKClientProvider.resolve(statePointer),
+          let driveClient = provider.get() else { return }
 
     let logEvent = LogEvent(sdkLogEvent: Proton_Drive_Sdk_LogEvent(byteArray: byteArray))
     driveClient.log(logEvent)

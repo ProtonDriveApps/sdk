@@ -12,18 +12,14 @@ final class ThumbnailEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cThumbnailEnumerationCallback: CCallback = { statePointer, byteArray in
+let cThumbnailEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<ThumbnailEnumerationCallbackWrapper>>
     let fileThumbnail = Proton_Drive_Sdk_FileThumbnail(byteArray: byteArray)
     let result = ThumbnailDataWithId(fileThumbnail: fileThumbnail)
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        let message = "cProgressCallback.statePointer is nil"
-        assertionFailure(message)
-        // there is no way we can inform the SDK back about the issue
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper: WeakReference<ThumbnailEnumerationCallbackWrapper> = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper: WeakReference<ThumbnailEnumerationCallbackWrapper> = box.state
     weakWrapper.value?.callback(.success(result))
 }

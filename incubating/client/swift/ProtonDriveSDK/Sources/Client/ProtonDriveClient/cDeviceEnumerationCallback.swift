@@ -12,15 +12,13 @@ final class DeviceEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cDeviceEnumerationCallback: CCallback = { statePointer, byteArray in
+let cDeviceEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DeviceEnumerationCallbackWrapper>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cDeviceEnumerationCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper = box.state
 
     let protoDevice = Proton_Drive_Sdk_Device(byteArray: byteArray)
     do {

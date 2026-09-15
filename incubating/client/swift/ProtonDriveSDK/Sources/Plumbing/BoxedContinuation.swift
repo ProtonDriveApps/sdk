@@ -1,3 +1,5 @@
+import Foundation
+
 protocol Resumable<ReturnType>: AnyObject {
     associatedtype ReturnType
     typealias Continuation = CheckedContinuation<ReturnType, any Error>
@@ -13,33 +15,31 @@ extension Resumable where ReturnType == Void {
 }
 
 // Boxed completion
-final class BoxedCompletionBlock<ResultType, StateType>: RegistryTracking, Resumable {
+final class BoxedCompletionBlock<ResultType, StateType>: Resumable {
     typealias CompletionBlock = (Result<ResultType, Error>) -> Void
 
+    private let lock = NSLock()
     private var completionBlock: CompletionBlock?
     let state: StateType
-    var registryHandleId: RegistryHandle?
 
     init(_ completionBlock: CompletionBlock?, state: StateType) {
         self.completionBlock = completionBlock
         self.state = state
     }
 
+    private func takeCompletion() -> CompletionBlock? {
+        lock.lock()
+        let completion = completionBlock
+        completionBlock = nil
+        lock.unlock()
+        return completion
+    }
+
     func resume(returning value: ResultType) {
-        guard let completionBlock else {
-            assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
-            return
-        }
-        completionBlock(.success(value))
-        self.completionBlock = nil
+        takeCompletion()?(.success(value))
     }
 
     func resume(throwing error: any Error) {
-        guard let completionBlock else {
-            assertionFailure("Attempt at calling continuation twice, programmer's error, must fix")
-            return
-        }
-        completionBlock(.failure(error))
-        self.completionBlock = nil
+        takeCompletion()?(.failure(error))
     }
 }

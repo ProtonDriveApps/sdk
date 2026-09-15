@@ -12,15 +12,13 @@ final class NodeResultEnumerationCallbackWrapper: Sendable {
     }
 }
 
-let cNodeResultEnumerationCallback: CCallback = { statePointer, byteArray in
+let cNodeResultEnumerationCallback: CCallback = { stateHandle, byteArray in
     typealias BoxType = BoxedCompletionBlock<Int, WeakReference<NodeResultEnumerationCallbackWrapper>>
 
-    guard let stateRawPointer = UnsafeRawPointer(bitPattern: statePointer) else {
-        assertionFailure("cNodeResultEnumerationCallback.statePointer is nil")
+    guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
     }
-    let stateTypedPointer = Unmanaged<BoxType>.fromOpaque(stateRawPointer)
-    let weakWrapper = stateTypedPointer.takeUnretainedValue().state
+    let weakWrapper = box.state
 
     let protoPair = Proton_Drive_Sdk_NodeResultPair(byteArray: byteArray)
     guard let result = NodeResult(sdkNodeResult: protoPair) else {

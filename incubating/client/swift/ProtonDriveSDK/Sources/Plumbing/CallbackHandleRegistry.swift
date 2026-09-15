@@ -1,16 +1,10 @@
 import Foundation
 
-/// Distinguishes registry-issued identifiers from raw memory addresses at the API level.
+/// Opaque identifier passed unchanged through native code; never a memory address.
 typealias RegistryHandle = Int
 
 protocol RegistryCancellable: AnyObject {
     func cancel()
-}
-
-/// Adopted by types whose extra lifetime reference is managed by `CallbackHandleRegistry`.
-/// The response callback checks this after `takeRetainedValue()` to release the registry entry.
-protocol RegistryTracking: AnyObject {
-    var registryHandleId: RegistryHandle? { get set }
 }
 
 enum CallbackScope: Equatable {
@@ -22,10 +16,6 @@ enum CallbackScope: Equatable {
     /// The registry entry survives the response callback and is cleaned up when the owner
     /// calls `removeAll(ownedBy:)` in its `deinit`.
     case ownerManaged
-
-    /// Callback that intentionally outlives every owner (e.g. client-creation state that must
-    /// stay alive for secondary C# callbacks during teardown). Not cleaned up by any owner.
-    case indefinite
 }
 
 /// Thread-safe registry that manages object lifetimes across the Swift/C# interop boundary.
@@ -58,23 +48,28 @@ final class CallbackHandleRegistry: @unchecked Sendable {
         switch scope {
         case .ownerManaged where owner == nil:
             assertionFailure("ownerManaged scope requires a non-nil owner")
-        case .operation where owner != nil,
-             .indefinite where owner != nil:
+        case .operation where owner != nil:
             assertionFailure("\(scope) scope should not have an owner")
         default:
             break
         }
 
+        var removed: [Entry] = []
         lock.lock()
         registrationsSinceLastSweep += 1
         if registrationsSinceLastSweep >= 100 {
-            entries = entries.filter { $0.value.scope != .ownerManaged || $0.value.owner != nil }
+            // Swept objects may reenter the registry from deinit; retain them until after unlocking.
+            let expired = entries.filter { $0.value.scope == .ownerManaged && $0.value.owner == nil }.map { $0.key }
+            for key in expired {
+                if let entry = entries.removeValue(forKey: key) { removed.append(entry) }
+            }
             registrationsSinceLastSweep = 0
         }
         let id = nextId
         nextId += 1
         entries[id] = Entry(object: object, scope: scope, owner: owner, ownerIdentity: owner.map(ObjectIdentifier.init))
         lock.unlock()
+        withExtendedLifetime(removed) {}
         return id
     }
 
@@ -93,6 +88,18 @@ final class CallbackHandleRegistry: @unchecked Sendable {
         let object = entries[id]?.object as? T
         lock.unlock()
         return object
+    }
+
+    /// Resolves a response under the lock. Operation state is claimed once; owner-managed
+    /// state remains registered for subsequent native callbacks until explicit owner cleanup.
+    func resolveResponse(_ id: RegistryHandle) -> AnyObject? {
+        lock.lock()
+        let entry = entries[id]
+        if entry?.scope == .operation {
+            entries.removeValue(forKey: id)
+        }
+        lock.unlock()
+        return entry?.object
     }
 
     /// Returns whether an entry with the given ID exists.
@@ -122,12 +129,15 @@ final class CallbackHandleRegistry: @unchecked Sendable {
     /// are already zeroed by the time `deinit` runs, making `===` always fail.
     func removeAll(ownedBy owner: AnyObject) {
         let identity = ObjectIdentifier(owner)
+        // Destructors can invoke application callbacks or registry cleanup; release entries outside the lock.
+        var removed: [Entry] = []
         lock.lock()
         let keysToRemove = entries.filter { $0.value.ownerIdentity == identity }.map { $0.key }
         for key in keysToRemove {
-            entries.removeValue(forKey: key)
+            if let entry = entries.removeValue(forKey: key) { removed.append(entry) }
         }
         lock.unlock()
+        withExtendedLifetime(removed) {}
     }
 
 }
