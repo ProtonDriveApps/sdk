@@ -24,7 +24,7 @@ internal sealed class NewRevisionDraftProvider : IRevisionDraftProvider
 
     public async ValueTask<RevisionDraft> GetDraftAsync(
         long intendedUploadSize,
-        IReadOnlyList<Thumbnail> thumbnails,
+        IEnumerable<Thumbnail> thumbnails,
         bool contentCanSeek,
         bool allowSmallUpload,
         CancellationToken cancellationToken)

@@ -53,15 +53,9 @@ internal sealed partial class RevisionUploadBackendFactory(ProtonDriveClient cli
         Message = "Could not get content key packet for file \"{FileUid}\" ({Error}); falling back to regular upload")]
     private static partial void LogContentKeyPacketUnavailable(ILogger logger, NodeUid fileUid, string? error);
 
-    private static long GetTotalPlaintextSize(long intendedUploadSize, IReadOnlyList<Thumbnail> thumbnails)
+    private static long GetTotalPlaintextSize(long intendedUploadSize, IEnumerable<Thumbnail> thumbnails)
     {
-        var totalPlaintextSize = intendedUploadSize;
-        foreach (var thumbnail in thumbnails)
-        {
-            totalPlaintextSize = checked(totalPlaintextSize + thumbnail.Content.Length);
-        }
-
-        return totalPlaintextSize;
+        return thumbnails.Aggregate(intendedUploadSize, (current, thumbnail) => checked(current + thumbnail.Content.Length));
     }
 
     private async ValueTask<ReadOnlyMemory<byte>?> TryGetContentKeyPacketAsync(NodeUid fileUid, CancellationToken cancellationToken)
@@ -119,7 +113,7 @@ internal sealed partial class RevisionUploadBackendFactory(ProtonDriveClient cli
 
     private async ValueTask<bool> CanUseSmallUploadAsync(
         long intendedUploadSize,
-        IReadOnlyList<Thumbnail> thumbnails,
+        IEnumerable<Thumbnail> thumbnails,
         bool contentCanSeek,
         CancellationToken cancellationToken)
     {

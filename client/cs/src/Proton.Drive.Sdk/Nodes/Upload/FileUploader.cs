@@ -17,6 +17,7 @@ public sealed partial class FileUploader : IDisposable
     private readonly ILogger _logger;
 
     private bool _isDisposed;
+    private bool _thumbnailBlocksReserved;
 
     private FileUploader(
         ProtonDriveClient client,
@@ -42,7 +43,7 @@ public sealed partial class FileUploader : IDisposable
 
     public UploadController UploadFromStream(
         Stream contentStream,
-        IEnumerable<Thumbnail> thumbnails,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
@@ -58,7 +59,7 @@ public sealed partial class FileUploader : IDisposable
 
     public UploadController UploadFromFile(
         string filePath,
-        IEnumerable<Thumbnail> thumbnails,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
@@ -209,7 +210,7 @@ public sealed partial class FileUploader : IDisposable
     private UploadController UploadFromStream(
         Stream contentStream,
         bool ownsContentStream,
-        IEnumerable<Thumbnail> thumbnails,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long, long>? onProgress,
         Func<ReadOnlyMemory<byte>>? expectedSha1Provider,
         CancellationToken cancellationToken)
@@ -277,24 +278,22 @@ public sealed partial class FileUploader : IDisposable
 
     private async Task<UploadResult> UploadFromStreamAsync(
         Stream contentStream,
-        IEnumerable<Thumbnail> thumbnails,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long>? onProgress,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         TaskCompletionSource<RevisionDraft> revisionDraftTaskCompletionSource,
         CancellationToken cancellationToken)
     {
-        var thumbnailList = thumbnails as IReadOnlyList<Thumbnail> ?? thumbnails.ToList();
-
         var revisionDraft = revisionDraftTaskCompletionSource.Task.GetResultIfCompletedSuccessfully();
         if (revisionDraft is not null)
         {
-            return await CompleteUploadAsync(revisionDraft, contentStream, thumbnailList, onProgress, expectedSha1, cancellationToken)
+            return await CompleteUploadAsync(revisionDraft, contentStream, thumbnails, onProgress, expectedSha1, cancellationToken)
                 .ConfigureAwait(false);
         }
 
         revisionDraft = await _revisionDraftProvider.GetDraftAsync(
             FileSize,
-            thumbnailList,
+            thumbnails,
             contentStream.CanSeek,
             allowSmallUpload: _metadata is not PhotosFileUploadMetadata,
             cancellationToken).ConfigureAwait(false);
@@ -311,7 +310,7 @@ public sealed partial class FileUploader : IDisposable
                 var smallUploadResult = await CompleteUploadAsync(
                     smallDraft,
                     contentStream,
-                    thumbnailList,
+                    thumbnails,
                     onProgress,
                     expectedSha1,
                     cancellationToken).ConfigureAwait(false);
@@ -331,7 +330,7 @@ public sealed partial class FileUploader : IDisposable
 
                 revisionDraft = await _revisionDraftProvider.GetDraftAsync(
                     FileSize,
-                    thumbnailList,
+                    thumbnails,
                     contentStream.CanSeek,
                     allowSmallUpload: false,
                     cancellationToken).ConfigureAwait(false);
@@ -347,22 +346,24 @@ public sealed partial class FileUploader : IDisposable
 
         revisionDraftTaskCompletionSource.SetResult(revisionDraft);
 
-        return await CompleteUploadAsync(revisionDraft, contentStream, thumbnailList, onProgress, expectedSha1, cancellationToken)
+        return await CompleteUploadAsync(revisionDraft, contentStream, thumbnails, onProgress, expectedSha1, cancellationToken)
             .ConfigureAwait(false);
     }
 
     private async Task<UploadResult> CompleteUploadAsync(
         RevisionDraft revisionDraft,
         Stream contentStream,
-        IReadOnlyList<Thumbnail> thumbnailList,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long>? onProgress,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         CancellationToken cancellationToken)
     {
+        ReserveThumbnailBlocks(revisionDraft, thumbnails.Count);
+
         return await UploadAsync(
             revisionDraft,
             contentStream,
-            thumbnailList,
+            thumbnails,
             onProgress,
             expectedSha1,
             cancellationToken).ConfigureAwait(false);
@@ -371,7 +372,7 @@ public sealed partial class FileUploader : IDisposable
     private async ValueTask<UploadResult> UploadAsync(
         RevisionDraft revisionDraft,
         Stream contentStream,
-        IEnumerable<Thumbnail> thumbnails,
+        IReadOnlyCollection<Thumbnail> thumbnails,
         Action<long>? onProgress,
         Lazy<ReadOnlyMemory<byte>>? expectedSha1,
         CancellationToken cancellationToken)
@@ -385,6 +386,20 @@ public sealed partial class FileUploader : IDisposable
             _metadata,
             onProgress,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Reserves once per upload, not per attempt: each thumbnail is uploaded, and its slot released, only once.</summary>
+    private void ReserveThumbnailBlocks(RevisionDraft revisionDraft, int thumbnailCount)
+    {
+        // Small uploads take part in no block-level queue accounting.
+        if (_thumbnailBlocksReserved || revisionDraft.IsSmallUpload || thumbnailCount == 0)
+        {
+            return;
+        }
+
+        _client.UploadQueue.IncreaseFileBlockCount(_queueToken, thumbnailCount);
+
+        _thumbnailBlocksReserved = true;
     }
 
     private void RaiseTelemetryEvent(UploadEvent uploadEvent)

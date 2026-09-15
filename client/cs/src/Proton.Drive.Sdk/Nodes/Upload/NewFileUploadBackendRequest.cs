@@ -7,7 +7,7 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 
 internal sealed record NewFileUploadBackendRequest(
     long IntendedUploadSize,
-    IReadOnlyList<Thumbnail> Thumbnails,
+    IEnumerable<Thumbnail> Thumbnails,
     bool ContentCanSeek,
     VolumeId ParentVolumeId,
     FileCreationRequest FileCreationRequest,
