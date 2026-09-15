@@ -158,6 +158,7 @@ internal static class FileOperations
                     block.Token,
                     contentKey,
                     outputStream,
+                    refreshTransferTargetAsync: null,
                     cancellationToken).ConfigureAwait(false);
                 var thumbnailData = outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
 

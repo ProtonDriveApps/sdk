@@ -244,9 +244,33 @@ internal sealed partial class RevisionReader
             block.Token,
             _state.ContentKey,
             blockOutputStream,
+            ct => GetBlockTransferTargetAsync(block.Index, ct),
             cancellationToken).ConfigureAwait(false);
 
         return new BlockDownloadResult(blockOutputStream, hashDigest);
+    }
+
+    private async ValueTask<(string BareUrl, string Token)?> GetBlockTransferTargetAsync(int index, CancellationToken cancellationToken)
+    {
+        var revisionResponse = await _client.Api.Files.GetRevisionAsync(
+            _state.Uid.NodeUid.VolumeId,
+            _state.Uid.NodeUid.LinkId,
+            _state.Uid.RevisionId,
+            fromBlockIndex: index,
+            pageSize: 1,
+            withoutBlockUrls: false,
+            cancellationToken).ConfigureAwait(false);
+
+        var block = revisionResponse.Revision.Blocks.FirstOrDefault(b => b.Index == index);
+
+        if (block is null)
+        {
+            LogMissingBlock(index, _state.Uid);
+
+            return null;
+        }
+
+        return (block.BareUrl, block.Token);
     }
 
     private async IAsyncEnumerable<(BlockDto Value, bool IsLast)> GetBlocksAsync(

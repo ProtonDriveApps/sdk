@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Polly;
@@ -12,7 +13,6 @@ using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Resilience;
 using Proton.Drive.Sdk.Telemetry;
 using Proton.Sdk.Api;
-
 namespace Proton.Drive.Sdk.Api.Files;
 
 internal sealed partial class RegularRevisionUploadBackend(
@@ -190,11 +190,16 @@ internal sealed partial class RegularRevisionUploadBackend(
         Debug.Assert(request.Thumbnails.Count + request.Blocks.Count == 1, "Block upload request should be for only one block, content or thumbnail");
 #pragma warning restore S3236 // Caller information arguments should not be provided explicitly
 
+        var uploadTarget = await RequestUploadTargetAsync(request, cancellationToken).ConfigureAwait(false);
+        var uploadTargetIsRefreshed = false;
+
         var nonDisposableDataPacketStream = new NonDisposingStreamWrapper(dataPacketStream);
         await using (nonDisposableDataPacketStream.ConfigureAwait(false))
         {
             await Policy
-                .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested && ExceptionIsRetriable(ex))
+                .Handle<Exception>(ex => !cancellationToken.IsCancellationRequested
+                    && ex is not FileContentsDecryptionException
+                    && RetryPolicy.IsRetriable(ex))
                 .WaitAndRetryAsync(
                     retryCount: 1,
                     sleepDurationProvider: RetryPolicy.GetAttemptDelay,
@@ -209,22 +214,40 @@ internal sealed partial class RegularRevisionUploadBackend(
 
         return;
 
-        static bool ExceptionIsRetriable(Exception ex)
-        {
-            return ex is not FileContentsDecryptionException;
-        }
-
+        // The token refresh does not count against the retry budget, otherwise an expired token spends the only attempt.
         async Task ExecuteUploadAsync()
         {
-            var uploadRequestResponse = await client.Api.Files.PrepareBlockUploadAsync(request, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await UploadDataPacketAsync().ConfigureAwait(false);
+            }
+            catch (HttpRequestException e) when (e.StatusCode is HttpStatusCode.NotFound && !uploadTargetIsRefreshed)
+            {
+                uploadTargetIsRefreshed = true;
 
-            var uploadTarget = request.Thumbnails.Count == 0 ? uploadRequestResponse.UploadTargets[0] : uploadRequestResponse.ThumbnailUploadTargets[0];
+                LogBlobUploadTokenExpired();
 
+                uploadTarget = await RequestUploadTargetAsync(request, cancellationToken).ConfigureAwait(false);
+
+                await UploadDataPacketAsync().ConfigureAwait(false);
+            }
+        }
+
+        async Task UploadDataPacketAsync()
+        {
             nonDisposableDataPacketStream.Seek(0, SeekOrigin.Begin);
 
             await client.Api.Storage.UploadBlobAsync(uploadTarget.BareUrl, uploadTarget.Token, nonDisposableDataPacketStream, cancellationToken)
                 .ConfigureAwait(false);
         }
+    }
+
+    // Kept out of the blob upload retry: replaying it turns a permanent rejection of the revision into repeated failures.
+    private async ValueTask<BlockUploadTarget> RequestUploadTargetAsync(BlockUploadPreparationRequest request, CancellationToken cancellationToken)
+    {
+        var response = await client.Api.Files.PrepareBlockUploadAsync(request, cancellationToken).ConfigureAwait(false);
+
+        return request.Thumbnails.Count == 0 ? response.UploadTargets[0] : response.ThumbnailUploadTargets[0];
     }
 
     private async Task WaitOnRetryAfterIfNeededAsync(Exception ex, CancellationToken cancellationToken)
@@ -296,4 +319,7 @@ internal sealed partial class RegularRevisionUploadBackend(
         Level = LogLevel.Information,
         Message = "Waiting {DelayDuration} before retrying blob upload due to 429 response")]
     private partial void LogBlobUploadWaitingForRetryAfter(TimeSpan delayDuration);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Upload token expired, requesting a new one")]
+    private partial void LogBlobUploadTokenExpired();
 }
