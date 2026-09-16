@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.28.0 (2026-09-15)
+
+### Features
+- Improve small file upload interop
+
+
 ## cs/v0.27.0 (2026-09-14)
 
 
