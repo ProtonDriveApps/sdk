@@ -108,7 +108,6 @@ export function initSharingPublicNodesModule(
         clientUid,
         publicRootNodeUid,
         publicRole,
-        token,
     );
     const cache = new NodesCache(telemetry.getLogger('nodes-cache'), driveEntitiesCache);
     const cryptoCache = new NodesCryptoCache(telemetry.getLogger('nodes-cache'), driveCryptoCache);
