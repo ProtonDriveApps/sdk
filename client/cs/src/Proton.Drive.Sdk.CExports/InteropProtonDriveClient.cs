@@ -414,6 +414,23 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleEnumerateNodesAsync(DriveClientEnumerateNodesRequest request, nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var nodeUids = request.NodeUids.Select(NodeUid.Parse).ToAsyncEnumerable();
+
+        await foreach (var node in client.EnumerateNodesAsync(nodeUids, cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, node.ToInterop());
+        }
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleLeaveSharedNodeAsync(DriveClientLeaveSharedNodeRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);

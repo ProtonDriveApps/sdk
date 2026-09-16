@@ -83,6 +83,20 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         driveClientGetAvailableName = request
     }
 
+    suspend fun enumerateNodes(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DriveClientEnumerateNodesRequest,
+        yield: suspend (ProtonDriveSdk.Node) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.Node::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientEnumerateNodes = request
+    }
+
     suspend fun moveNodes(
         coroutineScope: ProducerScope<me.proton.drive.sdk.entity.NodeResultPair>,
         request: ProtonDriveSdk.DriveClientMoveNodesRequest,

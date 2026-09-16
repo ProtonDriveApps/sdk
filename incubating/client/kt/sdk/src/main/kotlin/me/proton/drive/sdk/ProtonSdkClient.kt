@@ -17,4 +17,5 @@ interface ProtonSdkClient : AutoCloseable {
     suspend fun emptyTrash()
     fun enumerateSharedNodeUids(): Flow<NodeUid>
     suspend fun leaveSharedNode(nodeUid: NodeUid)
+    fun enumerateNodes(nodeUids: List<NodeUid>): Flow<Node>
 }

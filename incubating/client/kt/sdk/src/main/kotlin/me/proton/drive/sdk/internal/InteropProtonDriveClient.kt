@@ -40,6 +40,7 @@ import proton.drive.sdk.driveClientEmptyTrashRequest
 import proton.drive.sdk.driveClientEnumerateDevicesRequest
 import proton.drive.sdk.driveClientEnumerateEventsRequest
 import proton.drive.sdk.driveClientEnumerateFolderChildrenRequest
+import proton.drive.sdk.driveClientEnumerateNodesRequest
 import proton.drive.sdk.driveClientEnumerateSharedNodeUidsRequest
 import proton.drive.sdk.driveClientEnumerateSharedWithMeNodeUidsRequest
 import proton.drive.sdk.driveClientEnumerateThumbnailsRequest
@@ -402,6 +403,26 @@ internal class InteropProtonDriveClient internal constructor(
                 cancellationTokenSourceHandle = source.handle
             }
         )
+    }
+
+    override fun enumerateNodes(
+        nodeUids: List<NodeUid>,
+    ): Flow<Node> = channelFlow {
+        log(INFO, "enumerateNodes(${nodeUids.size} nodes)")
+        cancellationCoroutineScope { source ->
+            bridge.enumerateNodes(
+                coroutineScope = this@channelFlow,
+                request = driveClientEnumerateNodesRequest {
+                    this.nodeUids += nodeUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { node ->
+                    send(node.toEntity())
+                }
+            )
+        }
     }
 
     override suspend fun downloader(
