@@ -51,11 +51,11 @@ type PostLoadLinksMetadataResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['responses']['200']['content']['application/json'];
 
 type PostCreateDocumentRequest = Extract<
-    drivePaths['/drive/urls/{token}/documents']['post']['requestBody'],
+    drivePaths['/drive/v2/volumes/{volumeID}/documents']['post']['requestBody'],
     { content: object }
 >['content']['application/json'];
 type PostCreateDocumentResponse =
-    drivePaths['/drive/urls/{token}/documents']['post']['responses']['200']['content']['application/json'];
+    drivePaths['/drive/v2/volumes/{volumeID}/documents']['post']['responses']['200']['content']['application/json'];
 
 /**
  * Custom API service for public links that handles permission injection.
@@ -73,12 +73,10 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         clientUid: string | undefined,
         private publicRootNodeUid: string,
         private publicRole: MemberRole,
-        private token: string,
     ) {
         super(logger, apiService, clientUid);
         this.publicRootNodeUid = publicRootNodeUid;
         this.publicRole = publicRole;
-        this.token = token;
     }
 
     protected linkToEncryptedNode(
@@ -128,13 +126,13 @@ export class SharingPublicNodesAPIService extends NodeAPIService {
         const { volumeId, nodeId: parentId } = splitNodeUid(parentNodeUid);
 
         const response = await this.apiService.post<PostCreateDocumentRequest, PostCreateDocumentResponse>(
-            `drive/urls/${this.token}/documents`,
+            `drive/v2/volumes/${volumeId}/documents`,
             {
                 ParentLinkID: parentId,
                 NodeKey: newDocument.armoredKey,
                 NodePassphrase: newDocument.armoredNodePassphrase,
                 NodePassphraseSignature: newDocument.armoredNodePassphraseSignature,
-                SignatureEmail: newDocument.signatureEmail,
+                SignatureAddress: newDocument.signatureEmail,
                 Name: newDocument.encryptedName,
                 Hash: newDocument.hash,
                 ContentKeyPacket: newDocument.base64ContentKeyPacket,
