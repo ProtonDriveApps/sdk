@@ -307,6 +307,20 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         drivePhotosClientSavePhotosToTimeline = request
     }
 
+    suspend fun enumerateNodes(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientEnumerateNodesRequest,
+        yield: suspend (ProtonDriveSdk.Node) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "enumerateNodes",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.Node::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        drivePhotosClientEnumerateNodes = request
+    }
+
     fun free(handle: Long) {
         dispatchAndRelease("free") {
             drivePhotosClientFree = drivePhotosClientFreeRequest {

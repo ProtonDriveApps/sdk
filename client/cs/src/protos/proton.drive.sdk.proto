@@ -46,6 +46,7 @@ message Request {
         DriveClientMoveNodesRequest drive_client_move_nodes = 1019;
         DriveClientEnumerateSharedNodeUidsRequest drive_client_enumerate_shared_node_uids = 1020;
         DriveClientEnumerateEventsRequest drive_client_enumerate_events = 1021;
+        DriveClientEnumerateNodesRequest drive_client_enumerate_nodes = 1022;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -99,6 +100,7 @@ message Request {
         DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest drive_photos_client_enumerate_shared_with_me_node_uids = 2024;
         DrivePhotosClientSavePhotosToTimelineRequest drive_photos_client_save_photos_to_timeline = 2025;
         DrivePhotosClientEnumerateEventsRequest drive_photos_client_enumerate_events = 2026;
+        DrivePhotosClientEnumerateNodesRequest drive_photos_client_enumerate_nodes = 2027;
     };
 }
 
@@ -709,6 +711,14 @@ message DriveClientEnumerateEventsRequest {
     int64 cancellation_token_source_handle = 5;
 }
 
+// The response must not have a value, yield_action will be called for each item.
+message DriveClientEnumerateNodesRequest {
+    repeated string node_uids = 1;
+    int64 client_handle = 2;
+    int64 yield_action = 3;
+    int64 cancellation_token_source_handle = 4;
+}
+
 message DriveEvent {
     string id = 1;
     oneof event {
@@ -1212,6 +1222,14 @@ message DrivePhotosClientEnumerateEventsRequest {
     string cursor_event_id = 3; // optional
     int64 yield_action = 4;
     int64 cancellation_token_source_handle = 5;
+}
+
+// The response must not have a value, yield_action will be called for each item.
+message DrivePhotosClientEnumerateNodesRequest {
+    repeated string node_uids = 1;
+    int64 client_handle = 2;
+    int64 yield_action = 3;
+    int64 cancellation_token_source_handle = 4;
 }
 
 // The list must match the order from Telemetry/VolumeTypes to properly match it over the interop.
