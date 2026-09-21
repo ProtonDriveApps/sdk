@@ -685,8 +685,9 @@ export class SharingAPIService {
         shareId: string,
         invitation: GetShareExternalInvitations['ExternalInvitations'][0],
     ): EncryptedExternalInvitation {
+        // State 4 is deleted which we don't support. Deleted will be removed soon, so we can keep it as pending.
         const state =
-            invitation.State === 1 ? NonProtonInvitationState.Pending : NonProtonInvitationState.UserRegistered;
+            invitation.State === 2 ? NonProtonInvitationState.UserRegistered : NonProtonInvitationState.Pending;
         return {
             uid: makeInvitationUid(shareId, invitation.ExternalInvitationID),
             addedByEmail: invitation.InviterEmail,
