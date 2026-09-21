@@ -1231,6 +1231,65 @@ describe('SharingManagement', () => {
         });
     });
 
+    describe('autoConvertExternalInvitations', () => {
+        const nodeUid = 'volumeId~nodeUid';
+        const pendingExternalInvitationId = 'pendingInv123';
+        const userRegisteredExternalInvitationId = 'registeredInv456';
+
+        const pendingExternalInvitation = {
+            uid: `${DEFAULT_SHARE_ID}~${pendingExternalInvitationId}`,
+            invitationTime: new Date(),
+            addedByEmail: 'address@example.com',
+            inviteeEmail: 'pending@example.com',
+            role: MemberRole.Viewer,
+            state: NonProtonInvitationState.Pending,
+            base64Signature: 'pending-signature',
+        };
+        const userRegisteredExternalInvitation = {
+            uid: `${DEFAULT_SHARE_ID}~${userRegisteredExternalInvitationId}`,
+            invitationTime: new Date(),
+            addedByEmail: 'address@example.com',
+            inviteeEmail: 'registered@example.com',
+            role: MemberRole.Viewer,
+            state: NonProtonInvitationState.UserRegistered,
+            base64Signature: 'registered-signature',
+        };
+
+        beforeEach(() => {
+            cryptoService.verifyExternalInvitationSignature = jest.fn().mockResolvedValue(true);
+            apiService.getShareMembers = jest.fn().mockResolvedValue([]);
+        });
+
+        it('should skip auto-convert when external invitations are not user registered', async () => {
+            apiService.getShareExternalInvitations = jest.fn().mockResolvedValue([pendingExternalInvitation]);
+
+            await sharingManagement.autoConvertExternalInvitations([nodeUid]);
+
+            expect(logger.debug).toHaveBeenCalledWith(
+                `Skipping auto-convert for node ${nodeUid}: no user registered external invitations`,
+            );
+            expect(sharesService.loadEncryptedShare).not.toHaveBeenCalled();
+            expect(apiService.inviteProtonUser).not.toHaveBeenCalled();
+            expect(apiService.deleteExternalInvitation).not.toHaveBeenCalled();
+        });
+
+        it('should only auto-convert user registered external invitations', async () => {
+            apiService.getShareExternalInvitations = jest
+                .fn()
+                .mockResolvedValue([pendingExternalInvitation, userRegisteredExternalInvitation]);
+
+            await sharingManagement.autoConvertExternalInvitations([nodeUid]);
+
+            expect(apiService.inviteProtonUser).toHaveBeenCalledTimes(1);
+            expect(apiService.inviteProtonUser).toHaveBeenCalledWith(
+                DEFAULT_SHARE_ID,
+                expect.objectContaining({ inviteeEmail: userRegisteredExternalInvitation.inviteeEmail }),
+                {},
+                userRegisteredExternalInvitationId,
+            );
+        });
+    });
+
     describe('reportAbuse', () => {
         const nodeUid = 'volumeId~nodeId';
 

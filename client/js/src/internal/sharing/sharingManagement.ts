@@ -7,6 +7,7 @@ import {
     Member,
     MemberRole,
     NonProtonInvitation,
+    NonProtonInvitationState,
     ProtonDriveAccount,
     ProtonInvitation,
     ReportDirectShareAbuseSettings,
@@ -685,6 +686,14 @@ export class SharingManagement {
             return;
         }
 
+        const userRegisteredInvitations = encryptedExternalInvitations.filter(
+            (invitation) => invitation.state === NonProtonInvitationState.UserRegistered,
+        );
+        if (userRegisteredInvitations.length === 0) {
+            this.logger.debug(`Skipping auto-convert for node ${nodeUid}: no user registered external invitations`);
+            return;
+        }
+
         const encryptedShare = await this.sharesService.loadEncryptedShare(node.shareId);
         const { passphraseSessionKey } = await this.cryptoService.decryptShare(encryptedShare, nodeKey.key);
 
@@ -694,7 +703,7 @@ export class SharingManagement {
         adminEmails.add(encryptedShare.creatorEmail);
 
         await Promise.allSettled(
-            encryptedExternalInvitations.map(async (invitation) => {
+            userRegisteredInvitations.map(async (invitation) => {
                 const { invitationId: externalInvitationId } = splitInvitationUid(invitation.uid);
                 const inviterEmail = invitation.addedByEmail;
 
