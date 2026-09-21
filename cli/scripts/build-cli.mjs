@@ -30,7 +30,8 @@ if (target.startsWith('bun-')) {
 }
 
 const entryName = path.basename(entry).replace('.ts', '');
-const outfile = `release${outfileArchitecture}/${entryName}${bundleOnly ? '.js' : ''}`;
+const outputDirectory = process.env.CLI_OUTPUT_DIR || `release${outfileArchitecture}`;
+const outfile = `${outputDirectory}/${entryName}${bundleOnly ? '.js' : ''}`;
 
 const args = [
     'build',
