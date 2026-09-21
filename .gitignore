@@ -16,6 +16,7 @@ dist
 # JS CLI
 cli/release
 internal/cli/js/release
+internal/cli/js/release-darwin-arm64
 auth.txt
 auth-session.json
 cache*.sqlite
