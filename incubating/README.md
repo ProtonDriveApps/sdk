@@ -26,3 +26,4 @@ For overall SDK status and third-party usage guidelines, see the [root README](.
 | Module | Package | Languages | Status | Description |
 | --- | --- | --- | --- | --- |
 | [Client](client/) | `me.proton.drive.sdk` (Kotlin), `ProtonDriveSDK` (Swift) | Kotlin, Swift | Incubating | Drive client bindings over the C# SDK. These bindings do not have the same interface yet and is still evolving. |
+| [Search](search/) | `proton-drive-sdk-search` | Rust | Incubating | Search library for the SDK. Includes bindings for C# and TypeScript. |
