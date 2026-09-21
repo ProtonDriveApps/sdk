@@ -21,7 +21,7 @@
         "@swc/core": "^1.12.3",
         "@swc/jest": "^0.2.38",
         "@types/jest": "^29.5.14",
-        "@types/bun": "^1.3.14",
+        "@types/bun": "^1.4.2",
         "@types/node": "^22.15.21",
         "@typescript-eslint/eslint-plugin": "^8.55.0",
         "eslint": "^8.57.1",
