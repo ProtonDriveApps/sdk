@@ -39,6 +39,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/v3/photos/volumes/{volumeID}/albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an album */
+        post: operations["post_drive-v3-photos-volumes-{volumeID}-albums"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/drive/photos/volumes": {
         parameters: {
             query?: never;
@@ -327,10 +344,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Create document
-         * @description Create a new proton document.
-         */
+        /** Create a document/sheet */
         post: operations["post_drive-v2-volumes-{volumeID}-documents"];
         delete?: never;
         options?: never;
@@ -348,11 +362,27 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create document
+         * Create a document/sheet
          * @deprecated
-         * @description Create a new proton document.
          */
         post: operations["post_drive-shares-{shareID}-documents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/v3/volumes/{volumeID}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a document/sheet */
+        post: operations["post_drive-v3-volumes-{volumeID}-documents"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1930,56 +1960,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/urls/{token}/files/{linkID}/checkAvailableHashes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Check available hashes
-         * @deprecated
-         * @description Filter unavailable hashes out of a list of hashes under a given parent folder.
-         *
-         *     Pending hashes from drafts are also listed. They can be filtered with a list of ClientUID.
-         */
-        post: operations["post_drive-urls-{token}-files-{linkID}-checkAvailableHashes"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/files/{linkID}/revisions/{revisionID}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Commit a revision
-         * @deprecated
-         * @description The revision becomes the current active one and the updated file content become available for reading.
-         */
-        put: operations["put_drive-urls-{token}-files-{linkID}-revisions-{revisionID}"];
-        post?: never;
-        /**
-         * Delete a draft revision.
-         * @deprecated
-         * @description This will return an error code 2511 INCOMPATIBLE_STATE if the revision is active or obsolete.
-         *     You cannot delete a draft revision for a draft link. Delete the link instead.
-         */
-        delete: operations["delete_drive-urls-{token}-files-{linkID}-revisions-{revisionID}"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/drive/urls/{token}/documents": {
         parameters: {
             query?: never;
@@ -1995,69 +1975,6 @@ export interface paths {
          * @description Create a new anonymous proton document.
          */
         post: operations["post_drive-urls-{token}-documents"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/files": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create file.
-         * @deprecated
-         * @description Create a new file.
-         */
-        post: operations["post_drive-urls-{token}-files"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/folders": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a folder.
-         * @deprecated
-         * @description Create a new folder in a given share, under a given folder link.
-         */
-        post: operations["post_drive-urls-{token}-folders"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/folders/{linkID}/delete_multiple": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Delete children
-         * @deprecated
-         * @description Permanently delete children from folder, skipping trash.
-         */
-        post: operations["post_drive-urls-{token}-folders-{linkID}-delete_multiple"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2110,48 +2027,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drive/urls/{token}/blocks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Request block upload.
-         * @deprecated
-         * @description Request upload information for a set of blocks.
-         */
-        post: operations["post_drive-urls-{token}-blocks"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/links/{linkID}/revisions/{revisionID}/verification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get verification data.
-         * @deprecated
-         * @description Get data to verify encryption of the revision before committing.
-         */
-        get: operations["get_drive-urls-{token}-links-{linkID}-revisions-{revisionID}-verification"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/drive/urls/{token}": {
         parameters: {
             query?: never;
@@ -2166,66 +2041,6 @@ export interface paths {
         get: operations["get_drive-urls-{token}"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/folders/{linkID}/children": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List shared folder's children.
-         * @deprecated
-         */
-        get: operations["get_drive-urls-{token}-folders-{linkID}-children"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/files/{linkID}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Shared File & Revision Metadata.
-         * @deprecated
-         */
-        get: operations["get_drive-urls-{token}-files-{linkID}"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/drive/urls/{token}/file": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Get Shared File Information.
-         * @deprecated
-         */
-        post: operations["post_drive-urls-{token}-file"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2667,6 +2482,46 @@ export interface paths {
         put?: never;
         /** Report Share for abuse */
         post: operations["post_drive-report-share"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/recently-accessed-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report recently accessed
+         * @description Report recently accessed items to the API
+         */
+        post: operations["post_drive-recently-accessed-items"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/photos/recently-accessed-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report recently accessed
+         * @description Report recently accessed items to the API
+         */
+        post: operations["post_drive-photos-recently-accessed-items"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3470,6 +3325,11 @@ export interface components {
         };
         /** @description An encrypted ID */
         Id: string;
+        /**
+         * Format: hex
+         * @description Hex encoded binary data
+         */
+        HexBinaryString: string;
         /** @description An armored PGP Message */
         PGPMessage: string;
         /** @description An armored PGP Signature */
@@ -3482,7 +3342,7 @@ export interface components {
         AlbumPhotoLinkDataDto: {
             LinkID: components["schemas"]["Id"];
             /** @description Name Hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             Name: components["schemas"]["PGPMessage"];
             /**
              * Format: email
@@ -3492,7 +3352,7 @@ export interface components {
             /** @description Passphrase should be unchanged, reusing same session key as previously */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Photo content hash */
-            ContentHash: string;
+            ContentHash: components["schemas"]["HexBinaryString"];
             /** @description Nullable; Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address. */
             NodePassphraseSignature?: components["schemas"]["PGPSignature"] | null;
             /**
@@ -3508,8 +3368,8 @@ export interface components {
         PGPPrivateKey: string;
         AlbumLinkDto: {
             Name: components["schemas"]["PGPMessage"];
-            /** @description Album name Hash */
-            Hash: string;
+            /** @description Album name hash */
+            Hash: components["schemas"]["HexBinaryString"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
             /** @description Signature email address used to sign passphrase and name */
@@ -3541,6 +3401,19 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
+        };
+        /**
+         * Format: byte
+         * @description Base64 encoded binary data
+         */
+        BinaryString: string;
+        CreateFolderCryptoV2Dto: {
+            /** @default null */
+            XAttr: components["schemas"]["BinaryString"] | null;
+            ParentLinkID: components["schemas"]["Id"];
+            NodeKey: components["schemas"]["BinaryString"];
+            Name: components["schemas"]["BinaryString"];
+            NameHash: components["schemas"]["HexBinaryString"];
         };
         /** @description Address ID */
         AddressID: string;
@@ -3614,7 +3487,7 @@ export interface components {
         };
         FindDuplicatesInput: {
             /** @description List of Name HMACs to check */
-            NameHashes: string[];
+            NameHashes: components["schemas"]["HexBinaryString"][];
         };
         /**
          * @description <p>Can be null if the Link was deleted</p><details><summary>See values descriptions</summary><table><tr><th>Value</th><th>Description</th></tr><tr><td>0</td><td>Draft</td></tr><tr><td>1</td><td>Active</td></tr><tr><td>2</td><td>Trashed</td></tr></table></details>
@@ -3623,9 +3496,9 @@ export interface components {
         LinkState: 0 | 1 | 2;
         FoundDuplicate: {
             /** @description NameHash of the found duplicate */
-            Hash: string | null;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description ContentHash of the found duplicate */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             /** @description Can be null if the Link was deleted */
             LinkState: components["schemas"]["LinkState"];
             /** @description Client defined UID for the draft. Null if no ClientUID passed, or Revision was already committed. */
@@ -3707,14 +3580,14 @@ export interface components {
         ListPhotosAlbumRelatedPhotoItemResponseDto: {
             LinkID: components["schemas"]["Id"];
             CaptureTime: number;
-            Hash: string;
-            ContentHash: string;
+            Hash: components["schemas"]["HexBinaryString"];
+            ContentHash: components["schemas"]["HexBinaryString"];
         };
         ListPhotosAlbumItemResponseDto: {
             LinkID: components["schemas"]["Id"];
             CaptureTime: number;
-            Hash: string;
-            ContentHash: string;
+            Hash: components["schemas"]["HexBinaryString"];
+            ContentHash: components["schemas"]["HexBinaryString"];
             RelatedPhotos: components["schemas"]["ListPhotosAlbumRelatedPhotoItemResponseDto"][];
             AddedTime: number;
             IsChildOfAlbum: boolean;
@@ -3739,14 +3612,14 @@ export interface components {
             /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Current name hash before move operation. Used to prevent race conditions. */
-            OriginalHash: string;
+            OriginalHash: components["schemas"]["HexBinaryString"];
             /**
              * @description Optional, when transferring an Album-Link, required when transferring photos. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
              * @default null
@@ -3792,13 +3665,13 @@ export interface components {
         };
         AlbumLinkUpdateDto: {
             Name?: components["schemas"]["PGPMessage"] | null;
-            Hash?: string | null;
+            Hash?: components["schemas"]["HexBinaryString"] | null;
             /**
              * Format: email
              * @description Signature email address used to sign passphrase and name
              */
             NameSignatureEmail?: components["schemas"]["AddressEmail"] | null;
-            OriginalHash?: string | null;
+            OriginalHash?: components["schemas"]["HexBinaryString"] | null;
             /** @description Extended attributes encrypted with link key */
             XAttr?: components["schemas"]["PGPMessage"] | null;
         };
@@ -3842,8 +3715,6 @@ export interface components {
          * @enum {integer}
          */
         NodeType: 1 | 2 | 3;
-        /** @description Base64 encoded binary data */
-        BinaryString: string;
         ThumbnailURLInfoResponseDto: {
             /**
              * @deprecated
@@ -3856,10 +3727,6 @@ export interface components {
             Token: string | null;
         };
         TokenResponseDto: {
-            /**
-             * @description Url Token
-             * @example YTZZRH7DA8
-             */
             Token: string;
             /** @description Types: Folder - 1, File - 2} */
             LinkType: components["schemas"]["NodeType"];
@@ -3873,7 +3740,6 @@ export interface components {
             Name: components["schemas"]["PGPMessage"];
             /** @description Base64 encoded content key packet. Null for folders */
             ContentKeyPacket: components["schemas"]["BinaryString"] | null;
-            /** @example text/plain */
             MIMEType: string;
             /**
              * @description Permission bitfield, cannot exceed the owner's permissions. Valid permissions:
@@ -4053,8 +3919,8 @@ export interface components {
             /** @description Document=1, Sheet=2 */
             DocumentType?: components["schemas"]["DocumentType"];
             Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
+            /** @description File/folder name hash */
+            Hash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -4079,6 +3945,14 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
+        };
+        CreateDocumentCryptoV2Dto: {
+            /** @description Document=1, Sheet=2 */
+            DocumentType?: components["schemas"]["DocumentType"];
+            ParentLinkID: components["schemas"]["Id"];
+            NodeKey: components["schemas"]["BinaryString"];
+            Name: components["schemas"]["BinaryString"];
+            NameHash: components["schemas"]["HexBinaryString"];
         };
         /** @description An encrypted ID */
         ShortId: string;
@@ -4119,7 +3993,7 @@ export interface components {
              */
             Exif?: string | null;
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash: string | null;
+            ContentHash: string;
             /** @description LinkIDs of related Photos if there are any */
             RelatedPhotosLinkIDs: string[];
         };
@@ -4133,10 +4007,7 @@ export interface components {
              * @enum {integer}
              */
             Type: 1 | 2;
-            /**
-             * @description Link name
-             * @example ----BEGIN PGP MESSAGE----...
-             */
+            /** @description Link name */
             Name: string;
             /**
              * Format: email
@@ -4162,10 +4033,7 @@ export interface components {
             Size: number;
             /** @description Encrypted size of Node  (all active and obsolete revisions for files) */
             TotalSize: number;
-            /**
-             * @description Mime type
-             * @example application/ms-xls
-             */
+            /** @description Mime type */
             MIMEType: string;
             /**
              * @deprecated
@@ -4178,20 +4046,11 @@ export interface components {
              * @description Always returns 7, read+write+execute
              */
             Permissions: number;
-            /**
-             * @description Node Key
-             * @example -----BEGIN PGP PRIVATE KEY BLOCK-----...
-             */
+            /** @description Node Key */
             NodeKey: string;
-            /**
-             * @description Node passphrase
-             * @example ----BEGIN PGP MESSAGE-----...
-             */
+            /** @description Node passphrase */
             NodePassphrase: string;
-            /**
-             * @description Node passphrase signature
-             * @example -----BEGIN PGP SIGNATURE-----...
-             */
+            /** @description Node passphrase signature */
             NodePassphraseSignature: string;
             /**
              * Format: email
@@ -4521,7 +4380,7 @@ export interface components {
              */
             Code: 1000;
         };
-        CreateFolderRequestDto: {
+        CreateFolderDto: {
             /** @description Node hash key (random bytes encoded in base64 format), encrypted and signed. */
             NodeHashKey: components["schemas"]["PGPMessage"];
             /**
@@ -4530,8 +4389,8 @@ export interface components {
              */
             XAttr: components["schemas"]["PGPMessage"] | null;
             Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
+            /** @description File/folder name hash */
+            Hash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -4555,14 +4414,6 @@ export interface components {
              * @enum {integer}
              */
             Code: 1000;
-        };
-        CreateFolderCryptoV2RequestDto: {
-            /** @default null */
-            XAttr: components["schemas"]["BinaryString"] | null;
-            ParentLinkID: components["schemas"]["Id"];
-            NodeKey: components["schemas"]["BinaryString"];
-            Name: components["schemas"]["BinaryString"];
-            NameHash: string;
         };
         /** @description An encrypted ID */
         EncryptedId: string;
@@ -4592,7 +4443,7 @@ export interface components {
             Code: 1000;
         };
         CheckAvailableHashesRequestDto: {
-            Hashes: string[];
+            Hashes: components["schemas"]["HexBinaryString"][];
             /**
              * @description Client UID list to filter pending drafts with. If not provided, all conflicting draft hashes will be returned in `PendingHashes`
              * @default null
@@ -4600,13 +4451,13 @@ export interface components {
             ClientUID: string[] | null;
         };
         PendingHashResponseDto: {
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             RevisionID: components["schemas"]["Id"];
             LinkID: components["schemas"]["Id"];
             ClientUID: string | null;
         };
         AvailableHashesResponseDto: {
-            AvailableHashes: string[];
+            AvailableHashes: components["schemas"]["HexBinaryString"][];
             /** @description Hashes of existing drafts excluding the ones of provided ClientUIDs */
             PendingHashes: components["schemas"]["PendingHashResponseDto"][];
             /**
@@ -4623,13 +4474,13 @@ export interface components {
             /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
-            ContentHash: string;
+            ContentHash: components["schemas"]["HexBinaryString"];
         };
         PhotosDto: {
             /** @description Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
-            ContentHash: string;
+            ContentHash: components["schemas"]["HexBinaryString"];
             /** @default [] */
             RelatedPhotos: components["schemas"]["RelatedPhotoDto"][];
         };
@@ -4639,7 +4490,7 @@ export interface components {
             /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Volume ID to copy to. */
             TargetVolumeID: components["schemas"]["Id"];
             /** @description New parent link ID to copy to. */
@@ -4746,7 +4597,7 @@ export interface components {
             ModifyTime: number;
             TrashTime: number | null;
             Name: components["schemas"]["PGPMessage"];
-            NameHash: string | null;
+            NameHash: components["schemas"]["HexBinaryString"] | null;
             NodeKey: components["schemas"]["PGPPrivateKey"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -4756,11 +4607,15 @@ export interface components {
             NameSignatureEmail: string | null;
             OwnedBy: components["schemas"]["OwnedByDto"];
             DirectPermissions: number | null;
+            /** @description Whether the node was created by a 3rd party client (determined on a best-effort basis) */
+            ThirdParty: boolean;
+            /** @description Whether the node was created via the Drive SDK */
+            Sdk: boolean;
         };
         PhotoDto: {
             CaptureTime: number;
             MainPhotoLinkID: components["schemas"]["Id"] | null;
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"];
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
         };
         /**
@@ -4789,6 +4644,10 @@ export interface components {
             SignatureEmail?: string | null;
             /** @description Whether the revision was imported by Easy Switch on behalf of the user */
             IsImported: boolean;
+            /** @description Whether the revision was created by a 3rd party client (determined on a best-effort basis) */
+            ThirdParty: boolean;
+            /** @description Whether the revision was created via the Drive SDK */
+            Sdk: boolean;
         };
         FileDto: {
             ActiveRevision: components["schemas"]["ActiveRevisionDto"] | null;
@@ -4903,22 +4762,27 @@ export interface components {
             /** @description Node passphrase, reusing same session key as previously. The data packet may be omitted; the existing one is reused. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /**
              * @description Current name hash before move operation. Used to prevent race conditions.
              * @default null
              */
-            OriginalHash: string | null;
+            OriginalHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
              * @default null
              */
             NodePassphraseSignature: components["schemas"]["PGPSignature"] | null;
+            /**
+             * @description MIME type, optional, only on files when renaming.
+             * @default null
+             */
+            MIMEType: string | null;
         };
         MoveLinkBatchRequestDto: {
             ParentLinkID: components["schemas"]["Id"];
@@ -4938,7 +4802,7 @@ export interface components {
             /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             /**
              * Format: email
@@ -4957,7 +4821,7 @@ export interface components {
              * @description Current name hash before move operation. Used to prevent race conditions.
              * @default null
              */
-            OriginalHash: string | null;
+            OriginalHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @deprecated
              * @description Deprecated: Target ShareID (for move between shares/devices). Determined on the backend automatically
@@ -4968,7 +4832,7 @@ export interface components {
              * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
              * @default null
@@ -4981,23 +4845,23 @@ export interface components {
              */
             SignatureEmail: components["schemas"]["AddressEmail"] | null;
         };
-        MoveLinkRequestDto2: {
+        MoveLinkV2RequestDto: {
             /** @description Name, reusing same session key as previously. */
             Name: components["schemas"]["PGPMessage"];
             /** @description Node passphrase, reusing same session key as previously. */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             /** @description Current name hash before move operation. Used to prevent race conditions. */
-            OriginalHash: string;
+            OriginalHash: components["schemas"]["HexBinaryString"];
             /** @description Signature email address used for signing name */
             NameSignatureEmail: components["schemas"]["AddressEmail"];
             /**
              * @description Optional, except when moving a Photo-Link. Photo content hash, hmacsha256 of sha1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ]
              * @default null
              */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             /**
              * @description Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address.
              * @default null
@@ -5036,7 +4900,6 @@ export interface components {
             /**
              * @description MIME type, optional, only on files.
              * @default null
-             * @example text/plain
              */
             MIMEType: string | null;
         };
@@ -5052,7 +4915,7 @@ export interface components {
             /** @description Photo capture timestamp (in seconds), use negative values for times before 1970 */
             CaptureTime: number;
             /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key [ lower_hex(hmacSha256(folder hash key, lower_hex(sha1(plain content)))) ] */
-            ContentHash: string;
+            ContentHash: components["schemas"]["HexBinaryString"];
             /**
              * @description Main photo LinkID reference. Pass null if none.
              * @default null
@@ -5119,13 +4982,14 @@ export interface components {
             ChecksumVerified: boolean;
         };
         CommitRevisionCryptoV2Dto: {
-            ManifestHash: string;
+            ManifestHash: components["schemas"]["HexBinaryString"];
             /**
              * Format: email
              * @description Address used to sign the manifest. Is null for anonymous users. Must be the address in the membership of the context share.
              */
             SignatureEmail: components["schemas"]["AddressEmail"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            Salt: components["schemas"]["BinaryString"];
             /** @default null */
             XAttr: components["schemas"]["BinaryString"] | null;
             /** @default null */
@@ -5137,7 +5001,6 @@ export interface components {
             ChecksumVerified: boolean;
         };
         CreateFileDto: {
-            /** @example text/plain */
             MIMEType: string;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             /**
@@ -5156,8 +5019,8 @@ export interface components {
              */
             IntendedUploadSize: number | null;
             Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
+            /** @description File/folder name hash */
+            Hash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -5185,7 +5048,6 @@ export interface components {
             Code: 1000;
         };
         CreateFileCryptoV2Dto: {
-            /** @example text/plain */
             MIMEType: string;
             /**
              * @description Client unique ID. Useful for marking client's drafts - in case of failure client can recognise its own draft and continue upload.
@@ -5200,7 +5062,7 @@ export interface components {
             ParentLinkID: components["schemas"]["Id"];
             NodeKey: components["schemas"]["BinaryString"];
             Name: components["schemas"]["BinaryString"];
-            NameHash: string;
+            NameHash: components["schemas"]["HexBinaryString"];
         };
         CreateRevisionRequestDto: {
             /** @default null */
@@ -5283,6 +5145,10 @@ export interface components {
             ClientUID: string | null;
             /** @description Whether the revision was imported by Easy Switch on behalf of the user */
             IsImported: boolean;
+            /** @description Whether the revision was created by a 3rd party client (determined on a best-effort basis) */
+            ThirdParty: boolean;
+            /** @description Whether the revision was created via the Drive SDK */
+            Sdk: boolean;
             /** @default null */
             CreateTime: number | null;
             /**
@@ -5518,7 +5384,6 @@ export interface components {
             /**
              * @description User message about the report. Required for copyright or leak reports.
              * @default null
-             * @example This is malware
              */
             ReporterMessage: string | null;
             /** @default null */
@@ -5597,14 +5462,14 @@ export interface components {
         };
         FavoritePhotoDataDto: {
             /** @description Name Hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             Name: components["schemas"]["PGPMessage"];
             /** @description Email address used for signing name */
             NameSignatureEmail: components["schemas"]["AddressEmail"];
             /** @description Passphrase should be unchanged, reusing same session key as previously */
             NodePassphrase: components["schemas"]["PGPMessage"];
             /** @description Photo content hash */
-            ContentHash: string;
+            ContentHash: components["schemas"]["HexBinaryString"];
             /** @description Nullable; Node Passphrase Signature. Required when moving an anonymous Link. It must be signed by the SignatureEmail address. */
             NodePassphraseSignature?: components["schemas"]["PGPSignature"] | null;
             /**
@@ -5673,18 +5538,18 @@ export interface components {
             /** @description Unix timestamp (in seconds) of when the photo was taken as extracted by client from exif */
             CaptureTime: number;
             /** @description File name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash?: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"];
         };
         PhotoListingItemResponse: {
             LinkID: components["schemas"]["Id"];
             /** @description Unix timestamp (in seconds) of when the photo was taken as extracted by client from exif */
             CaptureTime: number;
             /** @description File name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash?: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"];
             /** @description Tags assigned to the photo */
             Tags: number[];
             RelatedPhotos: components["schemas"]["PhotoListingRelatedItemResponse"][];
@@ -5711,11 +5576,15 @@ export interface components {
             SignatureEmail?: string | null;
             /** @description Whether the revision was imported by Easy Switch on behalf of the user */
             IsImported: boolean;
+            /** @description Whether the revision was created by a 3rd party client (determined on a best-effort basis) */
+            ThirdParty: boolean;
+            /** @description Whether the revision was created via the Drive SDK */
+            Sdk: boolean;
         };
         PhotoAlbumDto: {
             AlbumLinkID: components["schemas"]["Id"];
-            Hash: string;
-            ContentHash: string;
+            Hash: components["schemas"]["HexBinaryString"];
+            ContentHash: components["schemas"]["HexBinaryString"];
             AddedTime: number;
         };
         PhotoFileDto: {
@@ -5724,7 +5593,7 @@ export interface components {
             CaptureTime?: number | null;
             MainPhotoLinkID: components["schemas"]["Id"] | null;
             /** @description Photo content hash, lowercase hex representation of HMAC SHA256 of SHA1 content using parent folder's hash key; Null on draft links */
-            ContentHash: string | null;
+            ContentHash: components["schemas"]["HexBinaryString"] | null;
             RelatedPhotosLinkIDs: components["schemas"]["Id"][];
             Albums: components["schemas"]["PhotoAlbumDto"][];
             /** @description Will be empty if the user is not the owner. */
@@ -5883,50 +5752,6 @@ export interface components {
              */
             Code: 1000;
         };
-        CommitAnonymousRevisionDto: {
-            ManifestSignature: components["schemas"]["PGPSignature"];
-            /**
-             * Format: email
-             * @description Address used to sign the manifest, blocks, and XAttributes. Must be the address in the membership of the context share.
-             */
-            SignatureEmail?: components["schemas"]["AddressEmail"] | null;
-            /** @description Extended attributes encrypted with link key */
-            XAttr: components["schemas"]["PGPMessage"];
-            /**
-             * @description Photo attributes
-             * @default null
-             */
-            Photo: components["schemas"]["CommitRevisionPhotoDto"] | null;
-            /**
-             * @description Whether the checksum in xattr of the revision content was verified by the client during upload
-             * @default false
-             */
-            ChecksumVerified: boolean;
-        };
-        CreateAnonymousDocumentDto: {
-            Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
-            ParentLinkID: components["schemas"]["Id"];
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodePassphraseSignature: components["schemas"]["PGPSignature"];
-            NodeKey: components["schemas"]["PGPPrivateKey"];
-            ContentKeyPacket: components["schemas"]["BinaryString"];
-            ManifestSignature: components["schemas"]["PGPSignature"];
-            /**
-             * Format: email
-             * @description Signature email address used to sign passphrase and name
-             * @default null
-             */
-            SignatureEmail: components["schemas"]["AddressEmail"] | null;
-            /**
-             * @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey.
-             * @default null
-             */
-            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
-            /** @description Document=1, Sheet=2 */
-            DocumentType?: components["schemas"]["DocumentType"];
-        };
         CreateAnonymousDocumentResponseDto: {
             Document: components["schemas"]["DocumentDetailsDto"];
             AuthorizationToken: string;
@@ -5937,74 +5762,13 @@ export interface components {
              */
             Code: 1000;
         };
-        CreateAnonymousFileRequestDto: {
-            Name: components["schemas"]["PGPMessage"];
-            /** @description File/folder name Hash */
-            Hash: string;
-            ParentLinkID: components["schemas"]["Id"];
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodePassphraseSignature: components["schemas"]["PGPSignature"];
-            NodeKey: components["schemas"]["PGPPrivateKey"];
-            /** @example text/plain */
-            MIMEType: string;
-            ContentKeyPacket: components["schemas"]["BinaryString"];
-            /**
-             * Format: email
-             * @description Signature email address used to sign passphrase and name
-             * @default null
-             */
-            SignatureEmail: components["schemas"]["AddressEmail"] | null;
-            /**
-             * @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey.
-             * @default null
-             */
-            ContentKeyPacketSignature: components["schemas"]["PGPSignature"] | null;
-            /**
-             * @description Client unique ID. Useful for marking client's drafts - in case of failure client can recognise its own draft and continue upload.
-             * @default null
-             */
-            ClientUID: string | null;
-            /**
-             * @description Intended upload file size, future BE size validation
-             * @default null
-             */
-            IntendedUploadSize: number | null;
-        };
-        CreateAnonymousFileResponseDto: {
-            File: components["schemas"]["FileResponseDto"];
-            AuthorizationToken: string;
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
-        CreateAnonymousFolderResponseDto: {
-            Folder: components["schemas"]["FolderResponseDto"];
-            AuthorizationToken: string;
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
-        LinkWithAuthorizationTokenDto: {
-            LinkID: components["schemas"]["Id"];
-            /** @default null */
-            AuthorizationToken: string | null;
-        };
-        DeleteChildrenRequestDto: {
-            Links: components["schemas"]["LinkWithAuthorizationTokenDto"][];
-        };
         RenameAnonymousLinkRequestDto: {
             /** @description Name, reusing same session key as previously. */
             Name: components["schemas"]["PGPMessage"];
             /** @description Name hash */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             /** @description Current name hash before move operation. Used to prevent race conditions. */
-            OriginalHash: string;
+            OriginalHash: components["schemas"]["HexBinaryString"];
             /**
              * Format: email
              * @description Signature email address used for signing name
@@ -6014,158 +5778,13 @@ export interface components {
             /**
              * @description MIME type, optional, only on files.
              * @default null
-             * @example text/plain
              */
             MIMEType: string | null;
             /** @default null */
             AuthorizationToken: string | null;
         };
-        RequestAnonymousUploadRequestDto: {
-            LinkID: components["schemas"]["Id"];
-            RevisionID: components["schemas"]["Id"];
-            /**
-             * Format: email
-             * @deprecated
-             * @description Signature email address used to sign the blocks content
-             * @default null
-             */
-            SignatureEmail: components["schemas"]["AddressEmail"] | null;
-            /** @default [] */
-            BlockList: components["schemas"]["RequestUploadBlockInput"][];
-            /** @default [] */
-            ThumbnailList: components["schemas"]["RequestUploadThumbnailInput"][];
-        };
         BootstrapShareTokenResponseDto: {
             Token: components["schemas"]["TokenResponseDto"];
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
-        BlockResponseDto: {
-            Index: number;
-            Hash: components["schemas"]["BinaryString"];
-            Token: string | null;
-            /** @deprecated */
-            URL?: string | null;
-            BareURL: string | null;
-            /**
-             * @deprecated
-             * @default null
-             */
-            EncSignature: components["schemas"]["PGPMessage"] | null;
-            /**
-             * Format: email
-             * @deprecated
-             * @description Email used to sign block
-             * @default null
-             */
-            SignatureEmail: string | null;
-        };
-        PhotoResponseDto: {
-            LinkID: components["schemas"]["Id"];
-            /** @description Unix timestamp (in seconds) of when the photo was taken as extracted by client from exif. Negative values represent times before 1970 */
-            CaptureTime: number;
-            MainPhotoLinkID: components["schemas"]["Id"] | null;
-            /** @description File name hash */
-            Hash: string | null;
-            /** @description Photo content hash, Hashmac of content using parent folder's hash key */
-            ContentHash: string | null;
-            /** @description LinkIDs of related Photos if there are any */
-            RelatedPhotosLinkIDs: components["schemas"]["Id"][];
-            /**
-             * @deprecated
-             * @description Deprecated: Clients persist exif information in xAttr instead
-             * @default null
-             */
-            Exif: string | null;
-        };
-        DetailedRevisionResponseDto: {
-            Blocks: components["schemas"]["BlockResponseDto"][];
-            Photo: components["schemas"]["PhotoResponseDto"] | null;
-            ID: components["schemas"]["Id"];
-            ManifestSignature?: components["schemas"]["PGPSignature"] | null;
-            /** @description Size of revision (in bytes) */
-            Size: number;
-            State: components["schemas"]["RevisionState"];
-            XAttr?: components["schemas"]["PGPMessage"] | null;
-            /**
-             * @deprecated
-             * @description Flag stating if revision has a thumbnail
-             * @enum {integer}
-             */
-            Thumbnail: 0 | 1;
-            /** @deprecated */
-            ThumbnailHash?: components["schemas"]["BinaryString"] | null;
-            /**
-             * @deprecated
-             * @description Size thumbnail in bytes; 0 if no thumbnail present
-             */
-            ThumbnailSize: number;
-            Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
-            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
-            ChecksumVerified: boolean;
-            ClientUID?: string | null;
-            /** @description Whether the revision was imported by Easy Switch on behalf of the user */
-            IsImported: boolean;
-            /** @default null */
-            CreateTime: number | null;
-            /**
-             * Format: email
-             * @description User's email associated with the share and used to sign the manifest and block contents.
-             * @default null
-             */
-            SignatureEmail: string | null;
-            /**
-             * Format: email
-             * @deprecated
-             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
-             * @default null
-             */
-            SignatureAddress: string | null;
-        };
-        GetRevisionResponseDto: {
-            Revision: components["schemas"]["DetailedRevisionResponseDto"];
-            /**
-             * ProtonResponseCode
-             * @example 1000
-             * @enum {integer}
-             */
-            Code: 1000;
-        };
-        GetSharedFileInfoRequestDto: {
-            /** @default 1 */
-            FromBlockIndex: number;
-            /** @default null */
-            PageSize: number | null;
-            ClientEphemeral: components["schemas"]["BinaryString"];
-            ClientProof: components["schemas"]["BinaryString"];
-            SRPSession: components["schemas"]["BinaryString"];
-        };
-        GetSharedFileInfoPayloadDto: {
-            SharePasswordSalt: components["schemas"]["BinaryString"];
-            SharePassphrase: components["schemas"]["PGPMessage"];
-            ShareKey: components["schemas"]["PGPPrivateKey"];
-            NodePassphrase: components["schemas"]["PGPMessage"];
-            NodeKey: components["schemas"]["PGPPrivateKey"];
-            Name: components["schemas"]["PGPMessage"];
-            Size: number;
-            MIMEType: string;
-            /** @description UNIX timestamp (in seconds) after which this link is no longer accessible */
-            ExpirationTime?: number | null;
-            ContentKeyPacket: components["schemas"]["BinaryString"];
-            BlockURLs: components["schemas"]["ThumbnailURLInfoResponseDto"][];
-            ThumbnailURLInfo: components["schemas"]["ThumbnailURLInfoResponseDto"];
-            /** @deprecated */
-            Blocks: string[];
-            /** @deprecated */
-            ThumbnailURL?: string | null;
-        };
-        GetSharedFileInfoResponseDto: {
-            ServerProof: components["schemas"]["BinaryString"];
-            Payload: components["schemas"]["GetSharedFileInfoPayloadDto"];
             /**
              * ProtonResponseCode
              * @example 1000
@@ -6184,7 +5803,6 @@ export interface components {
             CreateTime: number;
             MaxAccesses: number;
             NumAccesses: number;
-            Name: components["schemas"]["PGPMessage"] | null;
             CreatorEmail: string;
             /**
              * @description Permission bitfield, cannot exceed the owner's permissions. Valid permissions:
@@ -6204,6 +5822,11 @@ export interface components {
             SRPModulusID: components["schemas"]["Id"];
             Password: components["schemas"]["PGPMessage"];
             SharePassphraseKeyPacket: components["schemas"]["BinaryString"];
+            /**
+             * @deprecated
+             * @default null
+             */
+            Name: components["schemas"]["PGPMessage"] | null;
         };
         ShareURLContext: {
             /** @description Share ID of the share highest in the tree with permissions */
@@ -6270,6 +5893,7 @@ export interface components {
              */
             ExpirationDuration: number | null;
             /**
+             * @deprecated
              * @description PGP encrypted name. The name is encrypted with the user's address key. The name is only for user convenience.
              * @default null
              */
@@ -6280,7 +5904,10 @@ export interface components {
             ExpirationTime: number;
             /** @description Number of seconds after which this link is no longer accessible. Maximum 90 days. */
             ExpirationDuration?: number | null;
-            /** @description PGP encrypted name. The name is encrypted with the user's address key. The name is only for user convenience. */
+            /**
+             * @deprecated
+             * @description PGP encrypted name. The name is encrypted with the user's address key. The name is only for user convenience.
+             */
             Name?: components["schemas"]["PGPMessage"] | null;
             /**
              * @description Permission bitfield, cannot exceed the owner's permissions. Valid permissions:
@@ -6373,6 +6000,14 @@ export interface components {
              */
             BonaFide: true;
         };
+        ReportRecentlyAccessedItemDto: {
+            VolumeID: components["schemas"]["Id"];
+            LinkID: components["schemas"]["Id"];
+            AccessTime: number;
+        };
+        ReportRecentlyAccessedItemsListDto: {
+            RecentlyAccessedItems: components["schemas"]["ReportRecentlyAccessedItemDto"][];
+        };
         LinkMapQueryParameters: {
             /** @default null */
             SessionName: string | null;
@@ -6387,7 +6022,7 @@ export interface components {
             ParentLinkID?: components["schemas"]["Id"] | null;
             Type: components["schemas"]["NodeType2"];
             Name: components["schemas"]["PGPMessage"];
-            Hash?: string | null;
+            Hash?: components["schemas"]["HexBinaryString"] | null;
             State: components["schemas"]["LinkState2"];
             Size: number;
             MIMEType: string;
@@ -7273,7 +6908,7 @@ export interface components {
             /** @description Folder name as armored PGP message */
             Name: components["schemas"]["PGPMessage"];
             /** @description Hash of the name */
-            Hash: string;
+            Hash: components["schemas"]["HexBinaryString"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
             /**
@@ -7340,6 +6975,101 @@ export interface components {
             Error: string;
             Code: number;
         };
+        BlockResponseDto: {
+            Index: number;
+            Hash: components["schemas"]["BinaryString"];
+            Token: string | null;
+            /** @deprecated */
+            URL?: string | null;
+            BareURL: string | null;
+            /**
+             * @deprecated
+             * @default null
+             */
+            EncSignature: components["schemas"]["PGPMessage"] | null;
+            /**
+             * Format: email
+             * @deprecated
+             * @description Email used to sign block
+             * @default null
+             */
+            SignatureEmail: string | null;
+        };
+        PhotoResponseDto: {
+            LinkID: components["schemas"]["Id"];
+            /** @description Unix timestamp (in seconds) of when the photo was taken as extracted by client from exif. Negative values represent times before 1970 */
+            CaptureTime: number;
+            MainPhotoLinkID: components["schemas"]["Id"] | null;
+            /** @description File name hash */
+            Hash: components["schemas"]["HexBinaryString"];
+            /** @description Photo content hash, Hashmac of content using parent folder's hash key */
+            ContentHash: components["schemas"]["HexBinaryString"];
+            /** @description LinkIDs of related Photos if there are any */
+            RelatedPhotosLinkIDs: components["schemas"]["Id"][];
+            /**
+             * @deprecated
+             * @description Deprecated: Clients persist exif information in xAttr instead
+             * @default null
+             */
+            Exif: string | null;
+        };
+        DetailedRevisionResponseDto: {
+            Blocks: components["schemas"]["BlockResponseDto"][];
+            Photo: components["schemas"]["PhotoResponseDto"] | null;
+            ID: components["schemas"]["Id"];
+            ManifestSignature?: components["schemas"]["PGPSignature"] | null;
+            /** @description Size of revision (in bytes) */
+            Size: number;
+            State: components["schemas"]["RevisionState"];
+            XAttr?: components["schemas"]["PGPMessage"] | null;
+            /**
+             * @deprecated
+             * @description Flag stating if revision has a thumbnail
+             * @enum {integer}
+             */
+            Thumbnail: 0 | 1;
+            /** @deprecated */
+            ThumbnailHash?: components["schemas"]["BinaryString"] | null;
+            /**
+             * @deprecated
+             * @description Size thumbnail in bytes; 0 if no thumbnail present
+             */
+            ThumbnailSize: number;
+            Thumbnails: components["schemas"]["ThumbnailResponseDto"][];
+            /** @description Whether the checksum in xattr of the revision content was verified by the client during upload */
+            ChecksumVerified: boolean;
+            ClientUID?: string | null;
+            /** @description Whether the revision was imported by Easy Switch on behalf of the user */
+            IsImported: boolean;
+            /** @description Whether the revision was created by a 3rd party client (determined on a best-effort basis) */
+            ThirdParty: boolean;
+            /** @description Whether the revision was created via the Drive SDK */
+            Sdk: boolean;
+            /** @default null */
+            CreateTime: number | null;
+            /**
+             * Format: email
+             * @description User's email associated with the share and used to sign the manifest and block contents.
+             * @default null
+             */
+            SignatureEmail: string | null;
+            /**
+             * Format: email
+             * @deprecated
+             * @description [DEPRECATED] use `SignatureEmail` Email address corresponding to the signature
+             * @default null
+             */
+            SignatureAddress: string | null;
+        };
+        GetRevisionResponseDto: {
+            Revision: components["schemas"]["DetailedRevisionResponseDto"];
+            /**
+             * ProtonResponseCode
+             * @example 1000
+             * @enum {integer}
+             */
+            Code: 1000;
+        };
         ShareConflictErrorDetailsDto: {
             ConflictLinkID: components["schemas"]["Id"];
             /** @description A conflicting Share on the Link. */
@@ -7353,7 +7083,7 @@ export interface components {
         };
         SmallFileUploadMetadataRequestDto: {
             Name: components["schemas"]["PGPMessage"];
-            NameHash: string;
+            NameHash: components["schemas"]["HexBinaryString"];
             ParentLinkID: components["schemas"]["Id"];
             NodePassphrase: components["schemas"]["PGPMessage"];
             NodePassphraseSignature: components["schemas"]["PGPSignature"];
@@ -7363,7 +7093,6 @@ export interface components {
              */
             SignatureEmail: components["schemas"]["AddressEmail"] | null;
             NodeKey: components["schemas"]["PGPPrivateKey"];
-            /** @example text/plain */
             MIMEType: string;
             ContentKeyPacket: components["schemas"]["BinaryString"];
             /** @description Unencrypted signature of the content session key (plain text of the ContentKeyPacket), signed with the NodeKey. */
@@ -7390,7 +7119,6 @@ export interface components {
             ChecksumVerified: boolean;
         };
         SmallFileUploadMetadataCryptoV2RequestDto: {
-            /** @example text/plain */
             MIMEType: string;
             /**
              * Format: email
@@ -7398,6 +7126,7 @@ export interface components {
              */
             SignatureEmail: components["schemas"]["AddressEmail"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            Salt: components["schemas"]["BinaryString"];
             ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
             /** @default null */
             XAttr: components["schemas"]["BinaryString"] | null;
@@ -7411,7 +7140,7 @@ export interface components {
             ParentLinkID: components["schemas"]["Id"];
             NodeKey: components["schemas"]["BinaryString"];
             Name: components["schemas"]["BinaryString"];
-            NameHash: string;
+            NameHash: components["schemas"]["HexBinaryString"];
         };
         SmallRevisionUploadMetadataRequestDto: {
             CurrentRevisionID: components["schemas"]["Id"];
@@ -7447,6 +7176,7 @@ export interface components {
              */
             SignatureEmail: components["schemas"]["AddressEmail"] | null;
             ManifestSignature: components["schemas"]["PGPSignature"] | null;
+            Salt: components["schemas"]["BinaryString"];
             ContentBlockVerificationToken: components["schemas"]["BinaryString"] | null;
             /** @default null */
             XAttr: components["schemas"]["BinaryString"] | null;
@@ -7607,7 +7337,51 @@ export interface operations {
                     "application/json": {
                         /** @description Potential codes and their meaning:
                          *      - 200300: Limit of albums per volume reached
-                         *      - 2501: a photo share does not exist for this volume
+                         *      - 2501: Volume does not exist, or is not photo volume
+                         *      - 2011: Insufficient permissions, not volume owner
+                         *      */
+                        Code: number;
+                    };
+                };
+            };
+        };
+    };
+    "post_drive-v3-photos-volumes-{volumeID}-albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateFolderCryptoV2Dto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateAlbumResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Potential codes and their meaning:
+                         *      - 200300: Limit of albums per volume reached
+                         *      - 2501: Volume does not exist, or is not photo volume
+                         *      - 2011: Insufficient permissions, not volume owner
                          *      */
                         Code: number;
                     };
@@ -7798,7 +7572,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
-                         *      - 2501: volume does not exist, or is not photo volume
+                         *      - 2501: Volume does not exist, or is not photo volume
                          *      - 2011: Insufficient permissions, not volume owner
                          *      */
                         Code: number;
@@ -7840,7 +7614,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
-                         *      - 2501: volume does not exist, or is not photo volume
+                         *      - 2501: Volume does not exist, or is not photo volume
                          *      - 2011: Insufficient permissions, not volume owner
                          *      */
                         Code: number;
@@ -8407,8 +8181,8 @@ export interface operations {
                          * @description Potential codes and their meaning:
                          *      - 200300: max folder size reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
-                         *      - 2011: the user does not have permissions to create a file in this share
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *
                          * @enum {integer}
                          */
@@ -8471,8 +8245,72 @@ export interface operations {
                          * @description Potential codes and their meaning:
                          *      - 200300: max folder size reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
-                         *      - 2011: the user does not have permissions to create a file in this share
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
+                         *
+                         * @enum {integer}
+                         */
+                        Code: 200300 | 2500 | 2501 | 2011;
+                    } | components["schemas"]["ConflictErrorResponseDto"];
+                };
+            };
+            /** @description Failed dependency */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Potential codes and their meaning:
+                         *      - 2032: Blocked due to feature being disabled, clients are encouraged to refetch feature flags
+                         *
+                         * @enum {integer}
+                         */
+                        Code: 2032;
+                    };
+                };
+            };
+        };
+    };
+    "post_drive-v3-volumes-{volumeID}-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                volumeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateDocumentCryptoV2Dto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateDocumentResponseDto"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Potential codes and their meaning:
+                         *      - 200300: max folder size reached
+                         *      - 2500: file or folder with same name already exists
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *
                          * @enum {integer}
                          */
@@ -8689,7 +8527,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto"];
+                "application/json": components["schemas"]["CreateFolderDto"];
             };
         };
         responses: {
@@ -8715,7 +8553,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      */
                         Code?: number;
                     } | components["schemas"]["ConflictErrorResponseDto"];
@@ -8734,7 +8573,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto"];
+                "application/json": components["schemas"]["CreateFolderDto"];
             };
         };
         responses: {
@@ -8760,7 +8599,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      */
                         Code?: number;
                     } | components["schemas"]["ConflictErrorResponseDto"];
@@ -8779,7 +8619,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderCryptoV2RequestDto"];
+                "application/json": components["schemas"]["CreateFolderCryptoV2Dto"];
             };
         };
         responses: {
@@ -8805,7 +8645,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      */
                         Code?: number;
                     } | components["schemas"]["ConflictErrorResponseDto"];
@@ -9339,7 +9180,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["MoveLinkRequestDto2"];
+                "application/json": components["schemas"]["MoveLinkV2RequestDto"];
             };
         };
         responses: {
@@ -9514,6 +9355,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
+                         *      - 2501: file is not active or draft (could be trashed)
+                         *      - 2011: the user does not have write permissions on the file or it does not exist
                          *      - 200303: Cannot commit related photo with main already in album
                          *      */
                         Code: number;
@@ -9630,6 +9473,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
+                         *      - 2501: file is not active or draft (could be trashed)
+                         *      - 2011: the user does not have write permissions on the file or it does not exist
                          *      - 200303: Cannot commit related photo with main already in album
                          *      */
                         Code: number;
@@ -9715,6 +9560,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
+                         *      - 2501: file is not active or draft (could be trashed)
+                         *      - 2011: the user does not have write permissions on the file or it does not exist
                          *      - 200303: Cannot commit related photo with main already in album
                          *      */
                         Code: number;
@@ -9759,7 +9606,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      - 200701: A document type cannot create a revision
                          *      */
                         Code: number;
@@ -9804,7 +9652,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      - 200701: A document type cannot create a revision
                          *      */
                         Code: number;
@@ -9849,7 +9698,8 @@ export interface operations {
                          *      - 200300: max folder size reached
                          *      - 200301: max folder depth reached
                          *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
+                         *      - 2501: parent folder is not active (could be trashed)
+                         *      - 2011: user does not have write permissions to create a node in the folder or it does not exist
                          *      - 200701: A document type cannot create a revision
                          *      */
                         Code: number;
@@ -9925,6 +9775,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
+                         *      - 2501: file is not active (could be trashed)
+                         *      - 2011: the user does not have write permissions on the file or it does not exist
                          *      - 200700: A document type cannot create a revision
                          *      */
                         Code: number;
@@ -10000,6 +9852,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description Potential codes and their meaning:
+                         *      - 2501: file is not active (could be trashed)
+                         *      - 2011: the user does not have write permissions on the file or it does not exist
                          *      - 200700: A document type cannot create a revision
                          *      */
                         Code: number;
@@ -11673,133 +11527,6 @@ export interface operations {
             422: components["responses"]["ProtonErrorResponse"];
         };
     };
-    "post_drive-urls-{token}-files-{linkID}-checkAvailableHashes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CheckAvailableHashesRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AvailableHashesResponseDto"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      */
-                        Code: number;
-                    };
-                };
-            };
-        };
-    };
-    "put_drive-urls-{token}-files-{linkID}-revisions-{revisionID}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-                linkID: components["schemas"]["Id"];
-                revisionID: components["schemas"]["Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CommitAnonymousRevisionDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 2011: The current ShareURL does not have read+write permissions.
-                         *      - 200303: Cannot commit related photo with main already in album
-                         *      */
-                        Code: number;
-                    } | components["schemas"]["ConflictErrorResponseDto"];
-                };
-            };
-        };
-    };
-    "delete_drive-urls-{token}-files-{linkID}-revisions-{revisionID}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-                revisionID: components["schemas"]["Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuccessfulResponse"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ShareConflictErrorResponseDto"] | {
-                        /** @description Potential codes and their meaning:
-                         *      - 2501: the link (must be active or trashed) or revision does not exist in the volume
-                         *      - 2511: if the revision not in draft
-                         *      - 200700: if the link is a proton doc (revisions are not used for docs)
-                         *      */
-                        Code?: number;
-                    };
-                };
-            };
-        };
-    };
     "post_drive-urls-{token}-documents": {
         parameters: {
             query?: never;
@@ -11811,7 +11538,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateAnonymousDocumentDto"];
+                "application/json": components["schemas"]["CreateDocumentDto"];
             };
         };
         responses: {
@@ -11859,138 +11586,6 @@ export interface operations {
                          * @enum {integer}
                          */
                         Code: 2032;
-                    };
-                };
-            };
-        };
-    };
-    "post_drive-urls-{token}-files": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CreateAnonymousFileRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreateAnonymousFileResponseDto"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 200300: max folder size reached
-                         *      - 200301: max folder depth reached
-                         *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      - 200701: A document type cannot create a revision
-                         *      */
-                        Code: number;
-                    } | components["schemas"]["ConflictErrorResponseDto"];
-                };
-            };
-        };
-    };
-    "post_drive-urls-{token}-folders": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreateAnonymousFolderResponseDto"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 200300: max folder size reached
-                         *      - 200301: max folder depth reached
-                         *      - 2500: file or folder with same name already exists
-                         *      - 2501: parent folder was not found
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      */
-                        Code: number;
-                    };
-                };
-            };
-        };
-    };
-    "post_drive-urls-{token}-folders-{linkID}-delete_multiple": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DeleteChildrenRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Multi responses */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MultiResponsesPerLinkFactory"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      */
-                        Code: number;
                     };
                 };
             };
@@ -12065,86 +11660,6 @@ export interface operations {
             };
         };
     };
-    "post_drive-urls-{token}-blocks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RequestAnonymousUploadRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RequestUploadResponse"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      */
-                        Code: number;
-                    };
-                };
-            };
-        };
-    };
-    "get_drive-urls-{token}-links-{linkID}-revisions-{revisionID}-verification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-                revisionID: components["schemas"]["Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VerificationData"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Potential codes and their meaning:
-                         *      - 2011: The current ShareURL does not have read+write permissions
-                         *      */
-                        Code: number;
-                    };
-                };
-            };
-        };
-    };
     "get_drive-urls-{token}": {
         parameters: {
             query?: never;
@@ -12164,110 +11679,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BootstrapShareTokenResponseDto"];
-                };
-            };
-            422: components["responses"]["ProtonErrorResponse"];
-        };
-    };
-    "get_drive-urls-{token}-folders-{linkID}-children": {
-        parameters: {
-            query?: {
-                /** @description Field to sort by */
-                Sort?: "MIMEType" | "Size" | "ModifyTime" | "CreateTime" | "Type";
-                /** @description Sort order */
-                Desc?: 0 | 1;
-                /** @description Show all files including those in non-active (drafts) state. */
-                ShowAll?: 0 | 1;
-                /** @description Show folders only */
-                FoldersOnly?: 0 | 1;
-                /**
-                 * @deprecated
-                 * @description Get thumbnail download URLs
-                 */
-                Thumbnails?: 0 | 1;
-                PageSize?: components["schemas"]["OffsetPagination"]["PageSize"] & unknown;
-                Page?: components["schemas"]["OffsetPagination"]["Page"] & unknown;
-            };
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Links */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        Code: components["schemas"]["ResponseCodeSuccess"];
-                        Links: components["schemas"]["ExtendedLinkTransformer"][];
-                    };
-                };
-            };
-            422: components["responses"]["ProtonErrorResponse"];
-        };
-    };
-    "get_drive-urls-{token}-files-{linkID}": {
-        parameters: {
-            query?: {
-                /** @description Number of blocks */
-                PageSize?: components["schemas"]["GetRevisionQueryParameters"]["PageSize"];
-                /** @description Block index from which to fetch block list */
-                FromBlockIndex?: components["schemas"]["GetRevisionQueryParameters"]["FromBlockIndex"];
-                /** @description Do not generate download URLs for blocks */
-                NoBlockUrls?: components["schemas"]["GetRevisionQueryParameters"]["NoBlockUrls"];
-            };
-            header?: never;
-            path: {
-                token: string;
-                linkID: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetRevisionResponseDto"];
-                };
-            };
-            422: components["responses"]["ProtonErrorResponse"];
-        };
-    };
-    "post_drive-urls-{token}-file": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ShareURL Token */
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["GetSharedFileInfoRequestDto"];
-            };
-        };
-        responses: {
-            /** @description Success */
-            200: {
-                headers: {
-                    "x-pm-code": 1000;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetSharedFileInfoResponseDto"];
                 };
             };
             422: components["responses"]["ProtonErrorResponse"];
@@ -12618,7 +12029,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateFolderRequestDto"];
+                "application/json": components["schemas"]["CreateFolderDto"];
             };
         };
         responses: {
@@ -12985,6 +12396,56 @@ export interface operations {
                          *      */
                         Code: number;
                     };
+                };
+            };
+        };
+    };
+    "post_drive-recently-accessed-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReportRecentlyAccessedItemsListDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
+                };
+            };
+        };
+    };
+    "post_drive-photos-recently-accessed-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReportRecentlyAccessedItemsListDto"];
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    "x-pm-code": 1000;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessfulResponse"];
                 };
             };
         };
