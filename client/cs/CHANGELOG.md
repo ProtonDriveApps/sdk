@@ -1,5 +1,21 @@
 # Changelog
 
+## cs/v0.29.0 (2026-09-22)
+
+### Features
+- Enumerate nodes over interop
+
+### Bug Fixes
+- Cache thread number instead of running regex on every log call
+
+
+## cs/v0.28.1 (2026-09-15)
+
+### Bug Fixes
+- Stop retrying permanent API errors on block transfers
+- Stop leaking upload queue slots on thumbnail retry
+
+
 ## cs/v0.28.0 (2026-09-15)
 
 ### Features
