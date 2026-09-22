@@ -35,7 +35,7 @@ public struct LogEvent: Sendable {
             level: LogLevel(sdkLogEvent.level),
             message: sdkLogEvent.message,
             category: sdkLogEvent.categoryName,
-            thread: Thread.current.number,
+            thread: Thread.currentNumber,
             // this is not implemented on SDK side
             file: "",
             function: "",

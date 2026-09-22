@@ -59,16 +59,36 @@ final class Logger: Sendable {
 
     func log(level: LogLevel, _ message: String, category: String, file: String = #file, function: String = #function, line: UInt = #line) {
         self.logCallback(
-            LogEvent(level: level, message: message, category: category, thread: Thread.current.number, file: file, function: function, line: line)
+            LogEvent(level: level, message: message, category: category, thread: Thread.currentNumber, file: file, function: function, line: line)
         )
     }
 }
 
 extension Thread {
-    var number: UInt {
-        guard let match = Thread.current.description.firstMatch(of: #/number = (\d+)/#), let number = UInt(match.output.1) else {
-            return 0
+    /// NSThread's own thread number — the `number = N` in its description, as shown in
+    /// log prefixes.
+    ///
+    /// Matches PDCore's `Thread.currentNumber`: the number is parsed once per thread and
+    /// cached in the thread dictionary, so the per-log-call cost is a dictionary lookup
+    /// instead of building a description string and matching a regex against it on every
+    /// line. A thread's number does not change, so caching it is safe.
+    ///
+    /// Static rather than an instance property: the number and its cache both belong to
+    /// the *calling* thread, so a receiver could only ever mislead — and caching through
+    /// one would write into another thread's `threadDictionary`, which is not safe to
+    /// mutate cross-thread.
+    static var currentNumber: UInt {
+        let storage = Thread.current.threadDictionary
+        if let cached = storage["ProtonDriveSDK.threadNumber"] as? UInt {
+            return cached
         }
+
+        let description = Thread.current.description
+        let number = description.range(of: "number = ").flatMap {
+            UInt(description[$0.upperBound...].prefix(while: \.isNumber))
+        } ?? 0
+
+        storage["ProtonDriveSDK.threadNumber"] = number
         return number
     }
 }

@@ -11,7 +11,7 @@ let cCompatibleTelemetryRecordMetricCallback: CCallback = { statePointer, byteAr
     } catch {
         let logEvent: LogEvent = .init(
             level: .error, message: "Failed to parse Telemetry Record: \(error)", category: "Telemetry",
-            thread: Thread.current.number, file: #file, function: #function, line: #line
+            thread: Thread.currentNumber, file: #file, function: #function, line: #line
         )
         driveClient.log(logEvent)
     }
