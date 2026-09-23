@@ -29,6 +29,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
         case emptyTrash(UUID)
         case enumerateTrash(UUID)
         case enumerateEvents(UUID)
+        case savePhotosToTimeline(UUID)
 
         var operationName: String {
             switch self {
@@ -45,6 +46,7 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             case .emptyTrash: return "emptyTrash"
             case .enumerateTrash: return "enumerateTrash"
             case .enumerateEvents: return "enumerateEvents"
+            case .savePhotosToTimeline: return "savePhotosToTimeline"
             }
         }
     }
@@ -309,6 +311,36 @@ extension ProtonPhotosClient {
 
     public func cancelEnumerateAlbum(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .enumerateAlbum(cancellationToken))
+    }
+
+    public func savePhotosToTimeline(
+        photoUids: [SDKNodeUid],
+        cancellationToken: UUID,
+        onNodeResult: @escaping NodeResultCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.savePhotosToTimeline(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .savePhotosToTimeline(cancellationToken))
+        }
+
+        let callbackState = NodeResultEnumerationCallbackWrapper(callback: onNodeResult)
+        let request = Proton_Drive_Sdk_DrivePhotosClientSavePhotosToTimelineRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeResultEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelSavePhotosToTimeline(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .savePhotosToTimeline(cancellationToken))
     }
 }
 

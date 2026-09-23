@@ -267,6 +267,11 @@ extension Message {
                 $0.payload = .drivePhotosClientEnumerateAlbum(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientSavePhotosToTimelineRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientSavePhotosToTimeline(request)
+            }
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientLeaveSharedNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientLeaveSharedNode(request)
