@@ -13,7 +13,7 @@ final class ThumbnailEnumerationCallbackWrapper: Sendable {
 }
 
 let cThumbnailEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<ThumbnailEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<ThumbnailEnumerationCallbackWrapper>>
     let fileThumbnail = Proton_Drive_Sdk_FileThumbnail(byteArray: byteArray)
     let result = ThumbnailDataWithId(fileThumbnail: fileThumbnail)
 

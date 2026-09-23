@@ -14,7 +14,7 @@ final class DriveEventEnumerationCallbackWrapper: Sendable {
 }
 
 let cDriveEventEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DriveEventEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<DriveEventEnumerationCallbackWrapper>>
 
     guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return

@@ -13,7 +13,7 @@ final class NodeResultEnumerationCallbackWrapper: Sendable {
 }
 
 let cNodeResultEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<NodeResultEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<NodeResultEnumerationCallbackWrapper>>
 
     guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return

@@ -13,7 +13,7 @@ final class TimelineItemEnumerationCallbackWrapper: Sendable {
 }
 
 let cTimelineItemEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<TimelineItemEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<TimelineItemEnumerationCallbackWrapper>>
 
     guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
