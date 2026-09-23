@@ -1,5 +1,14 @@
 # Changelog
 
+## cs/v0.29.1 (2026-09-23)
+
+### Features
+- Expose savePhotosToTimeline
+
+### Bug Fixes
+- Use proper result type in enumeration callbacks
+
+
 ## cs/v0.29.0 (2026-09-22)
 
 ### Features
