@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.21.2 (2026-09-23)
+
+### Bug Fixes
+- Auto convert only registered user invitations
+
+
 ## js/v0.21.1 (2026-09-14)
 
 ### Features
