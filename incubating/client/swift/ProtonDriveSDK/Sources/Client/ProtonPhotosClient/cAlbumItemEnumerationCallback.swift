@@ -13,7 +13,7 @@ final class AlbumItemEnumerationCallbackWrapper: Sendable {
 }
 
 let cAlbumItemEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<AlbumItemEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<AlbumItemEnumerationCallbackWrapper>>
 
     guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return

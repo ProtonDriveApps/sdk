@@ -13,7 +13,7 @@ final class DeviceEnumerationCallbackWrapper: Sendable {
 }
 
 let cDeviceEnumerationCallback: CCallback = { stateHandle, byteArray in
-    typealias BoxType = BoxedCompletionBlock<Int, WeakReference<DeviceEnumerationCallbackWrapper>>
+    typealias BoxType = BoxedCompletionBlock<Void, WeakReference<DeviceEnumerationCallbackWrapper>>
 
     guard let box: BoxType = CallbackHandleRegistry.shared.get(stateHandle) else {
         return
