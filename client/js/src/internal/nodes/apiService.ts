@@ -31,6 +31,9 @@ const API_CONCURRENCY = 15;
 // This is the number of nodes that are loaded from the API in one call.
 const API_NODES_BATCH_SIZE = 100;
 
+// This is the maximum number of recently accessed items the API accepts in one call.
+const API_RECENTLY_ACCESSED_BATCH_SIZE = 50;
+
 type PostLoadLinksMetadataRequest = Extract<
     drivePaths['/drive/v2/volumes/{volumeID}/links']['post']['requestBody'],
     { content: object }
@@ -128,6 +131,13 @@ type PostCheckAvailableHashesRequest = Extract<
 >['content']['application/json'];
 type PostCheckAvailableHashesResponse =
     drivePaths['/drive/v2/volumes/{volumeID}/links/{linkID}/checkAvailableHashes']['post']['responses']['200']['content']['application/json'];
+
+type PostRecentlyAccessedItemsRequest = Extract<
+    drivePaths['/drive/recently-accessed-items']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostRecentlyAccessedItemsResponse =
+    drivePaths['/drive/recently-accessed-items']['post']['responses']['200']['content']['application/json'];
 
 /**
  * Provides API communication for fetching and manipulating nodes metadata.
@@ -645,6 +655,24 @@ export abstract class NodeAPIServiceBase<
                 clientUid: hash.ClientUID || undefined,
             })),
         };
+    }
+
+    async reportRecentlyAccessed(items: { nodeUid: string; accessTime: Date }[]): Promise<void> {
+        for (const itemsBatch of batch(items, API_RECENTLY_ACCESSED_BATCH_SIZE)) {
+            await this.apiService.post<PostRecentlyAccessedItemsRequest, PostRecentlyAccessedItemsResponse>(
+                'drive/recently-accessed-items',
+                {
+                    RecentlyAccessedItems: itemsBatch.map(({ nodeUid, accessTime }) => {
+                        const { volumeId, nodeId: linkId } = splitNodeUid(nodeUid);
+                        return {
+                            VolumeID: volumeId,
+                            LinkID: linkId,
+                            AccessTime: Math.floor(accessTime.getTime() / 1000),
+                        };
+                    }),
+                },
+            );
+        }
     }
 }
 

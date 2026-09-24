@@ -1193,4 +1193,22 @@ export class ProtonDriveClient {
         );
         await this.sharing.management.reportAbuse(settings);
     }
+
+    /**
+     * Reports that nodes were recently accessed by the user.
+     *
+     * Use this whenever the user opens or previews a node so that the
+     * "recently accessed" list on the server stays up to date.
+     *
+     * Multiple nodes can be reported in one call. Each node can have its
+     * own access time, for example to report nodes accessed while offline.
+     *
+     * @param items - Nodes to report, each with an optional access time (defaults to now).
+     */
+    async reportRecentlyAccessed(items: { nodeUid: NodeOrUid; accessTime?: Date }[]): Promise<void> {
+        this.logger.info(`Reporting ${items.length} recently accessed nodes`);
+        await this.nodes.management.reportRecentlyAccessed(
+            items.map(({ nodeUid, accessTime }) => ({ nodeUid: getUid(nodeUid), accessTime })),
+        );
+    }
 }

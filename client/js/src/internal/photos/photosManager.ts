@@ -129,6 +129,13 @@ export class PhotosManager {
         return this.apiService.copyPhoto(rootNode.uid, payload, signal);
     }
 
+    async reportRecentlyAccessed(items: { nodeUid: string; accessTime?: Date }[]): Promise<void> {
+        const now = new Date();
+        await this.apiService.reportRecentlyAccessed(
+            items.map(({ nodeUid, accessTime }) => ({ nodeUid, accessTime: accessTime ?? now })),
+        );
+    }
+
     async *updatePhotos(photos: UpdatePhotoSettings[], signal?: AbortSignal): AsyncGenerator<NodeResult> {
         for await (const {
             photoSettings: { nodeUid, tagsToAdd, tagsToRemove },

@@ -839,4 +839,16 @@ export class ProtonDrivePhotosClient {
         this.logger.info(`Reporting abuse for ${settings.invitationUid ? `invitation ${settings.invitationUid}` : `node ${settings.nodeUid}`}`);
         await this.sharing.management.reportAbuse(settings);
     }
+
+    /**
+     * Reports that photo nodes were recently accessed by the user.
+     *
+     * See `ProtonDriveClient.reportRecentlyAccessed` for full documentation.
+     */
+    async reportRecentlyAccessed(items: { nodeUid: NodeOrUid; accessTime?: Date }[]): Promise<void> {
+        this.logger.info(`Reporting ${items.length} recently accessed nodes`);
+        await this.photos.photos.reportRecentlyAccessed(
+            items.map(({ nodeUid, accessTime }) => ({ nodeUid: getUid(nodeUid), accessTime })),
+        );
+    }
 }

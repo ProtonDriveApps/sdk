@@ -56,7 +56,15 @@ async function collectSaveToTimelineResults(manager: PhotosManager, nodeUids: st
 describe('PhotosManager', () => {
     let logger: ReturnType<typeof getMockLogger>;
     let apiService: jest.Mocked<
-        Pick<PhotosAPIService, 'addPhotoTags' | 'removePhotoTags' | 'setPhotoFavorite' | 'transferPhotos' | 'copyPhoto'>
+        Pick<
+            PhotosAPIService,
+            | 'addPhotoTags'
+            | 'removePhotoTags'
+            | 'setPhotoFavorite'
+            | 'transferPhotos'
+            | 'copyPhoto'
+            | 'reportRecentlyAccessed'
+        >
     >;
     let cryptoService: jest.Mocked<Pick<AlbumsCryptoService, 'encryptPhotoForAlbum'>>;
     let nodesService: jest.Mocked<
@@ -91,6 +99,7 @@ describe('PhotosManager', () => {
             setPhotoFavorite: jest.fn().mockResolvedValue(undefined),
             transferPhotos: jest.fn().mockImplementation(async function* () {}),
             copyPhoto: jest.fn().mockResolvedValue('volume1~newPhoto'),
+            reportRecentlyAccessed: jest.fn().mockResolvedValue(undefined),
         };
 
         cryptoService = {
@@ -332,6 +341,38 @@ describe('PhotosManager', () => {
             expect(logger.info).toHaveBeenCalledWith(
                 `Missing related photos for saving volume2~photo1, re-queuing: ${missingRelatedUid}`,
             );
+        });
+    });
+
+    describe('reportRecentlyAccessed', () => {
+        beforeEach(() => {
+            jest.useFakeTimers().setSystemTime(1700000000000);
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should default the access time to now', async () => {
+            await manager.reportRecentlyAccessed([{ nodeUid: 'volume1~photo1' }]);
+
+            expect(apiService.reportRecentlyAccessed).toHaveBeenCalledWith([
+                { nodeUid: 'volume1~photo1', accessTime: new Date(1700000000000) },
+            ]);
+        });
+
+        it('should keep provided access times', async () => {
+            const accessTime = new Date(1600000000000);
+
+            await manager.reportRecentlyAccessed([
+                { nodeUid: 'volume1~photo1', accessTime },
+                { nodeUid: 'volume1~photo1b' },
+            ]);
+
+            expect(apiService.reportRecentlyAccessed).toHaveBeenCalledWith([
+                { nodeUid: 'volume1~photo1', accessTime },
+                { nodeUid: 'volume1~photo1b', accessTime: new Date(1700000000000) },
+            ]);
         });
     });
 });

@@ -66,6 +66,7 @@ describe('NodesManagement', () => {
                 availableHashes: ['name1Hash'],
                 pendingHashes: [],
             }),
+            reportRecentlyAccessed: jest.fn().mockResolvedValue(undefined),
         };
         // @ts-expect-error No need to implement all methods for mocking
         cryptoCache = {
@@ -491,6 +492,38 @@ describe('NodesManagement', () => {
                 'name1Hash',
                 'name2Hash',
                 'name3Hash',
+            ]);
+        });
+    });
+
+    describe('reportRecentlyAccessed', () => {
+        beforeEach(() => {
+            jest.useFakeTimers().setSystemTime(1700000000000);
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should default the access time to now', async () => {
+            await management.reportRecentlyAccessed([{ nodeUid: 'volume1~node1' }]);
+
+            expect(apiService.reportRecentlyAccessed).toHaveBeenCalledWith([
+                { nodeUid: 'volume1~node1', accessTime: new Date(1700000000000) },
+            ]);
+        });
+
+        it('should keep provided access times', async () => {
+            const accessTime = new Date(1600000000000);
+
+            await management.reportRecentlyAccessed([
+                { nodeUid: 'volume1~node1', accessTime },
+                { nodeUid: 'volume1~node1b' },
+            ]);
+
+            expect(apiService.reportRecentlyAccessed).toHaveBeenCalledWith([
+                { nodeUid: 'volume1~node1', accessTime },
+                { nodeUid: 'volume1~node1b', accessTime: new Date(1700000000000) },
             ]);
         });
     });
