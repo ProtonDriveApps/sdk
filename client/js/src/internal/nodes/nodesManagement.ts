@@ -440,6 +440,13 @@ export abstract class NodesManagementBase<
         };
     }
 
+    async reportRecentlyAccessed(items: { nodeUid: string; accessTime?: Date }[]): Promise<void> {
+        const now = new Date();
+        await this.apiService.reportRecentlyAccessed(
+            items.map(({ nodeUid, accessTime }) => ({ nodeUid, accessTime: accessTime ?? now })),
+        );
+    }
+
     async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
         const { hashKey: parentHashKey } = await this.nodesAccess.getNodeKeys(parentFolderUid);
         if (!parentHashKey) {

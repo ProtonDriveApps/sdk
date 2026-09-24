@@ -815,6 +815,93 @@ describe('nodeAPIService', () => {
             ).rejects.toThrow(new NodeOutOfSyncError('Node is out of sync'));
         });
     });
+
+    describe('reportRecentlyAccessed', () => {
+        describe('batching', () => {
+            const makeItems = (count: number) =>
+                Array.from({ length: count }, (_, i) => ({
+                    nodeUid: `volumeId~nodeId${i}`,
+                    accessTime: new Date(1700000000000 + i * 1000),
+                }));
+            const getSentLinkIds = () =>
+                (apiMock.post as jest.Mock).mock.calls.map(([, body]) =>
+                    body.RecentlyAccessedItems.map((item: { LinkID: string }) => item.LinkID),
+                );
+
+            beforeEach(() => {
+                apiMock.post = jest.fn().mockResolvedValue({ Code: 1000 });
+            });
+
+            it('should not call the API when there are no items', async () => {
+                await api.reportRecentlyAccessed([]);
+
+                expect(apiMock.post).not.toHaveBeenCalled();
+            });
+
+            it('should send exactly 50 items in one request', async () => {
+                await api.reportRecentlyAccessed(makeItems(50));
+
+                expect(getSentLinkIds().map((ids) => ids.length)).toEqual([50]);
+            });
+
+            it('should send 51 items in two requests', async () => {
+                await api.reportRecentlyAccessed(makeItems(51));
+
+                expect(getSentLinkIds().map((ids) => ids.length)).toEqual([50, 1]);
+            });
+
+            it('should split many items into requests of at most 50', async () => {
+                await api.reportRecentlyAccessed(makeItems(120));
+
+                expect(getSentLinkIds().map((ids) => ids.length)).toEqual([50, 50, 20]);
+            });
+
+            it('should keep item order across requests', async () => {
+                await api.reportRecentlyAccessed(makeItems(51));
+
+                const [firstBatch, secondBatch] = getSentLinkIds();
+                expect(firstBatch[0]).toBe('nodeId0');
+                expect(firstBatch[49]).toBe('nodeId49');
+                expect(secondBatch).toEqual(['nodeId50']);
+            });
+
+            it('should throw the API error and stop sending remaining requests', async () => {
+                const error = new Error('API failure');
+                apiMock.post = jest
+                    .fn()
+                    .mockResolvedValueOnce({ Code: 1000 })
+                    .mockRejectedValueOnce(error)
+                    .mockResolvedValueOnce({ Code: 1000 });
+
+                await expect(api.reportRecentlyAccessed(makeItems(130))).rejects.toBe(error);
+                expect(apiMock.post).toHaveBeenCalledTimes(2);
+            });
+        });
+
+        it('should report recently accessed nodes in one request', async () => {
+            apiMock.post = jest.fn().mockResolvedValue({ Code: ErrorCode.OK });
+
+            await api.reportRecentlyAccessed([
+                { nodeUid: 'volumeId~nodeId1', accessTime: new Date(1700000000000) },
+                { nodeUid: 'volumeId2~nodeId12', accessTime: new Date(1700000100500) },
+            ]);
+
+            expect(apiMock.post).toHaveBeenCalledWith('drive/recently-accessed-items', {
+                RecentlyAccessedItems: [
+                    {
+                        VolumeID: 'volumeId',
+                        LinkID: 'nodeId1',
+                        AccessTime: 1700000000,
+                    },
+                    {
+                        VolumeID: 'volumeId2',
+                        LinkID: 'nodeId12',
+                        AccessTime: 1700000100,
+                    },
+                ],
+            });
+        });
+    });
 });
 
 describe('groupNodeUidsByVolumeAndIteratePerBatch', () => {

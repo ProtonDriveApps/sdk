@@ -88,7 +88,17 @@ type PutTransferPhotosRequest = Extract<
 type PutTransferPhotosResponse =
     drivePaths['/drive/photos/volumes/{volumeID}/links/transfer-multiple']['put']['responses']['200']['content']['application/json'];
 
+type PostRecentlyAccessedItemsRequest = Extract<
+    drivePaths['/drive/photos/recently-accessed-items']['post']['requestBody'],
+    { content: object }
+>['content']['application/json'];
+type PostRecentlyAccessedItemsResponse =
+    drivePaths['/drive/photos/recently-accessed-items']['post']['responses']['200']['content']['application/json'];
+
 const ALBUM_CONTAINS_PHOTOS_NOT_IN_TIMELINE_ERROR_CODE = 200302;
+
+// This is the maximum number of recently accessed items the API accepts in one call.
+const API_RECENTLY_ACCESSED_BATCH_SIZE = 50;
 
 /**
  * Provides API communication for fetching and manipulating photos and albums
@@ -654,6 +664,24 @@ export class PhotosAPIService {
             } else {
                 yield { uid, ok: true };
             }
+        }
+    }
+
+    async reportRecentlyAccessed(items: { nodeUid: string; accessTime: Date }[]): Promise<void> {
+        for (const itemsBatch of batch(items, API_RECENTLY_ACCESSED_BATCH_SIZE)) {
+            await this.apiService.post<PostRecentlyAccessedItemsRequest, PostRecentlyAccessedItemsResponse>(
+                'drive/photos/recently-accessed-items',
+                {
+                    RecentlyAccessedItems: itemsBatch.map(({ nodeUid, accessTime }) => {
+                        const { volumeId, nodeId: linkId } = splitNodeUid(nodeUid);
+                        return {
+                            VolumeID: volumeId,
+                            LinkID: linkId,
+                            AccessTime: Math.floor(accessTime.getTime() / 1000),
+                        };
+                    }),
+                },
+            );
         }
     }
 }
