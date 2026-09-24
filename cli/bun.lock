@@ -1,5 +1,5 @@
 {
-  "lockfileVersion": 1,
+  "lockfileVersion": 3,
   "configVersion": 1,
   "workspaces": {
     "": {
@@ -37,9 +37,15 @@
   },
   "overrides": {
     "@xmldom/xmldom": "^0.9.12",
-    "brace-expansion@1": "1.1.18",
-    "brace-expansion@2": "2.1.4",
-    "brace-expansion@5": "^5.0.9",
+    "brace-expansion@1": {
+      ".": "1.1.18",
+    },
+    "brace-expansion@2": {
+      ".": "2.1.4",
+    },
+    "brace-expansion@5": {
+      ".": "^5.0.9",
+    },
     "tmp": "^0.2.7",
   },
   "packages": {
