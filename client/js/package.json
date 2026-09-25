@@ -10,12 +10,14 @@
         "src"
     ],
     "scripts": {
-        "build": "tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths",
-        "build:ci": "rm -rf dist tsconfig.tsbuildinfo && tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths",
+        "build": "npm run search-bindings -- --optional && tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths --ignore 'src/search/vendor/**,**/*.d.ts' && npm run copy-search-vendor-to-dist",
+        "build:ci": "npm run search-bindings -- --optional && rm -rf dist tsconfig.tsbuildinfo && tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths --ignore 'src/search/vendor/**,**/*.d.ts' && npm run copy-search-vendor-to-dist",
+        "copy-search-vendor-to-dist": "node tasks/search/copy-search-vendor-to-dist.mjs",
         "check-types": "tsc --noEmit",
         "generate-docs": "typedoc src/protonDriveClient.ts src/protonDrivePhotosClient.ts src/protonDrivePublicLinkClient.ts src/index.ts --out ${OUTPUT_PATH}",
         "generate-types": "openapi-typescript ../../api/openapi-drive.json -o ./src/internal/apiService/driveTypes.ts && openapi-typescript ../../api/openapi-core.json -o ./src/internal/apiService/coreTypes.ts",
-        "lint": "eslint src --ext .ts --cache --ignore-pattern '**/apiService/*Types.ts'",
+        "search-bindings": "node tasks/search/search-bindings.mjs",
+        "lint": "eslint src --ext .ts --cache --ignore-pattern '**/apiService/*Types.ts' --ignore-pattern 'src/search/vendor/**'",
         "pretty": "prettier --write  $(find src -type f -name '*.ts')",
         "test": "node node_modules/jest/bin/jest.js",
         "test:ci": "node node_modules/jest/bin/jest.js --runInBand --no-cache",
@@ -24,7 +26,9 @@
         "extract:ttag": "ttag extract src --output po/template.pot"
     },
     "dependencies": {
+        "@boltffi/runtime": "^0.30.1",
         "@noble/hashes": "^1.8.0",
+        "comlink": "^4.4.2",
         "ttag": "^1.8.7"
     },
     "optionalDependencies": {

@@ -5,6 +5,24 @@ import { execFileSync } from 'node:child_process';
 
 const GIT_ROOT = path.resolve(import.meta.dir, '../..');
 
+// `bun run` puts every ancestor `node_modules/.bin` on PATH, so a stray `bun`
+// package (e.g. in the home directory) can silently run the build instead.
+const requiredBunVersion = (await Bun.file(path.join(import.meta.dir, '../package.json')).json()).engines.bun;
+if (!Bun.semver.satisfies(Bun.version, requiredBunVersion)) {
+    const strayPackage = process.execPath.match(/^(.*)\/node_modules\/bun\//)?.[1];
+    console.error(
+        [
+            `Bun ${requiredBunVersion} is required, but ${Bun.version} is running (${process.execPath}).`,
+            strayPackage
+                ? `It comes from a \`bun\` npm package in ${strayPackage}: \`bun run\` puts every ancestor ` +
+                  `\`node_modules/.bin\` on PATH, so it takes precedence over your installed Bun. ` +
+                  `Remove it (\`cd ${strayPackage} && bun remove bun\`) and retry.`
+                : `Install Bun ${requiredBunVersion} (https://bun.com/docs/installation) and retry.`,
+        ].join('\n'),
+    );
+    process.exit(1);
+}
+
 let target = 'bun';
 let entry = 'src/proton-drive.ts';
 
@@ -57,7 +75,8 @@ const args = [
     `--outfile=${outfile}`,
 ];
 
-const proc = Bun.spawn(['bun', ...args], {
+// Use the checked Bun, not whichever `bun` comes first on PATH.
+const proc = Bun.spawn([process.execPath, ...args], {
     stdio: ['inherit', 'inherit', 'inherit'],
     env: { ...process.env, NODE_ENV: 'production' },
 });

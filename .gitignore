@@ -13,6 +13,14 @@ node_modules
 tsconfig.tsbuildinfo
 dist
 
+# Search engine: compiled from Rust, not committed (see client/js/tasks/search)
+/client/js/src/search/vendor
+/incubating/search/bindings/typescript/
+/incubating/search/bindings/csharp/**
+!/incubating/search/bindings/csharp/Proton.Drive.Sdk.Search.csproj
+/incubating/search/Cargo.lock
+/incubating/search/target
+
 # JS CLI
 cli/release
 internal/cli/js/release

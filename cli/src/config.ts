@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { ValidationError } from '@protontech/drive-sdk';
+import { type SearchServiceProvider, ValidationError } from '@protontech/drive-sdk';
 import { LogLevel } from '@protontech/drive-sdk/telemetry';
 
 const APP_DIR_NAME = 'proton-drive-cli';
@@ -20,6 +20,8 @@ export interface InitConfig {
     enableConsoleLog?: boolean;
     enableMetrics?: boolean;
     flags?: Record<string, boolean>;
+    /** Search is experimental and only wired up by the internal CLI. */
+    searchServiceProvider?: SearchServiceProvider;
 }
 
 export interface Config {

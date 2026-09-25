@@ -67,6 +67,7 @@ export async function init(configOptions: InitConfig) {
         featureFlagProvider: configOptions.flags
             ? new FeatureFlagProvider(configOptions.flags)
             : await FeatureFlagProvider.fromJsonFile(path.join(config.appDir, 'config.json')),
+        searchServiceProvider: configOptions.searchServiceProvider,
     };
     const sdk = new ProtonDriveClient(sdkDependencies);
     const photosSdk = new ProtonDrivePhotosClient(sdkDependencies);

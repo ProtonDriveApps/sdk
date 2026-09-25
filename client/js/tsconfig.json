@@ -4,8 +4,8 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "incremental": true,
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
+        "module": "preserve",
+        "moduleResolution": "bundler",
         "noEmit": false,
         "noImplicitAny": true,
         // Many variables are unused during prototyping - uncomment later once more modules are implemented.
@@ -32,6 +32,7 @@
     "exclude": [
         "**/node_modules/*",
         "**/coreTypes.ts",
-        "**/driveTypes.ts"
+        "**/driveTypes.ts",
+        "src/search/vendor/**"
     ],
 }
