@@ -1,12 +1,14 @@
 import { ProtonDriveCache } from '../cache';
 import { OpenPGPCrypto, PrivateKey, SessionKey, SRPModule } from '../crypto';
 import { LatestEventIdProvider } from '../internal/events/interface';
+import type { SearchServiceProvider } from '../search/index';
 import { ProtonDriveAccount } from './account';
 import { ProtonDriveConfig } from './config';
 import { FeatureFlagProvider } from './featureFlags';
 import { ProtonDriveHTTPClient } from './httpClient';
 import { MetricEvent, Telemetry } from './telemetry';
 
+export type { ProtonDriveSearchClient, SearchServiceProvider } from '../search/index';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
 export type { AnonymousUser, Author, UnverifiedAuthorError } from './author';
 export type { ProtonDriveConfig } from './config';
@@ -128,4 +130,5 @@ export interface ProtonDriveClientContructorParameters {
     telemetry?: ProtonDriveTelemetry;
     featureFlagProvider?: FeatureFlagProvider;
     latestEventIdProvider?: LatestEventIdProvider;
+    searchServiceProvider?: SearchServiceProvider;
 }

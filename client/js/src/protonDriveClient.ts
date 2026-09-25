@@ -54,6 +54,7 @@ import { getTokenAndPasswordFromUrl, SharingPublicSessionManager } from './inter
 import { makeNodeUid } from './internal/uids';
 import { initUploadModule } from './internal/upload';
 import { ProtonDrivePublicLinkClient } from './protonDrivePublicLinkClient';
+import type { ProtonDriveSearchClient, SearchServiceProvider } from './search/index';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingNodeIterator,
@@ -64,6 +65,7 @@ import {
     getUid,
     getUids,
 } from './transformers';
+import { VERSION } from './version';
 
 /**
  * ProtonDriveClient is the main interface for the ProtonDrive SDK.
@@ -83,6 +85,7 @@ export class ProtonDriveClient {
     private upload: ReturnType<typeof initUploadModule>;
     private devices: ReturnType<typeof initDevicesModule>;
     private publicSessionManager: SharingPublicSessionManager;
+    private searchServiceProvider: SearchServiceProvider;
 
     public experimental: {
         /**
@@ -162,6 +165,10 @@ export class ProtonDriveClient {
             base64Passphrase: string;
             armoredExtendedAttributes?: string;
         }>;
+        /**
+         * Experimental and WIP: initializes the search service.
+         */
+        initSearch: () => Promise<ProtonDriveSearchClient>;
     };
 
     constructor({
@@ -175,6 +182,7 @@ export class ProtonDriveClient {
         telemetry,
         featureFlagProvider,
         latestEventIdProvider,
+        searchServiceProvider,
     }: ProtonDriveClientContructorParameters) {
         if (!telemetry) {
             telemetry = new Telemetry();
@@ -182,6 +190,21 @@ export class ProtonDriveClient {
         if (!featureFlagProvider) {
             featureFlagProvider = new NullFeatureFlagProvider();
         }
+
+        // Use the browser-based search service by default.
+        this.searchServiceProvider = searchServiceProvider ?? {
+            start: async (sdkVersion, addressId) => {
+                // Lazily imported so it stays code-split from the core SDK
+                // bundle: the search implementation relies on newer web APIs
+                // (SharedWorker, Web Locks, workers nested in a shared worker)
+                // that not every browser we may need to support provides
+                // (e.g. Safari 15/16). An eager import would pull those
+                // dependencies and extra code into the core bundle for consumers
+                // who might never use search.
+                const { start } = await import('./search/browser/searchService.js');
+                return start(sdkVersion, addressId);
+            },
+        };
         this.logger = telemetry.getLogger('interface');
 
         const fullConfig = getConfig(config);
@@ -314,6 +337,11 @@ export class ProtonDriveClient {
                 this.logger.info('Preparing import folder crypto material');
                 const rootFolder = await this.nodes.access.getVolumeRootFolder();
                 return this.nodes.management.prepareImportFolderCryptoMaterial(rootFolder.uid, name);
+            },
+            initSearch: async () => {
+                this.logger.info('Initializing search service');
+                const { addressId } = await this.shares.getMyFilesShareMemberEmailKey();
+                return this.searchServiceProvider.start(VERSION, addressId);
             },
         };
     }

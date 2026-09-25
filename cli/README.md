@@ -6,7 +6,7 @@ The CLI is built with [Bun](https://bun.sh) and uses the Drive SDK under the hoo
 
 ## Requirements
 
-- [Bun](https://bun.sh) 1.3.14 or newer (for development builds from this repository)
+- [Bun](https://bun.sh) 1.4.2 or newer (for development builds from this repository)
 - A Proton account and browser access for sign-in
 - A secret store provided by your OS:
     - Windows: Windows Credential Manager
