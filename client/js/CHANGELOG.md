@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.21.3 (2026-09-24)
+
+### Features
+- Add recently accessed APIs
+
+
 ## js/v0.21.2 (2026-09-23)
 
 ### Bug Fixes
