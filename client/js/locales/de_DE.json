@@ -251,6 +251,9 @@
       ],
       "You do not have access to this shared item": [
         "Du hast keinen Zugriff auf diesen geteilten Eintrag"
+      ],
+      "Your browser does not support features required for the search.": [
+        "Dein Browser unterstützt die für die Suche erforderlichen Funktionen nicht."
       ]
     },
     "Info": {

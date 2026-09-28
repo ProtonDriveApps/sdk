@@ -155,6 +155,9 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Las claves de verificación para ${ signatureType } no están disponibles."
+      ],
+      "Your browser does not support features required for the search.": [
+        "Tu navegador no admite las funciones necesarias para la búsqueda."
       ]
     },
     "Info": {
