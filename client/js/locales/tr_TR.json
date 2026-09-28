@@ -251,6 +251,9 @@
       ],
       "You do not have access to this shared item": [
         "Bu paylaşılan ögeye erişme izniniz yok"
+      ],
+      "Your browser does not support features required for the search.": [
+        "Tarayıcınız arama için gerekli özellikleri desteklemiyor."
       ]
     },
     "Info": {

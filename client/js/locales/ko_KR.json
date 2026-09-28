@@ -23,6 +23,9 @@
       "Cannot share root folder": [
         "상위 폴더를 공유할 수 없습니다"
       ],
+      "Cannot verify the author of this file": [
+        "이 파일의 소유자를 인증할 수 없습니다"
+      ],
       "Cannot verify who uploaded this file": [
         "이 파일을 업로드한 사용자를 확인할 수 없습니다"
       ],
@@ -82,6 +85,9 @@
       ],
       "Failed to decrypt node key: ${ message }": [
         "노드 키 복호화 실패: ${ message }"
+      ],
+      "Failed to decrypt revision metadata": [
+        "버전 이력 메타데이터 복호화 실패"
       ],
       "Failed to get inviter keys": [
         "초대자 키를 가져오는 데 실패했습니다"
@@ -146,6 +152,9 @@
       "Operation failed, try again later": [
         "작업 실패, 나중에 다시 시도해 주세요."
       ],
+      "Part of the file appears to be corrupted": [
+        "파일의 일부가 손상되었습니다"
+      ],
       "Photo is already in the target album": [
         "사진이 이미 대상 앨범에 존재합니다."
       ],
@@ -176,6 +185,9 @@
       "Some file data failed to upload. Please try again.": [
         "일부 파일의 업로드에 실패했습니다. 다시 시도하세요."
       ],
+      "Some file parts failed to upload. Please try again.": [
+        "파일의 일부분을 업로드할 수 없습니다. 다시 시도하세요."
+      ],
       "Some items could not be loaded": [
         "일부 항목을 불러올 수 없습니다"
       ],
@@ -187,6 +199,9 @@
       ],
       "The uploaded file does not match the original. Please try again.": [
         "업로드된 파일이 원본과 일치하지 않습니다. 다시 시도하세요."
+      ],
+      "This file has missing crypto material": [
+        "파일의 암호화 메타데이터가 손상되었습니다"
       ],
       "This file has no version available to download": [
         "이 파일의 다운로드 가능한 버전이 없습니다."

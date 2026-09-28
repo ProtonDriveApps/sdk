@@ -251,6 +251,9 @@
       ],
       "You do not have access to this shared item": [
         "No teniu accés a aquest element compartit"
+      ],
+      "Your browser does not support features required for the search.": [
+        "El vostre navegador no suporta les característiques requerides per a la cerca."
       ]
     },
     "Info": {
