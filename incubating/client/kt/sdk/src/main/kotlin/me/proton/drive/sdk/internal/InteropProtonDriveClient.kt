@@ -27,6 +27,7 @@ import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeMoveItem
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.RecentlyAccessedReportItem
 import me.proton.drive.sdk.entity.ScopeId
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
@@ -50,6 +51,8 @@ import proton.drive.sdk.driveClientGetMyFilesFolderRequest
 import proton.drive.sdk.driveClientGetNodeRequest
 import proton.drive.sdk.driveClientLeaveSharedNodeRequest
 import proton.drive.sdk.driveClientMoveNodesRequest
+import proton.drive.sdk.driveClientReportRecentlyAccessedRequest
+import proton.drive.sdk.recentlyAccessedReportItem
 import proton.drive.sdk.driveClientRenameDeviceRequest
 import proton.drive.sdk.nodeMoveItem
 import proton.drive.sdk.driveClientRestoreNodesRequest
@@ -344,6 +347,23 @@ internal class InteropProtonDriveClient internal constructor(
             }
         )
     }
+
+    override suspend fun reportRecentlyAccessed(items: List<RecentlyAccessedReportItem>): Unit =
+        cancellationCoroutineScope { source ->
+            log(DEBUG, "reportRecentlyAccessed(${items.size})")
+            bridge.reportRecentlyAccessed(
+                driveClientReportRecentlyAccessedRequest {
+                    this.items += items.map { item ->
+                        recentlyAccessedReportItem {
+                            nodeUid = item.nodeUid.value
+                            item.accessTime?.toTimestamp()?.let { accessTime = it }
+                        }
+                    }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                }
+            )
+        }
 
     override fun enumerateDevices(): Flow<Device> = channelFlow {
         log(DEBUG, "enumerateDevices")

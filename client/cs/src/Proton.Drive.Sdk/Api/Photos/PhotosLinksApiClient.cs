@@ -59,4 +59,9 @@ internal sealed class PhotosLinksApiClient(HttpClient httpClient) : ILinksApiCli
     {
         return _driveImplementation.GetAvailableNames(volumeId, folderId, request, cancellationToken);
     }
+
+    public ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken)
+    {
+        return _driveImplementation.ReportRecentlyAccessedAsync(request, cancellationToken);
+    }
 }

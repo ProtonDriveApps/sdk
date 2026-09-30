@@ -75,4 +75,6 @@ namespace Proton.Drive.Sdk.Serialization;
 [JsonSerializable(typeof(SmallFileUploadMetadataRequest))]
 [JsonSerializable(typeof(SmallRevisionUploadMetadataRequest))]
 [JsonSerializable(typeof(SmallUploadResponse))]
+[JsonSerializable(typeof(ReportRecentlyAccessedItemsRequest))]
+[JsonSerializable(typeof(ReportRecentlyAccessedItemDto))]
 internal sealed partial class DriveApiSerializerContext : JsonSerializerContext;

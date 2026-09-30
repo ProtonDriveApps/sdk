@@ -51,6 +51,11 @@ public sealed class ProtonPhotosClient
             nodeProviderFactory: client => new NodeProvider(client, api.Photos.GetDetailsAsync));
     }
 
+    internal ProtonPhotosClient(ProtonDriveClient driveClient)
+    {
+        DriveClient = driveClient;
+    }
+
     internal ProtonDriveClient DriveClient { get; }
 
     [Experimental("TryTransferQueuing")]
@@ -149,6 +154,14 @@ public sealed class ProtonPhotosClient
     public IAsyncEnumerable<NodeUid> EnumerateSharedWithMeNodeUidsAsync(CancellationToken cancellationToken = default)
     {
         return EnumerateSharedWithMeNodeUidsAsync(DriveClient, cancellationToken);
+    }
+
+    /// <inheritdoc cref="ProtonDriveClient.ReportRecentlyAccessedAsync"/>
+    public ValueTask ReportRecentlyAccessedAsync(
+        IEnumerable<RecentlyAccessedReportItem> items,
+        CancellationToken cancellationToken)
+    {
+        return RecentlyAccessedOperations.ReportPhotosAsync(DriveClient, items, cancellationToken);
     }
 
     public ValueTask LeaveSharedNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)

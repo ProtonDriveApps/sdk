@@ -75,4 +75,12 @@ internal sealed class LinksApiClient(HttpClient httpClient) : ILinksApiClient
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken)
+    {
+        await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ApiResponse)
+            .PostAsync("recently-accessed-items", request, DriveApiSerializerContext.Default.ReportRecentlyAccessedItemsRequest, cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

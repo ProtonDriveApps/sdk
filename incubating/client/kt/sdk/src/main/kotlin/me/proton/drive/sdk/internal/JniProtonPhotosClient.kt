@@ -264,6 +264,12 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         drivePhotosClientLeaveSharedNode = request
     }
 
+    suspend fun reportRecentlyAccessed(
+        request: ProtonDriveSdk.DrivePhotosClientReportRecentlyAccessedRequest,
+    ): Unit = executeOnce("reportRecentlyAccessed", UnitResponseCallback) {
+        drivePhotosClientReportRecentlyAccessed = request
+    }
+
     suspend fun findPhotoDuplicates(
         name: String,
         clientHandle: Long,

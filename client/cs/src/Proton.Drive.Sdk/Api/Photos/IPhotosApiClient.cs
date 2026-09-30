@@ -45,4 +45,6 @@ internal interface IPhotosApiClient
         LinkId sourceLinkId,
         CopyPhotoRequest request,
         CancellationToken cancellationToken);
+
+    ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken);
 }
