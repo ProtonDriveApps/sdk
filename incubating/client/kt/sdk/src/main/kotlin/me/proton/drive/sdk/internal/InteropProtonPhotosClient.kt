@@ -21,6 +21,8 @@ import me.proton.drive.sdk.entity.FileThumbnail
 import me.proton.drive.sdk.entity.Node
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
+import me.proton.drive.sdk.entity.RecentlyAccessedReportItem
+import me.proton.drive.sdk.extension.toTimestamp
 import me.proton.drive.sdk.entity.PhotoTagsUpdate
 import me.proton.drive.sdk.entity.PhotosDownloaderRequest
 import me.proton.drive.sdk.entity.PhotosTimelineItem
@@ -42,9 +44,11 @@ import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTrashRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import proton.drive.sdk.drivePhotosClientLeaveSharedNodeRequest
+import proton.drive.sdk.drivePhotosClientReportRecentlyAccessedRequest
 import proton.drive.sdk.drivePhotosClientRestoreNodesRequest
 import proton.drive.sdk.drivePhotosClientSavePhotosToTimelineRequest
 import proton.drive.sdk.drivePhotosClientTrashNodesRequest
+import proton.drive.sdk.recentlyAccessedReportItem
 import proton.drive.sdk.drivePhotosClientUpdatePhotosRequest
 
 internal class InteropProtonPhotosClient internal constructor(
@@ -355,6 +359,23 @@ internal class InteropProtonPhotosClient internal constructor(
             }
         )
     }
+
+    override suspend fun reportRecentlyAccessed(items: List<RecentlyAccessedReportItem>): Unit =
+        cancellationCoroutineScope { source ->
+            log(DEBUG, "reportRecentlyAccessed(${items.size})")
+            bridge.reportRecentlyAccessed(
+                drivePhotosClientReportRecentlyAccessedRequest {
+                    this.items += items.map { item ->
+                        recentlyAccessedReportItem {
+                            nodeUid = item.nodeUid.value
+                            item.accessTime?.toTimestamp()?.let { accessTime = it }
+                        }
+                    }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                }
+            )
+        }
 
     override suspend fun downloader(
         request: PhotosDownloaderRequest,

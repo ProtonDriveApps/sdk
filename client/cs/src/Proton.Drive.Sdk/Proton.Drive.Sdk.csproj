@@ -19,6 +19,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Proton.Drive.Sdk.CExports" />
     <InternalsVisibleTo Include="Proton.Drive.Sdk.CExports.Tests" />
+    <InternalsVisibleTo Include="Proton.Drive.Sdk.Tests" />
   </ItemGroup>
 
   <ItemGroup>

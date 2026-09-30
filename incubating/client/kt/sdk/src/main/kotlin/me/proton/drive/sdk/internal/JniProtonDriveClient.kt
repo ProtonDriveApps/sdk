@@ -268,6 +268,12 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         driveClientLeaveSharedNode = request
     }
 
+    suspend fun reportRecentlyAccessed(
+        request: ProtonDriveSdk.DriveClientReportRecentlyAccessedRequest,
+    ): Unit = executeOnce("reportRecentlyAccessed", UnitResponseCallback) {
+        driveClientReportRecentlyAccessed = request
+    }
+
     suspend fun enumerateDevices(
         coroutineScope: CoroutineScope,
         request: ProtonDriveSdk.DriveClientEnumerateDevicesRequest,

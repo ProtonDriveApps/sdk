@@ -251,6 +251,18 @@ public sealed class ProtonDriveClient
         return SharingOperations.EnumerateSharedWithMeNodeUidsAsync(this, ShareTargetTypes, cancellationToken);
     }
 
+    /// <summary>
+    /// Reports that nodes were recently accessed by the user.
+    /// </summary>
+    /// <param name="items">Nodes that were accessed, optionally with their access times.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public ValueTask ReportRecentlyAccessedAsync(
+        IEnumerable<RecentlyAccessedReportItem> items,
+        CancellationToken cancellationToken)
+    {
+        return RecentlyAccessedOperations.ReportDriveAsync(this, items, cancellationToken);
+    }
+
     public ValueTask LeaveSharedNodeAsync(NodeUid nodeUid, CancellationToken cancellationToken)
     {
         return SharingOperations.LeaveSharedNodeAsync(this, nodeUid, cancellationToken);

@@ -38,6 +38,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case renameDevice(UUID)
         case deleteDevice(UUID)
         case leaveSharedNode(UUID)
+        case reportRecentlyAccessed(UUID)
         case enumerateSharedWithMeNodeUids(UUID)
         case enumerateSharedNodeUids(UUID)
         case enumerateEvents(UUID)
@@ -60,6 +61,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             case .renameDevice: return "renameDevice"
             case .deleteDevice: return "deleteDevice"
             case .leaveSharedNode: return "leaveSharedNode"
+            case .reportRecentlyAccessed: return "reportRecentlyAccessed"
             case .enumerateSharedWithMeNodeUids: return "enumerateSharedWithMeNodeUids"
             case .enumerateSharedNodeUids: return "enumerateSharedNodeUids"
             case .enumerateEvents: return "enumerateEvents"
@@ -787,6 +789,35 @@ extension ProtonDriveClient {
 
     public func cancelLeaveSharedNode(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .leaveSharedNode(cancellationToken))
+    }
+
+    public func reportRecentlyAccessed(
+        items: [RecentlyAccessedReportItem],
+        cancellationToken: UUID
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.reportRecentlyAccessed(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .reportRecentlyAccessed(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DriveClientReportRecentlyAccessedRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+            $0.items = items.map { item in
+                Proton_Drive_Sdk_RecentlyAccessedReportItem.with {
+                    $0.nodeUid = item.nodeUid.sdkCompatibleIdentifier
+                    if let accessTime = item.accessTime {
+                        $0.accessTime = Google_Protobuf_Timestamp(date: accessTime)
+                    }
+                }
+            }
+        }
+
+        let _: Void = try await SDKRequestHandler.send(request, logger: logger)
+    }
+
+    public func cancelReportRecentlyAccessed(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .reportRecentlyAccessed(cancellationToken))
     }
 
     /// Enumerates the UIDs of all nodes that have been shared with the current user.

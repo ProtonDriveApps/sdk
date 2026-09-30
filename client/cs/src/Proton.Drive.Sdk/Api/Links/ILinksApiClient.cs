@@ -27,4 +27,6 @@ internal interface ILinksApiClient
         LinkId folderId,
         NodeNameAvailabilityRequest request,
         CancellationToken cancellationToken);
+
+    ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken);
 }

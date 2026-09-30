@@ -47,6 +47,7 @@ message Request {
         DriveClientEnumerateSharedNodeUidsRequest drive_client_enumerate_shared_node_uids = 1020;
         DriveClientEnumerateEventsRequest drive_client_enumerate_events = 1021;
         DriveClientEnumerateNodesRequest drive_client_enumerate_nodes = 1022;
+        DriveClientReportRecentlyAccessedRequest drive_client_report_recently_accessed = 1023;
 
         UploadFromStreamRequest upload_from_stream = 1100;
         UploadFromFileRequest upload_from_file = 1101;
@@ -101,6 +102,7 @@ message Request {
         DrivePhotosClientSavePhotosToTimelineRequest drive_photos_client_save_photos_to_timeline = 2025;
         DrivePhotosClientEnumerateEventsRequest drive_photos_client_enumerate_events = 2026;
         DrivePhotosClientEnumerateNodesRequest drive_photos_client_enumerate_nodes = 2027;
+        DrivePhotosClientReportRecentlyAccessedRequest drive_photos_client_report_recently_accessed = 2028;
     };
 }
 
@@ -600,6 +602,11 @@ message NodeMoveItem {
     string new_media_type = 5; // optional
 }
 
+message RecentlyAccessedReportItem {
+    string node_uid = 1;
+    google.protobuf.Timestamp access_time = 2; // Optional
+}
+
 // The response must not have a value, yield_action will be called with a NodeResultPair for each item.
 message DriveClientMoveNodesRequest {
     int64 client_handle = 1;
@@ -717,6 +724,13 @@ message DriveClientEnumerateNodesRequest {
     int64 client_handle = 2;
     int64 yield_action = 3;
     int64 cancellation_token_source_handle = 4;
+}
+
+// The response must not have a value.
+message DriveClientReportRecentlyAccessedRequest {
+    int64 client_handle = 1;
+    repeated RecentlyAccessedReportItem items = 2;
+    int64 cancellation_token_source_handle = 3;
 }
 
 message DriveEvent {
@@ -1230,6 +1244,13 @@ message DrivePhotosClientEnumerateNodesRequest {
     int64 client_handle = 2;
     int64 yield_action = 3;
     int64 cancellation_token_source_handle = 4;
+}
+
+// The response must not have a value.
+message DrivePhotosClientReportRecentlyAccessedRequest {
+    int64 client_handle = 1;
+    repeated RecentlyAccessedReportItem items = 2;
+    int64 cancellation_token_source_handle = 3;
 }
 
 // The list must match the order from Telemetry/VolumeTypes to properly match it over the interop.

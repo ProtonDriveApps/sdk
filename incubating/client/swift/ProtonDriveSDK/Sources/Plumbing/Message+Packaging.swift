@@ -126,6 +126,11 @@ extension Message {
                 $0.payload = .driveClientLeaveSharedNode(request)
             }
 
+        case let request as Proton_Drive_Sdk_DriveClientReportRecentlyAccessedRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientReportRecentlyAccessed(request)
+            }
+
         case let request as Proton_Drive_Sdk_DriveClientEnumerateSharedWithMeNodeUidsRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientEnumerateSharedWithMeNodeUids(request)
@@ -275,6 +280,11 @@ extension Message {
         case let request as Proton_Drive_Sdk_DrivePhotosClientLeaveSharedNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientLeaveSharedNode(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientReportRecentlyAccessedRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientReportRecentlyAccessed(request)
             }
 
         case let request as Proton_Drive_Sdk_DrivePhotosClientFindDuplicatesRequest:

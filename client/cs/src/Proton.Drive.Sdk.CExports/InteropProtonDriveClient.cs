@@ -442,6 +442,21 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleReportRecentlyAccessedAsync(DriveClientReportRecentlyAccessedRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonDriveClient>(request.ClientHandle);
+
+        var items = request.Items.Select(item => new Sdk.Nodes.RecentlyAccessedReportItem(
+            NodeUid.Parse(item.NodeUid),
+            item.AccessTime is null ? null : new DateTimeOffset(item.AccessTime.ToDateTimeFixed(), TimeSpan.Zero)));
+
+        await client.ReportRecentlyAccessedAsync(items, cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleEmptyTrashAsync(DriveClientEmptyTrashRequest request)
     {
         var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);

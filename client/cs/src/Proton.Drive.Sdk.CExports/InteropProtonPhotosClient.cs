@@ -232,6 +232,21 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleReportRecentlyAccessedAsync(DrivePhotosClientReportRecentlyAccessedRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var items = request.Items.Select(item => new Sdk.Nodes.RecentlyAccessedReportItem(
+            NodeUid.Parse(item.NodeUid),
+            item.AccessTime is null ? null : new DateTimeOffset(item.AccessTime.ToDateTimeFixed(), TimeSpan.Zero)));
+
+        await client.ReportRecentlyAccessedAsync(items, cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleEnumerateSharedNodeUidsAsync(
         DrivePhotosClientEnumerateSharedNodeUidsRequest request,
         nint bindingsHandle)

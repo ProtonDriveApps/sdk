@@ -43,6 +43,16 @@ public struct NodeMoveItem: Sendable {
     }
 }
 
+public struct RecentlyAccessedReportItem: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let accessTime: Date?
+
+    public init(nodeUid: SDKNodeUid, accessTime: Date? = nil) {
+        self.nodeUid = nodeUid
+        self.accessTime = accessTime
+    }
+}
+
 public struct SDKRevisionUid: Sendable {
     public let volumeID: String
     public let nodeID: String

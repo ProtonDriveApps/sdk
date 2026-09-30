@@ -179,4 +179,16 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
                 cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken)
+    {
+        await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ApiResponse)
+            .PostAsync(
+                "photos/recently-accessed-items",
+                request,
+                DriveApiSerializerContext.Default.ReportRecentlyAccessedItemsRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
 }
