@@ -1,9 +1,9 @@
 import * as Comlink from 'comlink';
 
-import { createSearchDriveSdkClient } from '../driveSdkClient';
 import { createEngine } from '../engine';
 import { createMemoryStorage } from '../memoryStorage';
 import type { ProtonDriveSearchClient } from '../types';
+import { createUnconnectedHttpClient } from '../unconnectedHttpClient';
 import init, { DriveSearchEngine } from '../vendor/proton_drive_sdk_search.js';
 
 let enginePromise: Promise<DriveSearchEngine> | undefined;
@@ -11,11 +11,10 @@ let enginePromise: Promise<DriveSearchEngine> | undefined;
 function getEngine() {
     enginePromise ??= (async () => {
         await init(await fetch(new URL('../vendor/proton_drive_sdk_search_bg.wasm', import.meta.url)));
-        // TODO: source nodes from the main thread's `ProtonDriveClient.iterateNodes`, converted to the engine's `Node`.
         return createEngine(
-            createSearchDriveSdkClient(async function* () {}),
             // TODO: switch to an encrypted IndexedDB-backed storage (future MR) so the index survives the SharedWorker.
             createMemoryStorage(),
+            createUnconnectedHttpClient(),
         );
     })();
     return enginePromise;
@@ -28,7 +27,7 @@ function getEngine() {
 export const searchWorkerApi: ProtonDriveSearchClient = {
     async enable(): Promise<void> {
         const engine = await getEngine();
-        engine.enable();
+        engine.setEnabled(true);
     },
 };
 

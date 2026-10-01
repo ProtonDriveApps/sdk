@@ -2,10 +2,12 @@
  * The search engine is Rust, compiled to wasm. This makes sure the JS bindings
  * client/js imports (src/search/vendor, not committed) exist and are up to date:
  *
- *  - vendored files newer than the Rust sources: nothing to do.
- *  - otherwise, with `boltffi` installed: rebuild the crate, then vendor it.
- *  - otherwise, with an already-built package (e.g. a downloaded
- *    search-rs-pack-wasm artifact): vendor it as is.
+ *  - bindings newer than the Rust sources: nothing to do.
+ *  - otherwise, with `boltffi` installed: rebuild them. boltffi.toml points the
+ *    output at src/search/vendor, so boltffi's tsc resolves @boltffi/runtime and
+ *    @types/node from client/js/node_modules.
+ *  - otherwise, if bindings are there (e.g. a downloaded search-rs-pack-wasm
+ *    artifact): use them as is.
  *
  * Without bindings the SDK still typechecks (against src/search/vendorFallback.d.ts)
  * and builds; search just won't work.
@@ -15,19 +17,19 @@
  * described in incubating/search/proton-drive-sdk-search/README.md.
  */
 import { execFileSync } from 'child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const workspaceDir = path.resolve(__dirname, '../../../../incubating/search');
 const crateDir = path.join(workspaceDir, 'proton-drive-sdk-search');
-const generatedDir = path.join(workspaceDir, 'bindings/typescript/pkg');
 const vendorDir = path.resolve(__dirname, '../../src/search/vendor');
+const runtimeDir = path.resolve(__dirname, '../../node_modules/@boltffi/runtime');
 
 // Only the variant used by the browser worker and the Bun in-process path;
 // boltffi generates a few other entry points nothing here consumes.
-const FILES_TO_VENDOR = [
+const BINDING_FILES = [
     'proton_drive_sdk_search.js',
     'proton_drive_sdk_search.d.ts',
     'proton_drive_sdk_search_bg.wasm',
@@ -59,46 +61,58 @@ function newestMtime(target) {
 
 /** Oldest mtime across `files` in `dir`, or 0 if any is missing. */
 function oldestMtime(dir, files) {
-    // nosemgrep: path-join-resolve-traversal -- files are the hardcoded FILES_TO_VENDOR, not user input.
+    // nosemgrep: path-join-resolve-traversal -- files are the hardcoded BINDING_FILES, not user input.
     const paths = files.map((file) => path.join(dir, file));
     return paths.every((file) => existsSync(file)) ? Math.min(...paths.map((file) => statSync(file).mtimeMs)) : 0;
 }
 
-function hasBoltffi() {
+/** Version of the installed `boltffi` CLI, or undefined if it isn't installed. */
+function boltffiCliVersion() {
     try {
-        execFileSync('boltffi', ['--version'], { stdio: 'ignore' });
-        return true;
+        const output = execFileSync('boltffi', ['--version'], { encoding: 'utf8' });
+        return output.trim().split(/\s+/).pop();
     } catch {
-        return false;
+        return undefined;
     }
+}
+
+/** Version of the `boltffi` crate locked in Cargo.lock; the CLI must match it. */
+function boltffiCrateVersion() {
+    const lock = readFileSync(path.join(workspaceDir, 'Cargo.lock'), 'utf8');
+    return lock.match(/name = "boltffi"\nversion = "([^"]+)"/)?.[1];
 }
 
 const force = process.argv.includes('--force');
 const optional = process.argv.includes('--optional');
 const sourcesMtime = Math.max(...SOURCES.map(newestMtime));
 
-if (!force && oldestMtime(vendorDir, FILES_TO_VENDOR) > sourcesMtime) {
+if (!force && oldestMtime(vendorDir, BINDING_FILES) > sourcesMtime) {
     log('Bindings are up to date.');
     process.exit(0);
 }
 
-if (existsSync(crateDir) && hasBoltffi()) {
-    log('Building bindings with boltffi...');
+const cliVersion = existsSync(crateDir) ? boltffiCliVersion() : undefined;
+
+if (cliVersion) {
+    const crateVersion = boltffiCrateVersion();
+    if (cliVersion !== crateVersion) {
+        log(`boltffi CLI is ${cliVersion} but the crate is ${crateVersion}; run \`cargo install boltffi_cli@${crateVersion}\`.`);
+        process.exit(1);
+    }
+    if (!existsSync(runtimeDir)) {
+        log('@boltffi/runtime is not installed; run `bun install` first.');
+        process.exit(1);
+    }
+    log(`Building bindings with boltffi ${cliVersion}...`);
     execFileSync('boltffi', ['pack', '-v', 'wasm', '--deny-skipped'], { cwd: crateDir, stdio: 'inherit' });
-} else if (oldestMtime(generatedDir, FILES_TO_VENDOR)) {
-    log(`boltffi not found; vendoring the prebuilt package from ${path.relative(process.cwd(), generatedDir)}.`);
+    log(`Built bindings into ${path.relative(process.cwd(), vendorDir)}.`);
+} else if (oldestMtime(vendorDir, BINDING_FILES)) {
+    log(`boltffi not found; using the bindings already in ${path.relative(process.cwd(), vendorDir)}.`);
 } else if (optional) {
     // e.g. the public mirror, which has no Rust crate: the SDK builds against
     // vendorFallback.d.ts, search just won't work at runtime.
-    log('WARNING: no boltffi or prebuilt package; building without search.');
-    process.exit(0);
+    log('WARNING: no boltffi or prebuilt bindings; building without search.');
 } else {
-    log('boltffi not found and no prebuilt package; see incubating/search/proton-drive-sdk-search/README.md.');
+    log('boltffi not found and no prebuilt bindings; see incubating/search/proton-drive-sdk-search/README.md.');
     process.exit(1);
 }
-
-mkdirSync(vendorDir, { recursive: true });
-for (const file of FILES_TO_VENDOR) {
-    copyFileSync(path.join(generatedDir, file), path.join(vendorDir, file));
-}
-log(`Vendored ${FILES_TO_VENDOR.length} file(s) into ${path.relative(process.cwd(), vendorDir)}.`);

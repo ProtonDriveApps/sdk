@@ -3,19 +3,20 @@ import { wireOk } from '@boltffi/runtime';
 import { createSearchDriveSdkClient, type NodeSource } from './driveSdkClient';
 import type { Node, NodeUid } from './vendor/proton_drive_sdk_search.js';
 
-const node = (uid: string) => ({ uid: { inner: uid } }) as Node;
+const uid = (nodeId: string): NodeUid => ({ volumeId: 'volume', nodeId });
+const node = (nodeId: string) => ({ uid: uid(nodeId) }) as Node;
 
 const sourceOf = (nodes: Node[]): NodeSource =>
     async function* (nodeUids: NodeUid[]) {
-        const wanted = new Set(nodeUids.map((uid) => uid.inner));
-        yield* nodes.filter((n) => wanted.has(n.uid.inner));
+        const wanted = new Set(nodeUids.map(({ nodeId }) => nodeId));
+        yield* nodes.filter((n) => wanted.has(n.uid.nodeId));
     };
 
 describe('createSearchDriveSdkClient', () => {
     it('streams the requested nodes one by one, then null', async () => {
         const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b'), node('c')]));
 
-        const { value: token } = await client.openNodeStream([{ inner: 'a' }, { inner: 'c' }]);
+        const { value: token } = await client.openNodeStream([uid('a'), uid('c')]);
 
         expect(await client.nextNode(token)).toEqual(wireOk(node('a')));
         expect(await client.nextNode(token)).toEqual(wireOk(node('c')));
@@ -25,7 +26,7 @@ describe('createSearchDriveSdkClient', () => {
     it('streams nodes in batches, then null', async () => {
         const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b')]));
 
-        const { value: token } = await client.openNodeStream([{ inner: 'a' }, { inner: 'b' }]);
+        const { value: token } = await client.openNodeStream([uid('a'), uid('b')]);
 
         expect(await client.nextNodeBatch(token)).toEqual(wireOk([node('a'), node('b')]));
         expect(await client.nextNodeBatch(token)).toEqual(wireOk(null));
@@ -34,8 +35,8 @@ describe('createSearchDriveSdkClient', () => {
     it('keeps concurrent streams independent', async () => {
         const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b')]));
 
-        const { value: first } = await client.openNodeStream([{ inner: 'a' }]);
-        const { value: second } = await client.openNodeStream([{ inner: 'b' }]);
+        const { value: first } = await client.openNodeStream([uid('a')]);
+        const { value: second } = await client.openNodeStream([uid('b')]);
 
         expect(await client.nextNode(second)).toEqual(wireOk(node('b')));
         expect(await client.nextNode(first)).toEqual(wireOk(node('a')));
