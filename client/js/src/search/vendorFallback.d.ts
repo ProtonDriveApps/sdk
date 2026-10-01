@@ -27,6 +27,7 @@ declare module '*/vendor/proton_drive_sdk_search.js' {
     // implementations still typecheck under noImplicitAny.
     export type DriveSdkClient = Record<string, (...args: any[]) => any>;
     export type Storage = Record<string, (...args: any[]) => any>;
+    export type HttpClient = Record<string, (...args: any[]) => any>;
     export type Node = any;
     export type NodeUid = any;
 }
