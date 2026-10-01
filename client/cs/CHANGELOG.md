@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.29.2 (2026-09-30)
+
+### Features
+- Add method to report recently accessed nodes
+
+
 ## cs/v0.29.1 (2026-09-23)
 
 ### Features
