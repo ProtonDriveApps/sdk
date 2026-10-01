@@ -5,9 +5,9 @@ import { DriveSearchEngine, type HttpClient, type Storage } from './vendor/proto
  * and past which the recent index evicts.
  */
 const INDEX_COUNT_LIMITS = {
-    recent: 10_000,
-    ownVolume: 20_000,
-    sharedWithMe: 2_000,
+    recent: 10_000n,
+    ownVolume: 20_000n,
+    sharedWithMe: 2_000n,
 };
 
 /**
@@ -23,7 +23,7 @@ export async function createEngine(storage: Storage, http: HttpClient): Promise<
         generateCsprngSeed(),
         // wasm has no clock of its own; the engine reads seconds since the Unix epoch.
         { now: () => BigInt(Math.floor(Date.now() / 1000)) },
-        50,
+        50n,
         INDEX_COUNT_LIMITS,
         'proton-drive-sdk-search',
     );
