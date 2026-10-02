@@ -7,7 +7,6 @@ import {
     InvalidNameError,
     Logger,
     Member,
-    MetricVolumeType,
     NonProtonInvitation,
     ProtonDriveAccount,
     ProtonDriveTelemetry,
@@ -21,6 +20,7 @@ import {
 import { getErrorMessage, getVerificationMessage } from '../errors';
 import { validateNodeName } from '../nodes/validations';
 import { EncryptedShare } from '../shares';
+import { getMetricRecency } from '../telemetry';
 import {
     EncryptedBookmark,
     EncryptedExternalInvitation,
@@ -403,9 +403,8 @@ export class SharingCryptoService {
 
             this.telemetry.recordMetric({
                 eventName: 'verificationError',
-                volumeType: MetricVolumeType.Unknown,
                 field: 'membershipInviter',
-                fromBefore2024: encryptedMetadata.invitationTime < new Date('2024-01-01'),
+                recency: getMetricRecency(encryptedMetadata.invitationTime),
                 error: verificationErrors,
                 uid: encryptedMetadata.uid,
             });
@@ -611,8 +610,8 @@ export class SharingCryptoService {
         } catch (error: unknown) {
             this.telemetry.recordMetric({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareUrlPassword',
+                recency: getMetricRecency(encryptedBookmark.creationTime),
                 error,
                 uid: encryptedBookmark.tokenId,
             });
@@ -637,8 +636,8 @@ export class SharingCryptoService {
         } catch (error: unknown) {
             this.telemetry.recordMetric({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareKey',
+                recency: getMetricRecency(encryptedBookmark.creationTime),
                 error,
                 uid: encryptedBookmark.tokenId,
             });
@@ -670,8 +669,8 @@ export class SharingCryptoService {
         } catch (error: unknown) {
             this.telemetry.recordMetric({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'nodeName',
+                recency: getMetricRecency(encryptedBookmark.creationTime),
                 error,
                 uid: encryptedBookmark.tokenId,
             });

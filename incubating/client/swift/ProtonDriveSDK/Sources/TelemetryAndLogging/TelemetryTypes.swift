@@ -208,16 +208,16 @@ public struct BlockVerificationErrorEventPayload: Sendable {
 
 public struct DecryptionErrorEventPayload: Sendable {
 
-    public let volumeType: VolumeType
     public let field: EncryptedField
-    public let fromBefore2024: Bool
+    public let recency: ItemRecency
+    public let createdBy: ItemCreator
     public let error: String?
     public let uid: String
 
     init(sdkEventPayload: Proton_Drive_Sdk_DecryptionErrorEventPayload) {
-        self.volumeType = .init(sdkVolumeType: sdkEventPayload.volumeType)
         self.field = .init(sdkEncryptedField: sdkEventPayload.field)
-        self.fromBefore2024 = sdkEventPayload.fromBefore2024
+        self.recency = .init(sdkItemRecency: sdkEventPayload.recency)
+        self.createdBy = .init(sdkItemCreator: sdkEventPayload.createdBy)
         self.error = sdkEventPayload.hasError ? sdkEventPayload.error : nil
         self.uid = sdkEventPayload.uid
     }
@@ -259,20 +259,71 @@ public struct UploadEventPayload: Sendable {
 
 public struct VerificationErrorEventPayload: Sendable {
 
-    public let volumeType: VolumeType
     public let field: EncryptedField
-    public let fromBefore2024: Bool
+    public let recency: ItemRecency
+    public let createdBy: ItemCreator
     public let addressMatchingDefaultShare: Bool
     public let error: String?
     public let uid: String
 
     init(sdkEventPayload: Proton_Drive_Sdk_VerificationErrorEventPayload) {
-        self.volumeType = .init(sdkVolumeType: sdkEventPayload.volumeType)
         self.field = .init(sdkEncryptedField: sdkEventPayload.field)
-        self.fromBefore2024 = sdkEventPayload.fromBefore2024
+        self.recency = .init(sdkItemRecency: sdkEventPayload.recency)
+        self.createdBy = .init(sdkItemCreator: sdkEventPayload.createdBy)
         self.addressMatchingDefaultShare = sdkEventPayload.addressMatchingDefaultShare
         self.error = sdkEventPayload.hasError ? sdkEventPayload.error : nil
         self.uid = sdkEventPayload.uid
+    }
+}
+
+public enum ItemRecency: Int, Sendable {
+    case unrecognized = -1
+    case unspecified = 0
+    case pastMonth = 1
+    case pastYear = 2
+    case since2024 = 3
+    case before2024 = 4
+
+    init(sdkItemRecency: Proton_Drive_Sdk_ItemRecency) {
+        switch sdkItemRecency {
+        case .unspecified:
+            self = .unspecified
+        case .pastMonth:
+            self = .pastMonth
+        case .pastYear:
+            self = .pastYear
+        case .since2024:
+            self = .since2024
+        case .before2024:
+            self = .before2024
+        case .UNRECOGNIZED(let value):
+            assertionFailure("Received unrecognized ItemRecency from the SDK \(value)")
+            self = .unrecognized
+        }
+    }
+}
+
+public enum ItemCreator: Int, Sendable {
+    case unrecognized = -1
+    case unspecified = 0
+    case firstParty = 1
+    case thirdPartyWithSdk = 2
+    case thirdPartyWithoutSdk = 3
+
+    init(sdkItemCreator: Proton_Drive_Sdk_ItemCreator) {
+        switch sdkItemCreator {
+        case .unspecified:
+            self = .unspecified
+        case .firstParty:
+            self = .firstParty
+        case .thirdPartyWithSdk:
+            self = .thirdPartyWithSdk
+        case .thirdPartyWithoutSdk:
+            self = .thirdPartyWithoutSdk
+        case .UNRECOGNIZED(let value):
+            assertionFailure("Received unrecognized ItemCreator from the SDK \(value)")
+            self = .unrecognized
+        }
     }
 }
 

@@ -1,3 +1,5 @@
+using Proton.Drive.Sdk.Api.Files;
+using Proton.Drive.Sdk.Api.Links;
 using Proton.Drive.Sdk.Nodes;
 
 namespace Proton.Drive.Sdk.Telemetry;
@@ -7,17 +9,20 @@ internal static class TelemetryRecorder
     /// <summary>
     /// Attempts to record decryption error events for a degraded node with multiple failed fields.
     /// </summary>
-    public static async Task TryRecordDecryptionErrorAsync(
+    public static void TryRecordDecryptionError(
         ProtonDriveClient client,
-        Node node,
-        IReadOnlyDictionary<EncryptedField, ProtonDriveError> failedFields,
-        CancellationToken cancellationToken)
+        NodeUid nodeUid,
+        LinkDto link,
+        ActiveRevisionDto? activeRevision,
+        IReadOnlyDictionary<EncryptedField, ProtonDriveError> failedFields)
     {
         try
         {
-            var events = await TelemetryEventFactory.CreateDecryptionErrorEventsAsync(client, node, failedFields, cancellationToken).ConfigureAwait(false);
-
-            foreach (var @event in events)
+            foreach (var @event in TelemetryEventFactory.CreateDecryptionErrorEvents(
+                         nodeUid,
+                         link,
+                         activeRevision,
+                         failedFields))
             {
                 client.Telemetry.RecordMetric(@event);
             }
@@ -31,18 +36,18 @@ internal static class TelemetryRecorder
     /// <summary>
     /// Attempts to record a verification error event using a node UID.
     /// </summary>
-    public static async Task TryRecordVerificationErrorAsync(
+    public static void TryRecordVerificationError(
         ProtonDriveClient client,
         NodeUid nodeUid,
         EncryptedField field,
         DateTime creationTime,
-        string? error,
-        CancellationToken cancellationToken)
+        bool thirdParty,
+        bool sdk,
+        string? error)
     {
         try
         {
-            var @event = await TelemetryEventFactory.CreateVerificationErrorEventAsync(client, nodeUid, field, creationTime, error, cancellationToken)
-                .ConfigureAwait(false);
+            var @event = TelemetryEventFactory.CreateVerificationErrorEvent(nodeUid, field, creationTime, thirdParty, sdk, error);
 
             client.Telemetry.RecordMetric(@event);
         }

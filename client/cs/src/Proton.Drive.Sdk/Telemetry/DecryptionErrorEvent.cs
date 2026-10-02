@@ -7,11 +7,11 @@ public sealed class DecryptionErrorEvent : IMetricEvent
 {
     public string Name => "decryptionError";
 
-    public required VolumeType VolumeType { get; init; }
-
     public required EncryptedField Field { get; init; }
 
-    public bool? FromBefore2024 { get; init; }
+    public required ItemRecency Recency { get; init; }
+
+    public required ItemCreator CreatedBy { get; init; }
 
     public string? Error { get; init; }
 

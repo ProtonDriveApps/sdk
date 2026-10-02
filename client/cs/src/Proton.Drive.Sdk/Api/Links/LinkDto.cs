@@ -50,4 +50,8 @@ internal sealed class LinkDto
 
     [JsonPropertyName("OwnedBy")]
     public OwnedByDto? OwnedBy { get; init; }
+
+    public bool ThirdParty { get; init; }
+
+    public bool Sdk { get; init; }
 }

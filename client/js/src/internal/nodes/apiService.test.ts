@@ -25,6 +25,8 @@ function generateAPIFileNode(linkOverrides = {}, overrides = {}, fileOverrides =
                 XAttr: '{file}',
                 EncryptedSize: 12,
                 IsImported: false,
+                ThirdParty: true,
+                Sdk: true,
             },
             ...fileOverrides,
         },
@@ -82,6 +84,8 @@ function generateAPINode() {
                 Email: 'ownerByEmail',
                 Organization: null,
             },
+            ThirdParty: true,
+            Sdk: false,
         },
         SharingSummary: null,
     };
@@ -104,6 +108,8 @@ function generateFileNode(overrides = {}, encryptedCryptoOverrides = {}) {
                 uid: 'volumeId~linkId~revisionId',
                 state: 'active',
                 creationTime: new Date(1234567890000),
+                thirdParty: true,
+                sdk: true,
                 storageSize: 12,
                 signatureEmail: 'revSigEmail',
                 armoredExtendedAttributes: '{file}',
@@ -148,6 +154,8 @@ function generateAlbumNode(overrides = {}) {
 function generateNode() {
     return {
         hash: 'nameHash',
+        thirdParty: true,
+        sdk: false,
         encryptedName: 'encName',
 
         uid: 'volumeId~linkId',

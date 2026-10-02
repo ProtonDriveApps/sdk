@@ -4,7 +4,6 @@ import {
     Author,
     InvalidNameError,
     MemberRole,
-    MetricVolumeType,
     NodeEntity,
     NodeType,
     Result,
@@ -26,6 +25,8 @@ interface BaseNode {
     // ecnryptedName should not be needed to keep, nameSessionKey should be enough.
     // We will improve this in the future.
     encryptedName: string;
+    thirdParty?: boolean;
+    sdk?: boolean;
 
     // Basic node metadata
     uid: string;
@@ -60,7 +61,7 @@ interface BaseNode {
  */
 export interface EncryptedNode extends BaseNode {
     encryptedCrypto: EncryptedNodeFolderCrypto | EncryptedNodeFileCrypto | EncryptedNodeAlbumCrypto;
-    
+
     folder?: {
         isImported: boolean;
     };
@@ -177,6 +178,8 @@ interface BaseRevision {
     creationTime: Date; // created on the server
     storageSize: number;
     thumbnails: Thumbnail[];
+    thirdParty?: boolean;
+    sdk?: boolean;
 }
 
 export type Thumbnail = {
@@ -218,5 +221,4 @@ export interface SharesService {
         addressKey: PrivateKey;
         addressKeyId: string;
     }>;
-    getVolumeMetricContext(volumeId: string): Promise<MetricVolumeType>;
 }

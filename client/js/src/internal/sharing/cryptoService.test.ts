@@ -1,7 +1,6 @@
 import { DriveCrypto, PrivateKey, SessionKey, VERIFICATION_STATUS } from '../../crypto';
 import {
     MemberRole,
-    MetricVolumeType,
     NodeType,
     NonProtonInvitationState,
     ProtonDriveAccount,
@@ -125,8 +124,8 @@ describe('SharingCryptoService', () => {
             });
             expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareUrlPassword',
+                recency: 'past_month',
                 error,
                 uid: 'tokenId',
             });
@@ -144,8 +143,8 @@ describe('SharingCryptoService', () => {
             });
             expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'shareKey',
+                recency: 'past_month',
                 error,
                 uid: 'tokenId',
             });
@@ -163,8 +162,8 @@ describe('SharingCryptoService', () => {
             });
             expect(telemetry.recordMetric).toHaveBeenCalledWith({
                 eventName: 'decryptionError',
-                volumeType: MetricVolumeType.SharedPublic,
                 field: 'nodeName',
+                recency: 'past_month',
                 error,
                 uid: 'tokenId',
             });

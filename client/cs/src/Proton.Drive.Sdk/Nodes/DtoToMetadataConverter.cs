@@ -56,11 +56,12 @@ internal static partial class DtoToMetadataConverter
 
         if (conversionResult.FailedDecryptionFields.Count > 0)
         {
-            await TelemetryRecorder.TryRecordDecryptionErrorAsync(
+            TelemetryRecorder.TryRecordDecryptionError(
                 client,
-                conversionResult.Metadata.Node,
-                conversionResult.FailedDecryptionFields,
-                cancellationToken).ConfigureAwait(false);
+                conversionResult.Metadata.Node.Uid,
+                linkDetailsDto.Link,
+                linkDetailsDto.File?.ActiveRevision ?? linkDetailsDto.Photo?.ActiveRevision,
+                conversionResult.FailedDecryptionFields);
         }
 
         return conversionResult;

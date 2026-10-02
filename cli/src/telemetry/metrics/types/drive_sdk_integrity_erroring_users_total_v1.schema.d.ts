@@ -9,9 +9,10 @@
  * How many users experienced decryption or verification error in the past 5 minutes
  */
 export interface HttpsProtonMeDriveSdkIntegrityErroringUsersTotalV1SchemaJson {
-  Labels: {
-    volumeType: "own_volume" | "own_photo_volume" | "shared" | "shared_public" | "unknown";
-    userPlan: "free" | "paid" | "anonymous" | "unknown";
-  };
-  Value: number;
+    Labels: {
+        volumeType: 'own_volume' | 'own_photo_volume' | 'shared' | 'shared_public' | 'unknown';
+        userPlan: 'free' | 'paid' | 'anonymous' | 'unknown';
+        causedBy: '1p' | '3p-sdk' | '3p' | 'unknown';
+    };
+    Value: number;
 }

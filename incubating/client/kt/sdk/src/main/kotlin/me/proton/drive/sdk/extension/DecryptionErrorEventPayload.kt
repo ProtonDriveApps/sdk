@@ -4,9 +4,9 @@ import me.proton.drive.sdk.telemetry.DecryptionErrorEvent
 import proton.drive.sdk.ProtonDriveSdk
 
 fun ProtonDriveSdk.DecryptionErrorEventPayload.toEvent() = DecryptionErrorEvent(
-    volumeType = volumeType.toEnum(),
     field = field.toEnum(),
-    fromBefore2024 = fromBefore2024,
+    recency = recency.toEnum(),
+    createdBy = createdBy.toEnum(),
     error = takeIf { hasError() }?.error,
     uid = uid,
 )

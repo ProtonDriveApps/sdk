@@ -812,6 +812,8 @@ export function linkToEncryptedNode(
                         link.File.ActiveRevision.Thumbnails?.map((thumbnail) =>
                             transformThumbnail(volumeId, link.Link.LinkID, thumbnail),
                         ) || [],
+                    thirdParty: link.File.ActiveRevision.ThirdParty,
+                    sdk: link.File.ActiveRevision.Sdk,
                 },
             },
         };
@@ -846,6 +848,8 @@ export function linkToEncryptedNodeBaseMetadata(
         // Internal metadata
         hash: link.Link.NameHash || undefined,
         encryptedName: link.Link.Name,
+        thirdParty: link.Link.ThirdParty,
+        sdk: link.Link.Sdk,
 
         // Basic node metadata
         uid: makeNodeUid(volumeId, link.Link.LinkID),
@@ -939,6 +943,8 @@ function transformRevisionResponse(
         thumbnails: revision.Thumbnails?.map((thumbnail) => transformThumbnail(volumeId, nodeId, thumbnail)) || [],
         sha1Verified: revision.ChecksumVerified,
         isImported: revision.IsImported,
+        thirdParty: revision.ThirdParty,
+        sdk: revision.Sdk,
     };
 }
 
