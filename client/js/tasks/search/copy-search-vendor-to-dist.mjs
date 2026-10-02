@@ -5,12 +5,14 @@
  */
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
-// boltffi generates more entry points into src/search/vendor; only ship the one
+// boltffi generates more entry points into src/search/vendor; only ship the ones
 // the SDK imports (same list as BINDING_FILES in search-bindings.mjs).
 const BINDING_FILES = [
     'proton_drive_sdk_search.js',
     'proton_drive_sdk_search.d.ts',
     'proton_drive_sdk_search_bg.wasm',
+    'proton_drive_sdk_search_imports.js',
+    'proton_drive_sdk_search_imports.d.ts',
 ];
 
 if (existsSync('src/search/vendor')) {

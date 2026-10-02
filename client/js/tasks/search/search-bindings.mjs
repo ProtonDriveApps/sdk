@@ -33,6 +33,8 @@ const BINDING_FILES = [
     'proton_drive_sdk_search.js',
     'proton_drive_sdk_search.d.ts',
     'proton_drive_sdk_search_bg.wasm',
+    'proton_drive_sdk_search_imports.js',
+    'proton_drive_sdk_search_imports.d.ts',
 ];
 
 // Everything that can change the generated bindings.
