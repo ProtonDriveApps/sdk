@@ -1,5 +1,11 @@
 # Changelog
 
+## js/v0.22.2 (2026-10-02)
+
+### Bug Fixes
+- Stop bundling search into applications that do not use it
+
+
 ## js/v0.22.1 (2026-10-02)
 
 * No changes
