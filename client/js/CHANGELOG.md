@@ -1,5 +1,13 @@
 # Changelog
 
+## js/v0.22.0 (2026-10-02)
+
+### Features
+- Update telemetry to report recency and causedBy
+- Add extraction and indexing
+- Add experimental search integration
+
+
 ## js/v0.21.3 (2026-09-24)
 
 ### Features
