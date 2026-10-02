@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.30.0 (2026-10-02)
+
+### Features
+- Update telemetry to report recency and causedBy
+
+
 ## cs/v0.29.2 (2026-09-30)
 
 ### Features
