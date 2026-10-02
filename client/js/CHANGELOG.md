@@ -1,5 +1,9 @@
 # Changelog
 
+## js/v0.22.1 (2026-10-02)
+
+* No changes
+
 ## js/v0.22.0 (2026-10-02)
 
 ### Features
