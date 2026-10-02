@@ -99,10 +99,9 @@ describe('SharesCryptoService', () => {
         expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
         expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'verificationError',
-            volumeType: 'own_volume',
             field: 'shareKey',
             addressMatchingDefaultShare: undefined,
-            fromBefore2024: undefined,
+            recency: undefined,
             uid: 'shareId',
         });
     });
@@ -127,9 +126,8 @@ describe('SharesCryptoService', () => {
 
         expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'decryptionError',
-            volumeType: 'own_volume',
             field: 'shareKey',
-            fromBefore2024: undefined,
+            recency: undefined,
             error,
             uid: 'shareId',
         });

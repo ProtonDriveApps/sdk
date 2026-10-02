@@ -1314,20 +1314,37 @@ message DownloadEventPayload {
 }
 
 message DecryptionErrorEventPayload {
-    VolumeType volume_type = 1;
+    reserved 1, 3;
     EncryptedField field = 2;
-    bool from_before_2024 = 3;
     string error = 4; // Optional
     string uid = 5;
+    ItemRecency recency = 6;
+    ItemCreator created_by = 7;
 }
 
 message VerificationErrorEventPayload {
-    VolumeType volume_type = 1;
+    reserved 1, 3;
     EncryptedField field = 2;
-    bool from_before_2024 = 3;
     bool address_matching_default_share = 4;
     string error = 5; // Optional
     string uid = 6;
+    ItemRecency recency = 7;
+    ItemCreator created_by = 8;
+}
+
+enum ItemRecency {
+    ITEM_RECENCY_UNSPECIFIED = 0;
+    ITEM_RECENCY_PAST_MONTH = 1;
+    ITEM_RECENCY_PAST_YEAR = 2;
+    ITEM_RECENCY_SINCE_2024 = 3;
+    ITEM_RECENCY_BEFORE_2024 = 4;
+}
+
+enum ItemCreator {
+    ITEM_CREATOR_UNSPECIFIED = 0;
+    ITEM_CREATOR_FIRST_PARTY = 1;
+    ITEM_CREATOR_THIRD_PARTY_WITH_SDK = 2;
+    ITEM_CREATOR_THIRD_PARTY_WITHOUT_SDK = 3;
 }
 
 message BlockVerificationErrorEventPayload {

@@ -73,9 +73,9 @@ export type MetricsDownloadErrorType =
 
 export interface MetricDecryptionErrorEvent {
     eventName: 'decryptionError';
-    volumeType: MetricVolumeType;
     field: MetricsDecryptionErrorField;
-    fromBefore2024?: boolean;
+    recency?: MetricItemRecency;
+    createdBy?: MetricItemCreator;
     error?: unknown;
     uid: string;
 }
@@ -91,10 +91,10 @@ export type MetricsDecryptionErrorField =
 
 export interface MetricVerificationErrorEvent {
     eventName: 'verificationError';
-    volumeType: MetricVolumeType;
     field: MetricVerificationErrorField;
     addressMatchingDefaultShare?: boolean;
-    fromBefore2024?: boolean;
+    recency?: MetricItemRecency;
+    createdBy?: MetricItemCreator;
     error?: unknown;
     uid: string;
 }
@@ -127,6 +127,10 @@ export enum MetricVolumeType {
     Shared = 'shared',
     SharedPublic = 'shared_public',
 }
+
+export type MetricItemRecency = 'past_month' | 'past_year' | 'since_2024' | 'before_2024';
+
+export type MetricItemCreator = '1p' | '3p-sdk' | '3p';
 
 /**
  * Experimental metrics to track performance of encryption and decryption

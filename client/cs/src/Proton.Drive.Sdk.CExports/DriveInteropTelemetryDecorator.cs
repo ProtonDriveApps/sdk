@@ -23,6 +23,7 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
             UploadEvent me => GetUploadEventPayload(me),
             DownloadEvent me => GetDownloadEventPayload(me),
             DecryptionErrorEvent me => GetDecryptionErrorPayload(me),
+            VerificationErrorEvent me => GetVerificationErrorPayload(me),
             BlockVerificationErrorEvent me => GetBlockVerificationErrorPayload(me),
             UploadPerformanceEvent me => GetUploadPerformanceEventPayload(me),
             _ => null,
@@ -120,14 +121,33 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
     {
         var payload = new DecryptionErrorEventPayload
         {
-            VolumeType = (VolumeType)me.VolumeType,
             Field = (EncryptedField)me.Field,
+            Recency = GetItemRecency(me.Recency),
+            CreatedBy = GetItemCreator(me.CreatedBy),
             Uid = me.Uid.ToString(),
         };
 
-        if (me.FromBefore2024.HasValue)
+        if (me.Error is not null)
         {
-            payload.FromBefore2024 = me.FromBefore2024.Value;
+            payload.Error = me.Error;
+        }
+
+        return payload;
+    }
+
+    private static VerificationErrorEventPayload GetVerificationErrorPayload(VerificationErrorEvent me)
+    {
+        var payload = new VerificationErrorEventPayload
+        {
+            Field = (EncryptedField)me.Field,
+            Recency = GetItemRecency(me.Recency),
+            CreatedBy = GetItemCreator(me.CreatedBy),
+            Uid = me.Uid.ToString(),
+        };
+
+        if (me.AddressMatchingDefaultShare.HasValue)
+        {
+            payload.AddressMatchingDefaultShare = me.AddressMatchingDefaultShare.Value;
         }
 
         if (me.Error is not null)
@@ -137,6 +157,23 @@ internal sealed class DriveInteropTelemetryDecorator(InteropTelemetry instanceTo
 
         return payload;
     }
+
+    private static ItemRecency GetItemRecency(Sdk.Telemetry.ItemRecency recency) => recency switch
+    {
+        Sdk.Telemetry.ItemRecency.PastMonth => ItemRecency.PastMonth,
+        Sdk.Telemetry.ItemRecency.PastYear => ItemRecency.PastYear,
+        Sdk.Telemetry.ItemRecency.Since2024 => ItemRecency.Since2024,
+        Sdk.Telemetry.ItemRecency.Before2024 => ItemRecency.Before2024,
+        _ => throw new ArgumentOutOfRangeException(nameof(recency), recency, null),
+    };
+
+    private static ItemCreator GetItemCreator(Sdk.Telemetry.ItemCreator creator) => creator switch
+    {
+        Sdk.Telemetry.ItemCreator.FirstParty => ItemCreator.FirstParty,
+        Sdk.Telemetry.ItemCreator.ThirdPartyWithSdk => ItemCreator.ThirdPartyWithSdk,
+        Sdk.Telemetry.ItemCreator.ThirdPartyWithoutSdk => ItemCreator.ThirdPartyWithoutSdk,
+        _ => throw new ArgumentOutOfRangeException(nameof(creator), creator, null),
+    };
 
     private static Sdk.Telemetry.UploadError? TranslateToUploadError(InteropErrorException exception)
     {

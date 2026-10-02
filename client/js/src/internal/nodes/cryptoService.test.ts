@@ -95,7 +95,6 @@ describe('nodesCryptoService', () => {
                 email: 'email',
                 addressKey: 'key' as unknown as PrivateKey,
             })),
-            getVolumeMetricContext: jest.fn().mockResolvedValue('own_volume'),
         };
 
         const nodesCryptoReporter = new NodesCryptoReporter(telemetry, sharesService);
@@ -108,8 +107,8 @@ describe('nodesCryptoService', () => {
         expect(telemetry.recordMetric).toHaveBeenCalledTimes(1);
         expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'verificationError',
-            volumeType: 'own_volume',
-            fromBefore2024: false,
+            recency: 'past_month',
+            createdBy: '1p',
             addressMatchingDefaultShare: false,
             uid: 'volumeId~nodeId',
             ...options,
@@ -120,8 +119,8 @@ describe('nodesCryptoService', () => {
         expect(telemetry.recordMetric).toHaveBeenCalledTimes(1);
         expect(telemetry.recordMetric).toHaveBeenCalledWith({
             eventName: 'decryptionError',
-            volumeType: 'own_volume',
-            fromBefore2024: false,
+            recency: 'past_month',
+            createdBy: '1p',
             uid: 'volumeId~nodeId',
             ...options,
         });
@@ -134,6 +133,9 @@ describe('nodesCryptoService', () => {
             encryptedNode = {
                 uid: 'volumeId~nodeId',
                 parentUid: 'volumeId~parentId',
+                creationTime: new Date(),
+                thirdParty: false,
+                sdk: false,
                 membership: {
                     role: MemberRole.Admin,
                     inviteTime: new Date(1234567890000),
@@ -584,10 +586,13 @@ describe('nodesCryptoService', () => {
     });
 
     describe('file node', () => {
+        const revisionCreationTime = new Date();
         const encryptedNode = {
             uid: 'volumeId~nodeId',
             parentUid: 'volumeId~parentId',
-            creationTime: new Date('2026-01-01'),
+            creationTime: new Date(),
+            thirdParty: false,
+            sdk: false,
             encryptedCrypto: {
                 signatureEmail: 'signatureEmail',
                 nameSignatureEmail: 'nameSignatureEmail',
@@ -601,6 +606,9 @@ describe('nodesCryptoService', () => {
                 activeRevision: {
                     uid: 'revisionUid',
                     state: 'active',
+                    creationTime: revisionCreationTime,
+                    thirdParty: false,
+                    sdk: false,
                     signatureEmail: 'revisionSignatureEmail',
                     armoredExtendedAttributes: 'encryptedExtendedAttributes',
                 },
@@ -623,7 +631,7 @@ describe('nodesCryptoService', () => {
                     activeRevision: {
                         uid: 'revisionUid',
                         state: RevisionState.Active,
-                        creationTime: undefined,
+                        creationTime: revisionCreationTime,
                         extendedAttributes: '{}',
                         contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
                     },
@@ -673,7 +681,6 @@ describe('nodesCryptoService', () => {
                     activeRevision: {
                         uid: 'revisionUid',
                         state: RevisionState.Active,
-                        creationTime: undefined,
                         extendedAttributes: '{}',
                         contentAuthor: { ok: true, value: 'signatureEmail' },
                     },
@@ -760,7 +767,6 @@ describe('nodesCryptoService', () => {
                         uid: 'revisionUid',
                         extendedAttributes: '{}',
                         state: RevisionState.Active,
-                        creationTime: undefined,
                         contentAuthor: {
                             ok: false,
                             error: {
@@ -789,7 +795,7 @@ describe('nodesCryptoService', () => {
                 const result = await cryptoService.decryptNode(
                     {
                         ...encryptedNode,
-                        creationTime: new Date('2026-01-01'),
+                        creationTime: new Date(),
                     },
                     parentKey,
                 );
@@ -842,7 +848,7 @@ describe('nodesCryptoService', () => {
                     field: 'nodeContentKey',
                     error: 'verification error',
                     uid: 'otherVolumeId~nodeId',
-                    fromBefore2024: true,
+                    recency: 'before_2024',
                 });
             });
 
@@ -942,7 +948,7 @@ describe('nodesCryptoService', () => {
                 verifyLogEventVerificationError({
                     field: 'nodeContentKey',
                     error: 'verification error',
-                    fromBefore2024: true,
+                    recency: 'before_2024',
                 });
             });
         });
@@ -1107,9 +1113,13 @@ describe('nodesCryptoService', () => {
     });
 
     describe('anonymous node', () => {
+        const revisionCreationTime = new Date();
         const encryptedNode = {
             uid: 'volumeId~nodeId',
             parentUid: 'volumeId~parentId',
+            creationTime: new Date(),
+            thirdParty: false,
+            sdk: false,
             encryptedCrypto: {
                 signatureEmail: undefined,
                 nameSignatureEmail: undefined,
@@ -1122,6 +1132,9 @@ describe('nodesCryptoService', () => {
                 activeRevision: {
                     uid: 'revisionUid',
                     state: 'active',
+                    creationTime: revisionCreationTime,
+                    thirdParty: false,
+                    sdk: false,
                     signatureEmail: 'revisionSignatureEmail',
                     armoredExtendedAttributes: 'encryptedExtendedAttributes',
                 },
@@ -1147,7 +1160,7 @@ describe('nodesCryptoService', () => {
                     activeRevision: {
                         uid: 'revisionUid',
                         state: RevisionState.Active,
-                        creationTime: undefined,
+                        creationTime: revisionCreationTime,
                         extendedAttributes: '{}',
                         contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
                     },

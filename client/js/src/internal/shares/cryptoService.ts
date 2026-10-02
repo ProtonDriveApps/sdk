@@ -1,7 +1,6 @@
 import { DriveCrypto, PrivateKey, VERIFICATION_STATUS } from '../../crypto';
 import {
     Logger,
-    MetricVolumeType,
     ProtonDriveAccount,
     ProtonDriveTelemetry,
     Result,
@@ -10,13 +9,8 @@ import {
     UnverifiedAuthorError,
 } from '../../interface';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
-import {
-    DecryptedRootShare,
-    DecryptedShareKey,
-    EncryptedRootShare,
-    EncryptedShareCrypto,
-    ShareType,
-} from './interface';
+import { getMetricRecency } from '../telemetry';
+import { DecryptedRootShare, DecryptedShareKey, EncryptedRootShare, EncryptedShareCrypto } from './interface';
 
 /**
  * Provides crypto operations for share keys.
@@ -127,14 +121,13 @@ export class SharesCryptoService {
             return;
         }
 
-        const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
-        this.logger.error(`Failed to decrypt share ${share.shareId} (from before 2024: ${fromBefore2024})`, error);
+        const recency = share.creationTime ? getMetricRecency(share.creationTime) : undefined;
+        this.logger.error(`Failed to decrypt share ${share.shareId} (recency: ${recency})`, error);
 
         this.telemetry.recordMetric({
             eventName: 'decryptionError',
-            volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
-            fromBefore2024,
+            recency,
             error,
             uid: share.shareId,
         });
@@ -146,30 +139,15 @@ export class SharesCryptoService {
             return;
         }
 
-        const fromBefore2024 = share.creationTime ? share.creationTime < new Date('2024-01-01') : undefined;
-        this.logger.error(`Failed to verify share ${share.shareId} (from before 2024: ${fromBefore2024})`);
+        const recency = share.creationTime ? getMetricRecency(share.creationTime) : undefined;
+        this.logger.error(`Failed to verify share ${share.shareId} (recency: ${recency})`);
 
         this.telemetry.recordMetric({
             eventName: 'verificationError',
-            volumeType: shareTypeToMetricContext(share.type),
             field: 'shareKey',
-            fromBefore2024,
+            recency,
             uid: share.shareId,
         });
         this.reportedVerificationErrors.add(share.shareId);
-    }
-}
-
-function shareTypeToMetricContext(shareType: ShareType): MetricVolumeType {
-    // SDK doesn't support public sharing yet, also public sharing
-    // doesn't use a share but shareURL, thus we can simplify and
-    // ignore this case for now.
-    switch (shareType) {
-        case ShareType.Main:
-        case ShareType.Device:
-        case ShareType.Photo:
-            return MetricVolumeType.OwnVolume;
-        case ShareType.Standard:
-            return MetricVolumeType.Shared;
     }
 }

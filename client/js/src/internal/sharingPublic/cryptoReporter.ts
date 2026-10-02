@@ -7,12 +7,12 @@ import {
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
-    MetricVolumeType,
     ProtonDriveTelemetry,
     resultError,
     resultOk,
 } from '../../interface';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
+import { getMetricItemCreator, getMetricRecency } from '../telemetry';
 
 export class SharingPublicCryptoReporter {
     private logger: Logger;
@@ -24,7 +24,7 @@ export class SharingPublicCryptoReporter {
     }
 
     async handleClaimedAuthor(
-        node: { uid: string; creationTime: Date },
+        node: { uid: string; creationTime: Date; thirdParty?: boolean; sdk?: boolean },
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
@@ -45,7 +45,7 @@ export class SharingPublicCryptoReporter {
     }
 
     reportDecryptionError(
-        node: { uid: string; creationTime: Date },
+        node: { uid: string; creationTime: Date; thirdParty?: boolean; sdk?: boolean },
         field: MetricsDecryptionErrorField,
         error: unknown,
     ) {
@@ -53,15 +53,19 @@ export class SharingPublicCryptoReporter {
             return;
         }
 
-        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
+        const recency = getMetricRecency(node.creationTime);
+        const createdBy = getMetricItemCreator(node.thirdParty, node.sdk);
 
-        this.logger.error(`Failed to decrypt URL access node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
+        this.logger.error(
+            `Failed to decrypt URL access node ${node.uid} (recency: ${recency}, created by: ${createdBy})`,
+            error,
+        );
 
         this.telemetry.recordMetric({
             eventName: 'decryptionError',
-            volumeType: MetricVolumeType.SharedPublic,
             field,
-            fromBefore2024,
+            recency,
+            createdBy,
             error,
             uid: node.uid,
         });

@@ -7,11 +7,11 @@ public sealed class VerificationErrorEvent : IMetricEvent
 {
     public string Name => "verificationError";
 
-    public required VolumeType VolumeType { get; set; }
-
     public required EncryptedField Field { get; set; }
 
-    public bool? FromBefore2024 { get; set; }
+    public required ItemRecency Recency { get; set; }
+
+    public required ItemCreator CreatedBy { get; set; }
 
     public bool? AddressMatchingDefaultShare { get; set; }
 

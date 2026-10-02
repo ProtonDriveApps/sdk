@@ -228,7 +228,11 @@ export class NodesCryptoService {
             const activeRevisionResult = await activeRevisionPromise;
             activeRevision = activeRevisionResult.revision;
             if (activeRevisionResult.error) {
-                void this.reporter.reportDecryptionError(node, 'nodeExtendedAttributes', activeRevisionResult.error);
+                void this.reporter.reportDecryptionError(
+                    { ...node.encryptedCrypto.activeRevision, uid: node.uid },
+                    'nodeExtendedAttributes',
+                    activeRevisionResult.error,
+                );
                 errors.push(activeRevisionResult.error);
             }
 
@@ -502,7 +506,7 @@ export class NodesCryptoService {
                 : [nodeKey];
 
             const { extendedAttributes, author: contentAuthor } = await this.decryptExtendedAttributes(
-                { uid: nodeUid, creationTime: encryptedRevision.creationTime },
+                { ...encryptedRevision, uid: nodeUid },
                 encryptedRevision.armoredExtendedAttributes,
                 nodeKey,
                 verificationKeys,
@@ -607,7 +611,12 @@ export class NodesCryptoService {
     }
 
     private async decryptExtendedAttributes(
-        node: { uid: string; creationTime: Date },
+        node: {
+            uid: string;
+            creationTime: Date;
+            thirdParty?: boolean;
+            sdk?: boolean;
+        },
         encryptedExtendedAttributes: string | undefined,
         nodeKey: PrivateKey,
         addressKeys: PublicKey[],

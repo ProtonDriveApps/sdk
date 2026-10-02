@@ -81,6 +81,8 @@ export type {
     MetricDecryptionErrorEvent,
     MetricDownloadEvent,
     MetricEvent,
+    MetricItemCreator,
+    MetricItemRecency,
     MetricPerformanceEvent,
     MetricsDecryptionErrorField,
     MetricsDownloadErrorType,

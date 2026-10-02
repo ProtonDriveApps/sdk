@@ -27,4 +27,8 @@ internal sealed class ActiveRevisionDto
 
     [JsonPropertyName("SignatureEmail")]
     public string? SignatureEmailAddress { get; init; }
+
+    public bool ThirdParty { get; init; }
+
+    public bool Sdk { get; init; }
 }

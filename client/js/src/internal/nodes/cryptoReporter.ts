@@ -5,14 +5,20 @@ import {
     Logger,
     MetricsDecryptionErrorField,
     MetricVerificationErrorField,
-    MetricVolumeType,
     ProtonDriveTelemetry,
     resultError,
     resultOk,
 } from '../../interface';
 import { getVerificationMessage, isNotApplicationError } from '../errors';
-import { splitNodeUid } from '../uids';
+import { getMetricItemCreator, getMetricRecency } from '../telemetry';
 import { EncryptedNode, SharesService } from './interface';
+
+type MetricItem = {
+    uid: string;
+    creationTime: Date;
+    thirdParty?: boolean;
+    sdk?: boolean;
+};
 
 export class NodesCryptoReporter {
     private logger: Logger;
@@ -30,7 +36,7 @@ export class NodesCryptoReporter {
     }
 
     async handleClaimedAuthor(
-        node: { uid: string; creationTime: Date },
+        node: MetricItem,
         field: MetricVerificationErrorField,
         signatureType: string,
         verified: VERIFICATION_STATUS,
@@ -52,7 +58,7 @@ export class NodesCryptoReporter {
     }
 
     async reportVerificationError(
-        node: { uid: string; creationTime: Date },
+        node: MetricItem,
         field: MetricVerificationErrorField,
         verificationErrors?: Error[],
         claimedAuthor?: string | AnonymousUser,
@@ -62,29 +68,27 @@ export class NodesCryptoReporter {
         }
         this.reportedVerificationErrors.add(node.uid);
 
-        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
+        const recency = getMetricRecency(node.creationTime);
+        const createdBy = getMetricItemCreator(node.thirdParty, node.sdk);
 
-        let addressMatchingDefaultShare,
-            volumeType = MetricVolumeType.Unknown;
+        let addressMatchingDefaultShare;
         try {
-            const { volumeId } = splitNodeUid(node.uid);
             const { email } = await this.shareService.getMyFilesShareMemberEmailKey();
             addressMatchingDefaultShare = claimedAuthor ? claimedAuthor === email : undefined;
-            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
         } catch (error: unknown) {
             this.logger.error('Failed to check if claimed author matches default share', error);
         }
 
         this.logger.warn(
-            `Failed to verify ${field} for node ${node.uid} (from before 2024: ${fromBefore2024}, matching address: ${addressMatchingDefaultShare})`,
+            `Failed to verify ${field} for node ${node.uid} (recency: ${recency}, created by: ${createdBy}, matching address: ${addressMatchingDefaultShare})`,
         );
 
         this.telemetry.recordMetric({
             eventName: 'verificationError',
-            volumeType,
             field,
             addressMatchingDefaultShare,
-            fromBefore2024,
+            recency,
+            createdBy,
             error: verificationErrors?.map((e) => e.message).join(', '),
             uid: node.uid,
         });
@@ -99,23 +103,16 @@ export class NodesCryptoReporter {
             return;
         }
 
-        const fromBefore2024 = node.creationTime < new Date('2024-01-01');
+        const recency = getMetricRecency(node.creationTime);
+        const createdBy = getMetricItemCreator(node.thirdParty, node.sdk);
 
-        let volumeType = MetricVolumeType.Unknown;
-        try {
-            const { volumeId } = splitNodeUid(node.uid);
-            volumeType = await this.shareService.getVolumeMetricContext(volumeId);
-        } catch (error: unknown) {
-            this.logger.error('Failed to get metric context', error);
-        }
-
-        this.logger.error(`Failed to decrypt node ${node.uid} (from before 2024: ${fromBefore2024})`, error);
+        this.logger.error(`Failed to decrypt node ${node.uid} (recency: ${recency}, created by: ${createdBy})`, error);
 
         this.telemetry.recordMetric({
             eventName: 'decryptionError',
-            volumeType,
             field,
-            fromBefore2024,
+            recency,
+            createdBy,
             error,
             uid: node.uid,
         });
