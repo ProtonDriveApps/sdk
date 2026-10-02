@@ -85,7 +85,7 @@ export class ProtonDriveClient {
     private upload: ReturnType<typeof initUploadModule>;
     private devices: ReturnType<typeof initDevicesModule>;
     private publicSessionManager: SharingPublicSessionManager;
-    private searchServiceProvider: SearchServiceProvider;
+    private searchServiceProvider?: SearchServiceProvider;
 
     public experimental: {
         /**
@@ -167,6 +167,10 @@ export class ProtonDriveClient {
         }>;
         /**
          * Experimental and WIP: initializes the search service.
+         *
+         * Requires `searchServiceProvider` to be passed to the constructor.
+         *
+         * @throws {Error} If no search service provider was configured.
          */
         initSearch: () => Promise<ProtonDriveSearchClient>;
     };
@@ -191,20 +195,7 @@ export class ProtonDriveClient {
             featureFlagProvider = new NullFeatureFlagProvider();
         }
 
-        // Use the browser-based search service by default.
-        this.searchServiceProvider = searchServiceProvider ?? {
-            start: async (sdkVersion, addressId) => {
-                // Lazily imported so it stays code-split from the core SDK
-                // bundle: the search implementation relies on newer web APIs
-                // (SharedWorker, Web Locks, workers nested in a shared worker)
-                // that not every browser we may need to support provides
-                // (e.g. Safari 15/16). An eager import would pull those
-                // dependencies and extra code into the core bundle for consumers
-                // who might never use search.
-                const { start } = await import('./search/browser/searchService.js');
-                return start(sdkVersion, addressId);
-            },
-        };
+        this.searchServiceProvider = searchServiceProvider;
         this.logger = telemetry.getLogger('interface');
 
         const fullConfig = getConfig(config);
@@ -340,6 +331,9 @@ export class ProtonDriveClient {
             },
             initSearch: async () => {
                 this.logger.info('Initializing search service');
+                if (!this.searchServiceProvider) {
+                    throw new Error('Search service provider not available');
+                }
                 const { addressId } = await this.shares.getMyFilesShareMemberEmailKey();
                 return this.searchServiceProvider.start(VERSION, addressId);
             },
