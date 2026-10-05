@@ -1,4 +1,4 @@
-import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
+import { lstat, mkdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -28,8 +28,8 @@ import {
 import type { QueueItemDirectory, QueueItemFile } from './transferQueue';
 
 jest.mock('node:fs/promises', () => ({
+    lstat: jest.fn(),
     mkdir: jest.fn(),
-    readdir: jest.fn(),
     rm: jest.fn(),
     stat: jest.fn(),
     unlink: jest.fn(),
@@ -38,8 +38,8 @@ jest.mock('node:fs/promises', () => ({
 jest.mock('./digest');
 jest.mock('../../cli', () => jest.requireActual('../../cli/node'));
 
+const lstatMock = lstat as jest.MockedFunction<typeof lstat>;
 const mkdirMock = mkdir as jest.MockedFunction<typeof mkdir>;
-const readdirMock = readdir as jest.MockedFunction<typeof readdir>;
 const rmMock = rm as jest.MockedFunction<typeof rm>;
 const statMock = stat as jest.MockedFunction<typeof stat>;
 const unlinkMock = unlink as jest.MockedFunction<typeof unlink>;
@@ -52,6 +52,25 @@ function eexistError(): NodeJS.ErrnoException {
     const error = new Error('EEXIST') as NodeJS.ErrnoException;
     error.code = 'EEXIST';
     return error;
+}
+
+function enoentError(): NodeJS.ErrnoException {
+    const error = new Error('ENOENT') as NodeJS.ErrnoException;
+    error.code = 'ENOENT';
+    return error;
+}
+
+/** Simulates a case-insensitive filesystem (Windows, macOS) containing the given entries in the download root. */
+function mockCaseInsensitiveEntries(names: string[]): void {
+    const existingPaths = names.map((name) => path.join(downloadRoot, name).toLowerCase());
+    const statEntry = async (localPath: unknown) => {
+        if (existingPaths.includes(String(localPath).toLowerCase())) {
+            return mockFileStat();
+        }
+        throw enoentError();
+    };
+    statMock.mockImplementation(statEntry);
+    lstatMock.mockImplementation(statEntry);
 }
 
 function mockDirStat(): Awaited<ReturnType<typeof stat>> {
@@ -112,9 +131,10 @@ function createConflictResolver(
 
 describe('createLocalFolder', () => {
     beforeEach(() => {
+        lstatMock.mockReset();
         mkdirMock.mockReset();
-        readdirMock.mockReset();
         rmMock.mockReset();
+        statMock.mockReset();
     });
 
     function directoryItem(name: string): QueueItemDirectory<{ remoteNode: NodeEntity }> {
@@ -184,7 +204,7 @@ describe('createLocalFolder', () => {
 
     it('keeps both folders by picking an available local name', async () => {
         mkdirMock.mockRejectedValueOnce(eexistError()).mockResolvedValueOnce(undefined);
-        readdirMock.mockResolvedValue(['existing'] as unknown as Awaited<ReturnType<typeof readdir>>);
+        mockCaseInsensitiveEntries(['existing']);
         const item = directoryItem('existing');
 
         const result = await createLocalFolder(
@@ -193,6 +213,50 @@ describe('createLocalFolder', () => {
         );
 
         expect(result).toBe(path.join(downloadRoot, 'existing (1)'));
+    });
+
+    it('keeps both folders when the existing folder differs only by case', async () => {
+        mkdirMock.mockRejectedValueOnce(eexistError()).mockResolvedValueOnce(undefined);
+        mockCaseInsensitiveEntries(['Existing']);
+        const item = directoryItem('existing');
+
+        const result = await createLocalFolder(
+            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.Rename }) },
+            item,
+        );
+
+        expect(result).toBe(path.join(downloadRoot, 'existing (1)'));
+    });
+
+    it('keeps both folders when the existing entry is a dangling symlink', async () => {
+        mkdirMock.mockRejectedValueOnce(eexistError()).mockResolvedValueOnce(undefined);
+        mockCaseInsensitiveEntries(['existing']);
+        statMock.mockRejectedValue(enoentError());
+        const item = directoryItem('existing');
+
+        const result = await createLocalFolder(
+            { downloadRoot, conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.Rename }) },
+            item,
+        );
+
+        expect(result).toBe(path.join(downloadRoot, 'existing (1)'));
+    });
+
+    it('rethrows unexpected errors while picking an available local name', async () => {
+        const error = new Error('permission denied');
+        mkdirMock.mockRejectedValue(eexistError());
+        lstatMock.mockRejectedValue(error);
+        const item = directoryItem('existing');
+
+        await expect(
+            createLocalFolder(
+                {
+                    downloadRoot,
+                    conflictResolver: createConflictResolver({ forcedFolderStrategy: ConflictChoice.Rename }),
+                },
+                item,
+            ),
+        ).rejects.toBe(error);
     });
 });
 
@@ -206,8 +270,8 @@ describe('downloadRemoteFile', () => {
     });
 
     beforeEach(() => {
+        lstatMock.mockReset();
         mkdirMock.mockReset();
-        readdirMock.mockReset();
         statMock.mockReset();
         unlinkMock.mockReset();
         getSha1Mock.mockReset();
@@ -356,10 +420,25 @@ describe('downloadRemoteFile', () => {
     });
 
     it('keeps both files by downloading to an available local name', async () => {
-        statMock.mockResolvedValueOnce(mockFileStat()).mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
-        readdirMock.mockResolvedValue(['report.txt'] as unknown as Awaited<ReturnType<typeof readdir>>);
+        mockCaseInsensitiveEntries(['report.txt']);
         const item = fileItem('report.txt');
         const renamedPath = path.join(downloadRoot, 'report (1).txt');
+
+        await expect(
+            downloadRemoteFile(
+                downloadContext({
+                    conflictResolver: createConflictResolver({ forcedFileStrategy: ConflictChoice.Rename }),
+                }),
+                item,
+            ),
+        ).resolves.toBe(512);
+        expect(bunFile).toHaveBeenCalledWith(renamedPath);
+    });
+
+    it('keeps both files when existing local names differ only by case', async () => {
+        mockCaseInsensitiveEntries(['movie1.MOV', 'movie1 (1).MOV']);
+        const item = fileItem('movie1.mov');
+        const renamedPath = path.join(downloadRoot, 'movie1 (2).mov');
 
         await expect(
             downloadRemoteFile(
