@@ -1,5 +1,20 @@
 # Changelog
 
+## cli/v0.9.0 (2026-10-05)
+
+### Features
+- Update telemetry to report recency and causedBy
+- Add experimental search integration
+- Add takeout command
+- Suggest upgrades when hitting insufficient quota
+- Support new calculation of folder node size
+- Handle job-control resume (Ctrl-Z / fg)
+
+### Bug Fixes
+- Prevent download hang on case-insensitive local name conflicts
+- Prevent uninitialised crypto endpoint during login
+
+
 ## cli/v0.8.0 (2026-08-12)
 
 ### Features
