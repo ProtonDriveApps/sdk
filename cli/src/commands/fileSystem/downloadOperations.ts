@@ -1,4 +1,4 @@
-import { mkdir, readdir, rm, stat, unlink } from 'node:fs/promises';
+import { lstat, mkdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -238,14 +238,12 @@ function isEexistError(error: unknown): boolean {
     return typeof error === 'object' && error !== null && 'code' in error && (error as NodeJS.ErrnoException).code === 'EEXIST';
 }
 
+function isEnoentError(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT';
+}
+
 async function getAvailableLocalName(parentDir: string, baseName: string): Promise<string> {
-    let entries: string[];
-    try {
-        entries = await readdir(parentDir);
-    } catch {
-        return baseName;
-    }
-    if (!entries.includes(baseName)) {
+    if (!(await localPathExists(path.join(parentDir, baseName)))) {
         return baseName;
     }
     const dot = baseName.lastIndexOf('.');
@@ -254,9 +252,26 @@ async function getAvailableLocalName(parentDir: string, baseName: string): Promi
     let i = 1;
     while (true) {
         const candidate = `${stem} (${i})${ext}`;
-        if (!entries.includes(candidate)) {
+        if (!(await localPathExists(path.join(parentDir, candidate)))) {
             return candidate;
         }
         i++;
+    }
+}
+
+/**
+ * Asks the filesystem instead of comparing names, so that case-insensitive
+ * filesystems (Windows, macOS) treat `a.mov` and `a.MOV` as the same file.
+ * Uses `lstat` so a dangling symlink counts as taken, matching `mkdir` failing with EEXIST.
+ */
+async function localPathExists(localPath: string): Promise<boolean> {
+    try {
+        await lstat(localPath);
+        return true;
+    } catch (error: unknown) {
+        if (isEnoentError(error)) {
+            return false;
+        }
+        throw error;
     }
 }
