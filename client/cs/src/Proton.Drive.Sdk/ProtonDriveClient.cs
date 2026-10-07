@@ -118,7 +118,8 @@ public sealed class ProtonDriveClient
     internal BlockDownloader ThumbnailBlockDownloader { get; }
     internal RevisionUploadBackendFactory RevisionUploadBackendFactory { get; }
 
-    internal Func<string, IEnumerable<string>> GetAlternateFileNames { get; } = AlternateFileNameGenerator.GetNames;
+    internal Func<string, IEnumerable<string>> GetAlternateFileNames { get; } = AlternateFileNameGenerator.GetFileNames;
+    internal Func<string, IEnumerable<string>> GetAlternateFolderNames { get; } = AlternateFileNameGenerator.GetFolderNames;
 
     public ValueTask<FolderNode> GetMyFilesFolderAsync(CancellationToken cancellationToken)
     {
@@ -221,9 +222,9 @@ public sealed class ProtonDriveClient
     }
 
     // FIXME: unit tests, including name collision cases
-    public ValueTask<string> GetAvailableNameAsync(NodeUid parentUid, string name, CancellationToken cancellationToken)
+    public ValueTask<string> GetAvailableNameAsync(NodeUid parentUid, string name, AvailableNameTarget target, CancellationToken cancellationToken)
     {
-        return NodeOperations.GetAvailableNameAsync(this, parentUid, name, cancellationToken);
+        return NodeOperations.GetAvailableNameAsync(this, parentUid, name, target, cancellationToken);
     }
 
     /// <summary>

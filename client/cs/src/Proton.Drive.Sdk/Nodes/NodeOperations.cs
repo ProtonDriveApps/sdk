@@ -279,9 +279,21 @@ internal static class NodeOperations
         }
     }
 
-    public static async ValueTask<string> GetAvailableNameAsync(ProtonDriveClient client, NodeUid parentUid, string name, CancellationToken cancellationToken)
+    public static async ValueTask<string> GetAvailableNameAsync(
+        ProtonDriveClient client,
+        NodeUid parentUid,
+        string name,
+        AvailableNameTarget target,
+        CancellationToken cancellationToken)
     {
         const int batchSize = 10;
+
+        var alternateNames = target switch
+        {
+            AvailableNameTarget.File => client.GetAlternateFileNames.Invoke(name),
+            AvailableNameTarget.Folder => client.GetAlternateFolderNames.Invoke(name),
+            _ => throw new ArgumentOutOfRangeException(nameof(target), target, null),
+        };
 
         var operationData = await FolderOperations.GetOperationDataAsync(client, parentUid, cancellationToken)
             .ConfigureAwait(false);
@@ -290,7 +302,7 @@ internal static class NodeOperations
 
         var digestsToNamesMap = new Dictionary<string, string>(batchSize);
 
-        using var batchEnumerator = client.GetAlternateFileNames.Invoke(name).Prepend(name).Chunk(10).GetEnumerator();
+        using var batchEnumerator = alternateNames.Prepend(name).Chunk(10).GetEnumerator();
 
         string? availableName = null;
 

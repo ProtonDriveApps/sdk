@@ -13,6 +13,7 @@ import me.proton.drive.sdk.LoggerProvider.Level.INFO
 import me.proton.drive.sdk.ProtonDriveClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Uploader
+import me.proton.drive.sdk.entity.AvailableNameTarget
 import me.proton.drive.sdk.entity.Device
 import me.proton.drive.sdk.entity.DeviceType
 import me.proton.drive.sdk.entity.DeviceUid
@@ -68,12 +69,14 @@ internal class InteropProtonDriveClient internal constructor(
     override suspend fun getAvailableName(
         parentFolderUid: NodeUid,
         name: String,
+        target: AvailableNameTarget,
     ): String = cancellationCoroutineScope { source ->
         log(DEBUG, "getAvailableName")
         bridge.getAvailableName(
             driveClientGetAvailableNameRequest {
                 this.parentFolderUid = parentFolderUid.value
                 this.name = name
+                this.target = target.toProto()
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

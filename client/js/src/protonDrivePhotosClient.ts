@@ -10,6 +10,7 @@ import {
     NodeEntity,
     NodeOrUid,
     NodeResult,
+    NodeType,
     NonProtonInvitationOrUid,
     PhotoNode,
     PhotoTag,
@@ -603,9 +604,9 @@ export class ProtonDrivePhotosClient {
      *
      * See `ProtonDriveClient.getAvailableName` for more information.
      */
-    async getAvailableName(parentFolderUid: NodeOrUid, name: string): Promise<string> {
+    async getAvailableName(parentFolderUid: NodeOrUid, name: string, nodeType: NodeType): Promise<string> {
         this.logger.info(`Getting available name in photos folder ${getUid(parentFolderUid)}`);
-        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name);
+        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name, nodeType);
     }
 
     /**

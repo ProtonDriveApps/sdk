@@ -1123,16 +1123,19 @@ export class ProtonDriveClient {
     }
 
     /**
-     * Returns the available name for the file in the given parent folder.
+     * Returns the available name for the file or folder in the given parent folder.
      *
      * The function will return a name that includes the original name with the
      * available index. The name is guaranteed to be unique in the parent folder.
      *
-     * Example new name: `file (2).txt`.
+     * Example new name: `file (2).txt` for files, `folder.name (2)` for folders.
+     *
+     * @param nodeType - Type of the node to name. For folders and albums, the index is
+     *                   appended at the end as they have no extension.
      */
-    async getAvailableName(parentFolderUid: NodeOrUid, name: string): Promise<string> {
+    async getAvailableName(parentFolderUid: NodeOrUid, name: string, nodeType: NodeType): Promise<string> {
         this.logger.info(`Getting available name in folder ${getUid(parentFolderUid)}`);
-        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name);
+        return this.nodes.management.findAvailableName(getUid(parentFolderUid), name, nodeType);
     }
 
     /**
