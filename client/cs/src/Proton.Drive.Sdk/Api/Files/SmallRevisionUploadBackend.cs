@@ -106,7 +106,6 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
         }
 
         var (encryptionResult, verificationToken) = await ContentEncryptionOperations.EncryptAndVerifyContentBlockAsync(
-            ProtonDriveClient.MemoryStreamManager,
             _fileKey,
             _contentKey,
             _signingKey,
@@ -121,16 +120,18 @@ internal sealed partial class SmallRevisionUploadBackend : IRevisionUploadBacken
         var encryptedStream = encryptionResult.EncryptedContentStream;
         await using (encryptedStream.ConfigureAwait(false))
         {
-            var encryptedBytes = encryptedStream.ToArray();
+            encryptedStream.Seek(0, SeekOrigin.Begin);
+            var encryptedContent = new byte[encryptedStream.Length];
+            await encryptedStream.ReadExactlyAsync(encryptedContent, cancellationToken).ConfigureAwait(false);
 
             _contentBlock = new ContentBlock(
-                encryptedBytes,
+                encryptedContent,
                 encryptionResult.EncryptedSignature,
                 verificationToken.AsReadOnlyMemory());
 
             onProgress?.Invoke(plainData.Stream.Length);
 
-            return new BlockUploadResult((int)plainData.Stream.Length, encryptedBytes.Length, encryptionResult.Sha256Digest);
+            return new BlockUploadResult((int)plainData.Stream.Length, encryptedContent.Length, encryptionResult.Sha256Digest);
         }
     }
 

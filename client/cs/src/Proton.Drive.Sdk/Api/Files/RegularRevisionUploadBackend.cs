@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
-using Microsoft.IO;
 using Polly;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Account.Addresses;
@@ -49,7 +48,6 @@ internal sealed partial class RegularRevisionUploadBackend(
             var plainDataLength = plainData.Stream.Length;
 
             var (encryptionResult, verificationToken) = await ContentEncryptionOperations.EncryptAndVerifyContentBlockAsync(
-                ProtonDriveClient.MemoryStreamManager,
                 fileKey,
                 contentKey,
                 signingKey,
@@ -183,7 +181,7 @@ internal sealed partial class RegularRevisionUploadBackend(
 
     private async ValueTask UploadBlobAsync(
         BlockUploadPreparationRequest request,
-        RecyclableMemoryStream dataPacketStream,
+        Stream dataPacketStream,
         CancellationToken cancellationToken)
     {
 #pragma warning disable S3236 // FP: https://community.sonarsource.com/t/false-positive-on-s3236-when-calling-debug-assert-with-message/138761/6

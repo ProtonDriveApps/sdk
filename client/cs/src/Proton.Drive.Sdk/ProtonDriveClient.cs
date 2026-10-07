@@ -92,7 +92,7 @@ public sealed class ProtonDriveClient
     }
 
     internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } =
-        new(new RecyclableMemoryStreamManager.Options { BlockSize = PgpDefaults.AeadDecryptionMinimumInputLength });
+        new(new RecyclableMemoryStreamManager.Options { BlockSize = PgpDefaults.MinimumDecryptionInputLength });
 
     internal string Uid { get; }
 
