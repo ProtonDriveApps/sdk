@@ -4,6 +4,7 @@ using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Http;
+using Proton.Drive.Sdk.IO;
 using Proton.Sdk.Api;
 
 namespace Proton.Drive.Sdk.Nodes.Download;
@@ -235,7 +236,7 @@ internal sealed partial class RevisionReader
 
     private async Task<BlockDownloadResult> DownloadBlockAsync(BlockDto block, CancellationToken cancellationToken)
     {
-        var blockOutputStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+        var blockOutputStream = TransferBufferStreamProvider.GetBufferStream();
 
         var hashDigest = await _client.BlockDownloader.DownloadAsync(
             _state.Uid,

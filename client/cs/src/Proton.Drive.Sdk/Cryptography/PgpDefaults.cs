@@ -10,5 +10,5 @@ internal static class PgpDefaults
     // first chunk of the encrypted payload.
     public const int AeadStreamingChunkLength = 1 << 17; // bytes -> 128KiB block size for streaming
 
-    public static int AeadDecryptionMinimumInputLength { get; } = PgpConfiguration.GetAeadDecryptionMinimumInputLength(AeadStreamingChunkLength);
+    public static int MinimumDecryptionInputLength { get; } = PgpConfiguration.GetAeadDecryptionMinimumInputLength(AeadStreamingChunkLength);
 }

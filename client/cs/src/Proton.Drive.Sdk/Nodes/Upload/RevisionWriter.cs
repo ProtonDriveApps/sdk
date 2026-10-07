@@ -6,6 +6,7 @@ using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Api.Files;
 using Proton.Drive.Sdk.Cryptography;
 using Proton.Drive.Sdk.Http;
+using Proton.Drive.Sdk.IO;
 using Proton.Drive.Sdk.Nodes.Cryptography;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Drive.Sdk.Serialization;
@@ -419,7 +420,7 @@ internal sealed partial class RevisionWriter
         var plainDataPrefixBuffer = ArrayPool<byte>.Shared.Rent(prefixLength);
         try
         {
-            var plainDataStream = ProtonDriveClient.MemoryStreamManager.GetStream();
+            var plainDataStream = TransferBufferStreamProvider.GetBufferStream();
 
             try
             {

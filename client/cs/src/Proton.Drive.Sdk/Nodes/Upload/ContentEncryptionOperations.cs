@@ -1,8 +1,10 @@
+using System.Buffers;
 using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance;
 using Microsoft.IO;
 using Proton.Cryptography.Pgp;
 using Proton.Drive.Sdk.Cryptography;
+using Proton.Drive.Sdk.IO;
 using Proton.Drive.Sdk.Nodes.Upload.Verification;
 using Proton.Sdk.Cryptography;
 
@@ -11,7 +13,6 @@ namespace Proton.Drive.Sdk.Nodes.Upload;
 internal static class ContentEncryptionOperations
 {
     internal static async ValueTask<(ContentBlockEncryptionResult Encryption, VerificationToken Token)> EncryptAndVerifyContentBlockAsync(
-        RecyclableMemoryStreamManager memoryStreamManager,
         PgpPrivateKey fileKey,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
@@ -28,11 +29,10 @@ internal static class ContentEncryptionOperations
 
         while (true)
         {
-            attempt++;
+            ++attempt;
             plainData.Stream.Seek(0, SeekOrigin.Begin);
 
             var encryptionResult = await EncryptContentBlockAsync(
-                memoryStreamManager,
                 fileKey,
                 contentKey,
                 signingKey,
@@ -42,17 +42,37 @@ internal static class ContentEncryptionOperations
 
             try
             {
-                var plainDataPrefixLength = (int)Math.Min(BlockVerifierBase.MaxPlainDataVerificationLength, plainData.Stream.Length);
-                var verificationToken = blockVerifier.VerifyBlock(
-                    encryptionResult.EncryptedContentStream.GetFirstBytes(PgpDefaults.AeadDecryptionMinimumInputLength),
-                    plainData.PrefixForVerification.AsSpan()[..plainDataPrefixLength]);
+                var minimumDataPacketPrefixLength = (int)Math.Min(PgpDefaults.MinimumDecryptionInputLength, encryptionResult.EncryptedContentStream.Length);
+                var dataPacketPrefixBuffer = ArrayPool<byte>.Shared.Rent(minimumDataPacketPrefixLength);
 
-                if (integrityErrorEncountered)
+                try
                 {
-                    await onVerificationError(true).ConfigureAwait(false);
-                }
+                    encryptionResult.EncryptedContentStream.Seek(0, SeekOrigin.Begin);
 
-                return (encryptionResult, verificationToken);
+                    var dataPacketPrefixByteCount = await encryptionResult.EncryptedContentStream.ReadAtLeastAsync(
+                        dataPacketPrefixBuffer,
+                        minimumDataPacketPrefixLength,
+                        throwOnEndOfStream: true,
+                        cancellationToken).ConfigureAwait(false);
+
+                    var dataPacketPrefix = dataPacketPrefixBuffer.AsMemory()[..dataPacketPrefixByteCount];
+
+                    var plainDataPrefixLength = (int)Math.Min(BlockVerifierBase.MaxPlainDataVerificationLength, plainData.Stream.Length);
+                    var verificationToken = blockVerifier.VerifyBlock(dataPacketPrefix, plainData.PrefixForVerification.AsSpan()[..plainDataPrefixLength]);
+
+                    if (integrityErrorEncountered)
+                    {
+                        await onVerificationError(true).ConfigureAwait(false);
+                    }
+
+#pragma warning disable S1751 // Loops with at most one iteration should be refactored - False positive
+                    return (encryptionResult, verificationToken);
+#pragma warning restore S1751 // Loops with at most one iteration should be refactored
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(dataPacketPrefixBuffer);
+                }
             }
             catch (SessionKeyAndDataPacketMismatchException) when (attempt <= maxRetries)
             {
@@ -108,7 +128,6 @@ internal static class ContentEncryptionOperations
     }
 
     internal static async ValueTask<ContentBlockEncryptionResult> EncryptContentBlockAsync(
-        RecyclableMemoryStreamManager memoryStreamManager,
         PgpPrivateKey fileKey,
         PgpSessionKey contentKey,
         PgpPrivateKey signingKey,
@@ -116,11 +135,11 @@ internal static class ContentEncryptionOperations
         PgpProfile pgpProfile,
         CancellationToken cancellationToken)
     {
-        var encryptedContentStream = memoryStreamManager.GetStream();
+        var encryptedContentStream = TransferBufferStreamProvider.GetBufferStream();
 
         try
         {
-            var signatureStream = memoryStreamManager.GetStream();
+            var signatureStream = ProtonDriveClient.MemoryStreamManager.GetStream();
 
             await using (signatureStream.ConfigureAwait(false))
             {
@@ -134,11 +153,11 @@ internal static class ContentEncryptionOperations
                 await using (encryptingStream.ConfigureAwait(false))
                 {
                     using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                    var encryptedHashingStream = new HashingReadStream(encryptingStream, sha256, leaveOpen: true);
+                    var encryptingHashingStream = new HashingReadStream(encryptingStream, sha256, leaveOpen: true);
 
-                    await using (encryptedHashingStream.ConfigureAwait(false))
+                    await using (encryptingHashingStream.ConfigureAwait(false))
                     {
-                        await encryptedHashingStream.CopyToAsync(encryptedContentStream, cancellationToken).ConfigureAwait(false);
+                        await encryptingHashingStream.CopyToAsync(encryptedContentStream, cancellationToken).ConfigureAwait(false);
                     }
 
                     var encryptedSignature = PgpEncrypter.Encrypt(
