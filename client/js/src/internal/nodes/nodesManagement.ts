@@ -447,13 +447,14 @@ export abstract class NodesManagementBase<
         );
     }
 
-    async findAvailableName(parentFolderUid: string, name: string): Promise<string> {
+    async findAvailableName(parentFolderUid: string, name: string, nodeType: NodeType): Promise<string> {
         const { hashKey: parentHashKey } = await this.nodesAccess.getNodeKeys(parentFolderUid);
         if (!parentHashKey) {
             throw new ValidationError(c('Error').t`Creating files in non-folders is not allowed`);
         }
 
-        const [namePart, extension] = splitExtension(name);
+        const hasExtension = nodeType === NodeType.File || nodeType === NodeType.Photo;
+        const [namePart, extension] = hasExtension ? splitExtension(name) : [name, ''];
 
         let startIndex = 1;
         while (startIndex < AVAILABLE_NAME_LIMIT) {

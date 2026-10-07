@@ -823,6 +823,19 @@ public struct SDKDeviceUid: Sendable {
     }
 }
 
+/// Kind of node an available name is requested for (files keep their extension).
+public enum SDKAvailableNameTarget: Sendable {
+    case file
+    case folder
+
+    var sdkType: Proton_Drive_Sdk_AvailableNameTarget {
+        switch self {
+        case .file: return .file
+        case .folder: return .folder
+        }
+    }
+}
+
 /// Platform of a device registered in Proton Drive.
 public enum DeviceType: Sendable {
     case windows

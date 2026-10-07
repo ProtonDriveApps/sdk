@@ -1,5 +1,5 @@
 import { NodeWithSameNameExistsValidationError, ValidationError } from '../../errors';
-import { NodeResult } from '../../interface';
+import { NodeResult, NodeType } from '../../interface';
 import { NodeAPIService } from './apiService';
 import { NodesCryptoCache } from './cryptoCache';
 import { NodesCryptoService } from './cryptoService';
@@ -458,7 +458,7 @@ describe('NodesManagement', () => {
                 };
             });
 
-            const result = await management.findAvailableName('parentUid', 'name');
+            const result = await management.findAvailableName('parentUid', 'name', NodeType.File);
             expect(result).toBe('name3');
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(1);
             expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
@@ -485,7 +485,7 @@ describe('NodesManagement', () => {
                 };
             });
 
-            const result = await management.findAvailableName('parentUid', 'name');
+            const result = await management.findAvailableName('parentUid', 'name', NodeType.File);
             expect(result).toBe('name3');
             expect(apiService.checkAvailableHashes).toHaveBeenCalledTimes(2);
             expect(apiService.checkAvailableHashes).toHaveBeenCalledWith('parentUid', [
@@ -493,6 +493,39 @@ describe('NodesManagement', () => {
                 'name2Hash',
                 'name3Hash',
             ]);
+        });
+
+        it.each([NodeType.File, NodeType.Photo])(
+            'should insert index before extension of %s name',
+            async (nodeType) => {
+                apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
+                    return {
+                        availableHashes: ['name1Hash'],
+                        pendingHashes: [],
+                    };
+                });
+
+                await management.findAvailableName('parentUid', 'name.ext', nodeType);
+                expect(cryptoService.generateNameHashes).toHaveBeenCalledWith(
+                    'parentUid-hashKey',
+                    expect.arrayContaining(['name.ext', 'name (1).ext', 'name (10).ext']),
+                );
+            },
+        );
+
+        it.each([NodeType.Folder, NodeType.Album])('should append index at the end of %s name', async (nodeType) => {
+            apiService.checkAvailableHashes = jest.fn().mockImplementation(() => {
+                return {
+                    availableHashes: ['name1Hash'],
+                    pendingHashes: [],
+                };
+            });
+
+            await management.findAvailableName('parentUid', 'name.ext', nodeType);
+            expect(cryptoService.generateNameHashes).toHaveBeenCalledWith(
+                'parentUid-hashKey',
+                expect.arrayContaining(['name.ext', 'name.ext (1)', 'name.ext (10)']),
+            );
         });
     });
 

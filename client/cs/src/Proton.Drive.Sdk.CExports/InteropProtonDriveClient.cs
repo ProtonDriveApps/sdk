@@ -175,6 +175,7 @@ internal static class InteropProtonDriveClient
         var availableName = await client.GetAvailableNameAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.Name,
+            (Nodes.AvailableNameTarget)request.Target,
             cancellationToken).ConfigureAwait(false);
 
         return new StringValue { Value = availableName };

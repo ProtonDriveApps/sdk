@@ -1,6 +1,7 @@
 import {
     Logger,
     NodeEntity,
+    NodeType,
     NodeWithSameNameExistsValidationError,
     type ProtonDriveClient,
     Thumbnail,
@@ -226,7 +227,7 @@ export class CommandFileSystemUpload implements Command {
                         await this.trashConflictingNode(ctx, existingNode);
                         continue;
                     case ConflictChoice.Rename:
-                        name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName);
+                        name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName, NodeType.Folder);
                         continue;
                     default:
                         throw new ValidationError(`Unexpected conflict choice: ${choice}`);
@@ -292,7 +293,7 @@ export class CommandFileSystemUpload implements Command {
                         await this.trashConflictingNode(ctx, existingNode);
                         break;
                     case ConflictChoice.Rename:
-                        name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName);
+                        name = await ctx.sdk.getAvailableName(item.parentNode, item.baseName, NodeType.File);
                         break;
                     default:
                         throw new ValidationError(`Unexpected conflict choice: ${choice}`);

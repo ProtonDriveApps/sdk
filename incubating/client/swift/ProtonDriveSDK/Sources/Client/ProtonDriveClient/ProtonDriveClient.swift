@@ -452,6 +452,7 @@ extension ProtonDriveClient {
     public func getAvailableName(
         parentFolderUid: SDKNodeUid,
         name: String,
+        target: SDKAvailableNameTarget,
         cancellationToken: UUID
     ) async throws -> String {
         let cancellationTokenSource = try await createCancellationTokenSource(.getAvailableName(cancellationToken), logger)
@@ -465,6 +466,7 @@ extension ProtonDriveClient {
             $0.clientHandle = Int64(clientHandle)
             $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
             $0.name = name
+            $0.target = target.sdkType
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
 

@@ -1,6 +1,7 @@
 import {
     Logger,
     NodeEntity,
+    NodeType,
     ValidationError,
 } from '@protontech/drive-sdk';
 import { generateAdditionalPhotoNodeMetadata } from '@protontech/drive-sdk/additionalNodeMetadata';
@@ -143,7 +144,7 @@ export class CommandPhotoUpload implements Command {
                     case ConflictChoice.Skip:
                         return false;
                     case ConflictChoice.Rename:
-                        name = await ctx.photosSdk.getAvailableName(ctx.volumeRootFolder, name);
+                        name = await ctx.photosSdk.getAvailableName(ctx.volumeRootFolder, name, NodeType.Photo);
                         continue;
                     default:
                         throw new ValidationError(`Unexpected conflict choice: ${choice}`);

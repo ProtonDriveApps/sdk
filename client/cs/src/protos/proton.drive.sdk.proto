@@ -288,6 +288,12 @@ enum ThumbnailType {
     THUMBNAIL_TYPE_PREVIEW = 2;
 }
 
+enum AvailableNameTarget {
+    AVAILABLE_NAME_TARGET_UNSPECIFIED = 0; // Invalid value
+    AVAILABLE_NAME_TARGET_FILE = 1;
+    AVAILABLE_NAME_TARGET_FOLDER = 2;
+}
+
 enum RevisionState {
     REVISION_STATE_UNSPECIFIED = 0; // Invalid value
     REVISION_STATE_ACTIVE = 1;
@@ -575,6 +581,7 @@ message DriveClientGetAvailableNameRequest {
     string parent_folder_uid = 2;
     string name = 3;
     int64 cancellation_token_source_handle = 4;
+    AvailableNameTarget target = 5;
 }
 
 // The response message must be of type FolderNode
