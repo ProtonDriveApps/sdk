@@ -11,7 +11,8 @@ import kotlin.coroutines.Continuation
 class ContinuationValueOrErrorResponse<T>(
     continuation: CancellableContinuation<T>,
     private val anyConverter: AnyConverter<T>,
-) : BaseContinuationResponse<T>(continuation) {
+    onDropped: ((T) -> Unit)? = null,
+) : BaseContinuationResponse<T>(continuation, onDropped) {
 
     override fun invoke(data: ByteBuffer) = parse(data) { response ->
         when (response.resultCase) {
