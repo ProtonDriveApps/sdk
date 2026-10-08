@@ -34,6 +34,17 @@ fun CancellableContinuation<Long>.toLongResponse(): ResponseCallback =
 val LongResponseCallback: (CancellableContinuation<Long>) -> ResponseCallback =
     CancellableContinuation<Long>::toLongResponse
 
+/**
+ * For a native handle that holds resources (e.g. a transfer queue slot): if it arrives after the caller
+ * stopped waiting, it is passed to [free] instead of being leaked. A zero handle means none was created.
+ */
+fun handleResponseCallback(free: (Long) -> Unit): (CancellableContinuation<Long>) -> ResponseCallback =
+    { continuation ->
+        ContinuationValueOrErrorResponse(continuation, LongConverter()) { handle ->
+            if (handle != 0L) free(handle)
+        }
+    }
+
 fun CancellableContinuation<String>.toStringResponse(): ResponseCallback =
     ContinuationValueOrErrorResponse(this, StringConverter())
 

@@ -3,7 +3,7 @@ package me.proton.drive.sdk.internal
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
 import me.proton.drive.sdk.entity.FileUploaderRequest
 import me.proton.drive.sdk.entity.ThumbnailType
-import me.proton.drive.sdk.extension.LongResponseCallback
+import me.proton.drive.sdk.extension.handleResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
@@ -21,7 +21,7 @@ class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: FileUploaderRequest,
-    ): Long = executeOnce("getFile", LongResponseCallback) {
+    ): Long = executeOnce("getFile", handleResponseCallback(::free)) {
         driveClientGetFileUploader =
             request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
@@ -30,7 +30,7 @@ class JniFileUploader internal constructor() : JniBaseProtonDriveSdk() {
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: FileRevisionUploaderRequest,
-    ): Long = executeOnce("getFileRevision", LongResponseCallback) {
+    ): Long = executeOnce("getFileRevision", handleResponseCallback(::free)) {
         driveClientGetFileRevisionUploader =
             request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }

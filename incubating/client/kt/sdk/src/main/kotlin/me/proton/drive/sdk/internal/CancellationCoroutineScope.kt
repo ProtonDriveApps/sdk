@@ -1,5 +1,6 @@
 package me.proton.drive.sdk.internal
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
@@ -24,14 +25,29 @@ suspend fun <T> cancellationCoroutineScope(
 }
 
 /** Creates a source owned by whatever [block] returns; it is only closed when [block] fails. */
-@Suppress("TooGenericExceptionCaught")
 suspend fun <T> ownedCancellationTokenSource(
     block: suspend (CancellationTokenSource) -> T,
+): T = ownedCancellationTokenSource(cancellationTokenSource(), block)
+
+@Suppress("TooGenericExceptionCaught")
+internal suspend fun <T> ownedCancellationTokenSource(
+    source: CancellationTokenSource,
+    block: suspend (CancellationTokenSource) -> T,
 ): T {
-    val source = cancellationTokenSource()
     return try {
         block(source)
     } catch (throwable: Throwable) {
+        if (throwable is CancellationException) {
+            // Freeing the source does not cancel it, so a native operation still waiting
+            // (e.g. for a transfer queue slot) would otherwise complete with nobody to release it.
+            try {
+                withContext(NonCancellable) {
+                    source.cancel()
+                }
+            } catch (cancelThrowable: Throwable) {
+                throwable.addSuppressed(cancelThrowable)
+            }
+        }
         try {
             source.close()
         } catch (closeThrowable: Throwable) {

@@ -1,7 +1,7 @@
 package me.proton.drive.sdk.internal
 
 import me.proton.drive.sdk.entity.FileDownloaderRequest
-import me.proton.drive.sdk.extension.LongResponseCallback
+import me.proton.drive.sdk.extension.handleResponseCallback
 import me.proton.drive.sdk.extension.toLongResponse
 import me.proton.drive.sdk.extension.toProtobuf
 import proton.drive.sdk.ProtonDriveSdk
@@ -16,7 +16,7 @@ class JniFileDownloader internal constructor() : JniBaseProtonDriveSdk() {
         clientHandle: Long,
         cancellationTokenSourceHandle: Long,
         request: FileDownloaderRequest,
-    ): Long = executeOnce("create", LongResponseCallback) {
+    ): Long = executeOnce("create", handleResponseCallback(::free)) {
         driveClientGetFileDownloader = request.toProtobuf(clientHandle, cancellationTokenSourceHandle)
     }
 

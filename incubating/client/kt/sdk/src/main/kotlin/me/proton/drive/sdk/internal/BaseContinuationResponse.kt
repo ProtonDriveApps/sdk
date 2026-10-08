@@ -7,11 +7,12 @@ import me.proton.drive.sdk.ProtonDriveSdkException
 import me.proton.drive.sdk.extension.toError
 import proton.drive.sdk.ProtonDriveSdk
 import java.nio.ByteBuffer
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 abstract class BaseContinuationResponse<T>(
     private val continuation: CancellableContinuation<T>,
+    /** Releases a value that arrives after the caller stopped waiting, so it is not leaked. */
+    private val onDropped: ((T) -> Unit)? = null,
 ) : ResponseCallback {
 
     private val callSite = CallerException("Called from")
@@ -27,9 +28,10 @@ abstract class BaseContinuationResponse<T>(
             .mapCatching(block)
             .onSuccess { value ->
                 if (continuation.isActive) {
-                    continuation.resume(value)
+                    continuation.resume(value) { _, droppedValue, _ -> onDropped?.invoke(droppedValue) }
                 } else {
                     logger("Cannot resume inactive continuation")
+                    onDropped?.invoke(value)
                 }
             }
             .onFailure { error ->
