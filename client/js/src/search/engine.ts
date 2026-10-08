@@ -1,16 +1,6 @@
 import { DriveSearchEngine, type HttpClient, type Storage } from './vendor/proton_drive_sdk_search.js';
 
 /**
- * Nodes each index may hold, which decides how many shards it is split into
- * and past which the recent index evicts.
- */
-const INDEX_COUNT_LIMITS = {
-    recent: 10_000n,
-    ownVolume: 20_000n,
-    sharedWithMe: 2_000n,
-};
-
-/**
  * Builds the engine from an already-initialised wasm module.
  *
  * `storage` and `http` are supplied by the caller so each runtime can pick its
@@ -23,8 +13,6 @@ export async function createEngine(storage: Storage, http: HttpClient): Promise<
         generateCsprngSeed(),
         // wasm has no clock of its own; the engine reads seconds since the Unix epoch.
         { now: () => BigInt(Math.floor(Date.now() / 1000)) },
-        50n,
-        INDEX_COUNT_LIMITS,
         'proton-drive-sdk-search',
     );
     if (!engine) {
