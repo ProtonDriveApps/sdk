@@ -27,7 +27,7 @@ function getEngine() {
 export const searchWorkerApi: ProtonDriveSearchClient = {
     async enable(): Promise<void> {
         const engine = await getEngine();
-        engine.setEnabled(true);
+        await engine.setEnabled(true);
     },
 };
 

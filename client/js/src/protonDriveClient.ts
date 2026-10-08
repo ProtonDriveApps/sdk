@@ -170,7 +170,7 @@ export class ProtonDriveClient {
          *
          * Requires `searchServiceProvider` to be passed to the constructor.
          *
-         * @throws {Error} If no search service provider was configured.
+         * @throws {@link Error} If no search service provider was configured.
          */
         initSearch: () => Promise<ProtonDriveSearchClient>;
     };
