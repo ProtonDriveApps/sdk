@@ -18,7 +18,7 @@ dist
 /incubating/search/bindings/typescript/
 /incubating/search/bindings/csharp/**
 !/incubating/search/bindings/csharp/Proton.Drive.Sdk.Search.csproj
-/incubating/search/Cargo.lock
+/target
 /incubating/search/target
 
 # JS CLI
