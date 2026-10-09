@@ -22,8 +22,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const workspaceDir = path.resolve(__dirname, '../../../../incubating/search');
-const crateDir = path.join(workspaceDir, 'proton-drive-sdk-search');
+const workspaceDir = path.resolve(__dirname, '../../../..');
+const crateDir = path.join(workspaceDir, 'incubating/search/proton-drive-sdk-search');
+const cryptoCrateDir = path.join(workspaceDir, 'incubating/crypto_v2/proton-drive-crypto');
 const vendorDir = path.resolve(__dirname, '../../src/search/vendor');
 const runtimeDir = path.resolve(__dirname, '../../node_modules/@boltffi/runtime');
 
@@ -41,9 +42,12 @@ const BINDING_FILES = [
 const SOURCES = [
     path.join(workspaceDir, 'Cargo.toml'),
     path.join(workspaceDir, 'Cargo.lock'),
+    path.join(workspaceDir, '.cargo/config.toml'),
     path.join(crateDir, 'Cargo.toml'),
     path.join(crateDir, 'boltffi.toml'),
     path.join(crateDir, 'src'),
+    path.join(cryptoCrateDir, 'Cargo.toml'),
+    path.join(cryptoCrateDir, 'src'),
 ];
 
 const log = (message) => console.log(`[search-bindings] ${message}`);
