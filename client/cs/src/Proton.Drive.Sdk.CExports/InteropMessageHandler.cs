@@ -261,6 +261,25 @@ internal static class InteropMessageHandler
                         request.DrivePhotosClientSavePhotosToTimeline,
                         bindingsHandle).ConfigureAwait(false),
 
+                Request.PayloadOneofCase.DrivePhotosClientAddPhotosToAlbum
+                    => await InteropProtonPhotosClient.HandleAddPhotosToAlbumAsync(
+                        request.DrivePhotosClientAddPhotosToAlbum,
+                        bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientRemovePhotosFromAlbum
+                    => await InteropProtonPhotosClient.HandleRemovePhotosFromAlbumAsync(
+                        request.DrivePhotosClientRemovePhotosFromAlbum,
+                        bindingsHandle).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientUpdateAlbum
+                    => await InteropProtonPhotosClient.HandleUpdateAlbumAsync(request.DrivePhotosClientUpdateAlbum).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientDeleteAlbum
+                    => await InteropProtonPhotosClient.HandleDeleteAlbumAsync(request.DrivePhotosClientDeleteAlbum).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DrivePhotosClientCreateAlbum
+                    => await InteropProtonPhotosClient.HandleCreateAlbumAsync(request.DrivePhotosClientCreateAlbum).ConfigureAwait(false),
+
                 Request.PayloadOneofCase.DrivePhotosClientEnumerateSharedWithMeNodeUids
                     => await InteropProtonPhotosClient.HandleEnumerateSharedWithMeNodeUidsAsync(
                         request.DrivePhotosClientEnumerateSharedWithMeNodeUids,

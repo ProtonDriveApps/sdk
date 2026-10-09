@@ -91,6 +91,16 @@ internal static class InteropDriveErrorConverter
                 error.AdditionalData = Any.Pack(ToAdditionalData(e));
                 break;
 
+            case AlbumContainsPhotosNotInTimelineException e:
+                if (e.Code is not null)
+                {
+                    error.PrimaryCode = e.Code.Value;
+                }
+
+                error.Domain = ErrorDomain.BusinessLogic;
+                error.AdditionalData = Any.Pack(ToAdditionalData(e));
+                break;
+
             default:
                 error.PrimaryCode = UnknownDecryptionErrorPrimaryCode;
                 InteropErrorConverter.SetDomainAndCodes(error, exception);
@@ -186,6 +196,13 @@ internal static class InteropDriveErrorConverter
             data.NodeUid = nodeUid.ToString();
         }
 
+        return data;
+    }
+
+    private static AlbumContainsPhotosNotInTimelineErrorData ToAdditionalData(AlbumContainsPhotosNotInTimelineException e)
+    {
+        var data = new AlbumContainsPhotosNotInTimelineErrorData();
+        data.PhotoUids.Add(e.PhotosOnlyInAlbumNodeUids.Select(uid => uid.ToString()));
         return data;
     }
 }

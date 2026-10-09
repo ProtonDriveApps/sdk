@@ -74,6 +74,12 @@ data class ProtonSdkError(
             override fun toSafe() = this
         }
 
+        data class AlbumContainsPhotosNotInTimeline(
+            val photoUids: List<NodeUid>,
+        ) : Data<AlbumContainsPhotosNotInTimeline> {
+            override fun toSafe() = this
+        }
+
         class ChecksumMismatch(
             val actualChecksum: ByteArray?,
             val expectedChecksum: ByteArray?,

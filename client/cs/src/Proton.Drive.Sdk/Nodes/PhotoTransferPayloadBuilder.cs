@@ -135,7 +135,7 @@ internal static class PhotoTransferPayloadBuilder
             NameSignatureEmailAddress = signingEmailAddress,
             Passphrase = encrypted.Passphrase,
 
-            // The passphrase signature (and its email) are set only when PhotosCrypto signed the passphrase, i.e. for anonymous nodes.
+            // The server rejects these fields unless the node is anonymous, so PhotosCrypto only signs in that case.
             PassphraseSignature = encrypted.PassphraseSignature,
             SignatureEmailAddress = encrypted.PassphraseSignature is not null ? signingEmailAddress : null,
             RelatedPhotos = [],

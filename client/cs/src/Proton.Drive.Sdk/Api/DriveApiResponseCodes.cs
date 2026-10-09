@@ -20,6 +20,7 @@ internal static class DriveApiResponseCodes
     public const int AlreadyMemberOfShareInVolumeWithAnotherAddress = 200_201;
     public const int TooManyChildren = 200_300;
     public const int NestingTooDeep = 200_301;
+    public const int AlbumContainsPhotosNotInTimeline = 200_302;
     public const int InsufficientInvitationQuota = 200_600;
     public const int InsufficientShareQuota = 200_601;
     public const int InsufficientShareJoinedQuota = 200_602;

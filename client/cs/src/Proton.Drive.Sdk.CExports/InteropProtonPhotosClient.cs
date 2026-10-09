@@ -107,6 +107,57 @@ internal static class InteropProtonPhotosClient
         return null;
     }
 
+    public static async ValueTask<IMessage?> HandleAddPhotosToAlbumAsync(
+        DrivePhotosClientAddPhotosToAlbumRequest request,
+        nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var albumUid = NodeUid.Parse(request.AlbumUid);
+        var photoUids = request.PhotoUids.Select(NodeUid.Parse).ToList();
+
+        await foreach (var result in client.AddPhotosToAlbumAsync(albumUid, photoUids, cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleRemovePhotosFromAlbumAsync(
+        DrivePhotosClientRemovePhotosFromAlbumRequest request,
+        nint bindingsHandle)
+    {
+        var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var albumUid = NodeUid.Parse(request.AlbumUid);
+        var photoUids = request.PhotoUids.Select(NodeUid.Parse).ToList();
+
+        await foreach (var result in client.RemovePhotosFromAlbumAsync(albumUid, photoUids, cancellationToken).ConfigureAwait(false))
+        {
+            yieldAction.InvokeWithMessage(bindingsHandle, result.ToInterop());
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<IMessage?> HandleDeleteAlbumAsync(DrivePhotosClientDeleteAlbumRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        await client.DeleteAlbumAsync(NodeUid.Parse(request.AlbumUid), request.Force, request.SaveToTimeline, cancellationToken).ConfigureAwait(false);
+
+        return null;
+    }
+
     public static async ValueTask<IMessage?> HandleTrashNodesAsync(DrivePhotosClientTrashNodesRequest request, nint bindingsHandle)
     {
         var yieldAction = new InteropAction<nint, InteropArray<byte>>(request.YieldAction);
@@ -230,6 +281,32 @@ internal static class InteropProtonPhotosClient
         await client.LeaveSharedNodeAsync(NodeUid.Parse(request.NodeUid), cancellationToken).ConfigureAwait(false);
 
         return null;
+    }
+
+    public static async ValueTask<IMessage> HandleUpdateAlbumAsync(DrivePhotosClientUpdateAlbumRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var updatedAlbum = await client.UpdateAlbumAsync(
+            NodeUid.Parse(request.AlbumUid),
+            request.HasName ? request.Name : null,
+            request.HasCoverPhotoUid ? NodeUid.Parse(request.CoverPhotoUid) : null,
+            cancellationToken).ConfigureAwait(false);
+
+        return updatedAlbum.ToInterop();
+    }
+
+    public static async ValueTask<IMessage> HandleCreateAlbumAsync(DrivePhotosClientCreateAlbumRequest request)
+    {
+        var cancellationToken = Interop.GetCancellationToken(request.CancellationTokenSourceHandle);
+
+        var client = Interop.GetFromHandle<ProtonPhotosClient>(request.ClientHandle);
+
+        var createdAlbum = await client.CreateAlbumAsync(request.Name, cancellationToken).ConfigureAwait(false);
+
+        return createdAlbum.ToInterop();
     }
 
     public static async ValueTask<IMessage?> HandleReportRecentlyAccessedAsync(DrivePhotosClientReportRecentlyAccessedRequest request)

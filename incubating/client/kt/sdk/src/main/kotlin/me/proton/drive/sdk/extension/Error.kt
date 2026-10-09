@@ -55,5 +55,8 @@ private fun Any.toData() = when (typeUrl) {
     "type.googleapis.com/proton.drive.sdk.NodeNotFoundErrorData" ->
         ProtonDriveSdk.NodeNotFoundErrorData.parseFrom(value).toEntity()
 
+    "type.googleapis.com/proton.drive.sdk.AlbumContainsPhotosNotInTimelineErrorData" ->
+        ProtonDriveSdk.AlbumContainsPhotosNotInTimelineErrorData.parseFrom(value).toEntity()
+
     else -> null
 }
