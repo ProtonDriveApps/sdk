@@ -9,6 +9,7 @@ import type { Credentials } from '../credentials';
 import { DriveAccountAdapter } from './driveAccountAdapter';
 import { createDriveRequirementAfterResponseHook } from './driveRequirementHook';
 import { HTTPClient } from './httpClient';
+import { createServerTimeAfterResponseHook } from './serverTimeHook';
 
 export type { ApiClient } from 'proton-drive-sdk-account';
 export { Auth, Srp } from 'proton-drive-sdk-account';
@@ -28,7 +29,10 @@ export async function initApi(
         headers: {
             'x-pm-drive-sdk-version': config.sdkVersion,
         },
-        afterResponseHooks: [createDriveRequirementAfterResponseHook(config, logger)],
+        afterResponseHooks: [
+            createServerTimeAfterResponseHook(),
+            createDriveRequirementAfterResponseHook(config, logger),
+        ],
     });
     const {
         auth,
