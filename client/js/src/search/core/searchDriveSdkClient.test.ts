@@ -1,7 +1,7 @@
 import { wireOk } from '@boltffi/runtime';
 
-import { createSearchDriveSdkClient, type NodeSource } from './driveSdkClient';
-import type { Node, NodeUid } from './vendor/proton_drive_sdk_search.js';
+import type { Node, NodeUid } from '../vendor/proton_drive_sdk_search.js';
+import { type NodeSource, SearchDriveSdkClient } from './searchDriveSdkClient';
 
 const uid = (nodeId: string): NodeUid => ({ volumeId: 'volume', nodeId });
 const node = (nodeId: string) => ({ uid: uid(nodeId) }) as Node;
@@ -12,9 +12,9 @@ const sourceOf = (nodes: Node[]): NodeSource =>
         yield* nodes.filter((n) => wanted.has(n.uid.nodeId));
     };
 
-describe('createSearchDriveSdkClient', () => {
+describe('SearchDriveSdkClient', () => {
     it('streams the requested nodes one by one, then null', async () => {
-        const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b'), node('c')]));
+        const client = new SearchDriveSdkClient(sourceOf([node('a'), node('b'), node('c')]));
 
         const { value: token } = await client.openNodeStream([uid('a'), uid('c')]);
 
@@ -24,7 +24,7 @@ describe('createSearchDriveSdkClient', () => {
     });
 
     it('streams nodes in batches, then null', async () => {
-        const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b')]));
+        const client = new SearchDriveSdkClient(sourceOf([node('a'), node('b')]));
 
         const { value: token } = await client.openNodeStream([uid('a'), uid('b')]);
 
@@ -33,7 +33,7 @@ describe('createSearchDriveSdkClient', () => {
     });
 
     it('keeps concurrent streams independent', async () => {
-        const client = createSearchDriveSdkClient(sourceOf([node('a'), node('b')]));
+        const client = new SearchDriveSdkClient(sourceOf([node('a'), node('b')]));
 
         const { value: first } = await client.openNodeStream([uid('a')]);
         const { value: second } = await client.openNodeStream([uid('b')]);
@@ -44,7 +44,7 @@ describe('createSearchDriveSdkClient', () => {
 
     it('rejects reads from a closed stream and stops the source', async () => {
         let finished = false;
-        const client = createSearchDriveSdkClient(async function* () {
+        const client = new SearchDriveSdkClient(async function* () {
             try {
                 yield node('a');
                 yield node('b');

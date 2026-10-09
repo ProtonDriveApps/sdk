@@ -1,10 +1,15 @@
-// Makes consumers compiling these sources (the CLIs) pick up the fallback types without their own include.
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="./vendorFallback.d.ts" />
-
-export { createSearchDriveSdkClient, type NodeSource } from './driveSdkClient';
-export { createEngine } from './engine';
-export { createMemoryStorage } from './memoryStorage';
-export type { ProtonDriveSearchClient, SearchServiceProvider } from './types';
-export { createUnconnectedHttpClient } from './unconnectedHttpClient';
-export { type DriveSearchEngine, default as initSearchWasm } from './vendor/proton_drive_sdk_search.js';
+export { type SearchSdkCapabilities } from './sdkCapabilities';
+export {
+    type DateRange,
+    IndexStatus,
+    type ProtonDriveSearchClient,
+    type RunIndexingOptions,
+    type RunSchedule,
+    type SearchDebugInfo,
+    SearchIndex,
+    type SearchQuery,
+    type SearchResult,
+    type SearchServiceProvider,
+    type SearchStatus,
+    type StructuredSearchQuery,
+} from './types';

@@ -2,7 +2,9 @@ import * as Comlink from 'comlink';
 import { c } from 'ttag';
 
 import { ValidationError } from '../../errors';
+import type { SearchSdkCapabilities } from '../sdkCapabilities';
 import type { ProtonDriveSearchClient, SearchServiceProvider } from '../types';
+import { RemoteSearchClient, type SearchWorkerApi } from './comlinkAdapter';
 
 /**
  * Browser search service provider to pass as `searchServiceProvider` to
@@ -12,7 +14,7 @@ import type { ProtonDriveSearchClient, SearchServiceProvider } from '../types';
  * of applications that don't import it never process the search worker or wasm.
  *
  * ```ts
- * import { browserSearchServiceProvider } from '@protontech/drive-sdk/dist/search/browser/searchService';
+ * import { browserSearchServiceProvider } from '@protontech/drive-sdk/dist/search/browser/searchServiceProvider';
  *
  * new ProtonDriveClient({ ..., searchServiceProvider: browserSearchServiceProvider });
  * ```
@@ -23,16 +25,16 @@ import type { ProtonDriveSearchClient, SearchServiceProvider } from '../types';
  *
  * ```ts
  * const searchServiceProvider: SearchServiceProvider = {
- *     start: async (sdkVersion, addressId) => {
+ *     start: async (sdkVersion, addressId, sdk) => {
  *         const { browserSearchServiceProvider } = await import(
- *             '@protontech/drive-sdk/dist/search/browser/searchService'
+ *             '@protontech/drive-sdk/dist/search/browser/searchServiceProvider'
  *         );
- *         return browserSearchServiceProvider.start(sdkVersion, addressId);
+ *         return browserSearchServiceProvider.start(sdkVersion, addressId, sdk);
  *     },
  * };
  * ```
  *
- * Bundler setup: the search worker loads the engine wasm at runtime with
+ * Bundler setup: the search worker loads the search module wasm at runtime with
  * `fetch(new URL('…/proton_drive_sdk_search_bg.wasm', import.meta.url))` and
  * instantiates it itself, supplying the wasm imports (the `env` module) from JS.
  * The bundler must therefore emit the `.wasm` file as a plain static asset and
@@ -58,27 +60,25 @@ import type { ProtonDriveSearchClient, SearchServiceProvider } from '../types';
  * via a package.json `exports` map, keeping `./dist/*` for existing deep imports.
  */
 export const browserSearchServiceProvider: SearchServiceProvider = {
-    start: async (sdkVersion, addressId) => start(sdkVersion, addressId),
+    start: async (sdkVersion, addressId, sdk) => start(sdkVersion, addressId, sdk),
 };
 
 /**
- * Runs the engine in a `SharedWorker`, so same-origin tabs share one search engine
+ * Runs the search module in a `SharedWorker`, so same-origin tabs share one
  * instead of each duplicating the work.
  */
-export function start(sdkVersion: string, addressId: string): ProtonDriveSearchClient {
+export function start(sdkVersion: string, addressId: string, sdk: SearchSdkCapabilities): ProtonDriveSearchClient {
     if (typeof SharedWorker === 'undefined') {
         // TODO: centralize proper browser capability detection instead of throwing here.
-        throw new ValidationError(
-            c('Error').t`Your browser does not support features required for the search.`,
-        );
+        throw new ValidationError(c('Error').t`Your browser does not support features required for the search.`);
     }
 
-    const worker = new SharedWorker(new URL('./protonDriveSdkSearchSharedWorker.js', import.meta.url), {
+    const worker = new SharedWorker(new URL('./protonSearchSharedWorker.js', import.meta.url), {
         name: getSearchWorkerName(sdkVersion, addressId),
         type: 'module',
     });
     worker.port.start();
-    return Comlink.wrap<ProtonDriveSearchClient>(worker.port);
+    return new RemoteSearchClient(Comlink.wrap<SearchWorkerApi>(worker.port), sdk);
 }
 
 /**
