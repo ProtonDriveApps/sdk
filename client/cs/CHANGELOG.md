@@ -1,5 +1,15 @@
 # Changelog
 
+## cs/v0.31.0 (2026-10-08)
+
+### Features
+- Require node type for getting available name
+- Add possibility to use local storage for large transfer buffers
+
+### Bug Fixes
+- Stop timed-out transfer requests from holding queue slots
+
+
 ## cs/v0.30.0 (2026-10-02)
 
 ### Features
