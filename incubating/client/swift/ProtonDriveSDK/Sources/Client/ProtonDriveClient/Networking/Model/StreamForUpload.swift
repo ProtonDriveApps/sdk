@@ -7,7 +7,10 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     
     public var onStreamError: (Error) -> Void = { _ in }
 
-    let sdkContentHandle: Int64
+    /// Fills the buffer with the next chunk of the upload and calls back with the number of bytes read (0 at end of file).
+    typealias ReadChunk = (UnsafeMutableRawBufferPointer, @escaping (Result<Int32, Error>) -> Void) -> Void
+
+    let readChunk: ReadChunk
     let logger: Logger
     let buffer: UnsafeMutableRawBufferPointer
     let bufferLength: Int
@@ -21,6 +24,9 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     }
     
     private var state: State = .initialized
+    /// A `.hasSpaceAvailable` event that arrived while a write was in progress. The stream does not
+    /// signal again until we write, so dropping it would stall the upload forever.
+    private var hasPendingSpaceAvailable = false
     private let stateQueue = DispatchQueue(label: "StreamForUpload.StateQueue", qos: .userInitiated)
     
     private var remainingBytes: [UInt8] = []
@@ -28,9 +34,23 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
 
     /// `inputStream`'s lifecycle is owned by URLSession (it opens, reads, and closes it).
     /// Only `outputStream`'s lifecycle is owned by this class.
-    init(inputStream: InputStream, outputStream: OutputStream, bufferLength: Int, sdkContentHandle: Int64, logger: Logger) throws {
+    init(
+        inputStream: InputStream,
+        outputStream: OutputStream,
+        bufferLength: Int,
+        sdkContentHandle: Int64,
+        logger: Logger,
+        readChunk: ReadChunk? = nil
+    ) throws {
         self.bufferLength = bufferLength
-        self.sdkContentHandle = sdkContentHandle
+        self.readChunk = readChunk ?? { buffer, completion in
+            let streamReadRequest = Proton_Drive_Sdk_StreamReadRequest.with {
+                $0.bufferLength = Int32(buffer.count)
+                $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(buffer.baseAddress!)))
+                $0.streamHandle = sdkContentHandle
+            }
+            SDKRequestHandler.send(streamReadRequest, logger: logger, completionBlock: completion)
+        }
         self.logger = logger
         self.input = inputStream
         self.output = outputStream
@@ -77,7 +97,10 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
                 state = .isReadyForNextWrite
             case .isReadyForNextWrite:
                 break /* no-op, we already know */
-            case .writingInProgress, .isClosed:
+            case .writingInProgress:
+                logger.trace("StreamForUpload: space available during write, deferring", category: "upload stream")
+                hasPendingSpaceAvailable = true
+            case .isClosed:
                 break /* ignore, we're not ready to send any more data */
             }
             
@@ -89,15 +112,24 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
     }
     
     private func hasFinishedWriting() {
-        stateQueue.sync {
+        let shouldWriteAgain = stateQueue.sync { () -> Bool in
             switch state {
             case .writingInProgress:
+                if hasPendingSpaceAvailable {
+                    hasPendingSpaceAvailable = false
+                    return true /* stay in .writingInProgress and serve the deferred event */
+                }
                 state = .writingDone
+                return false
             case .isClosed:
-                return /* no-op, our stream is not usable for writing anymore */
+                return false /* no-op, our stream is not usable for writing anymore */
             case .initialized, .isReadyForNextWrite, .writingDone:
                 assertionFailure("We should never be in \(state) state when we finish writing")
+                return false
             }
+        }
+        if shouldWriteAgain {
+            writeToOutputStream()
         }
     }
 
@@ -110,12 +142,7 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
             }
 
             let baseAddress = buffer.baseAddress!
-            let streamReadRequest = Proton_Drive_Sdk_StreamReadRequest.with {
-                $0.bufferLength = Int32(buffer.count)
-                $0.bufferPointer = Int64(ObjectHandle(rawPointer: UnsafeRawPointer(baseAddress)))
-                $0.streamHandle = sdkContentHandle
-            }
-            SDKRequestHandler.send(streamReadRequest, logger: logger) { (result: Result<Int32, Error>) in
+            readChunk(buffer) { result in
                 self.handleReadResult(result, baseAddress: baseAddress)
             }
         }
@@ -147,7 +174,8 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
             switch result {
             case .success(let read):
                 if read == 0 {
-                    output.close()
+                    // Marks the state closed so a deferred .hasSpaceAvailable does not trigger another read.
+                    closeAndCleanUp()
                 } else {
                     let bytesWritten = output.write(baseAddress, maxLength: Int(read))
                     if bytesWritten < 0 {
@@ -156,7 +184,7 @@ public final class StreamForUpload: NSObject, StreamDelegate, @unchecked Sendabl
                         // Keep the remaining, unwritten bytes in the memory.
                         // On the next .hasSpaceAvailable event, we will write
                         // these bytes from the memory instead of asking the SDK.
-                        remainingBytes = Array(self.buffer[bytesWritten...])
+                        remainingBytes = Array(self.buffer[bytesWritten..<Int(read)])
                     }
                 }
             case .failure(let error):
