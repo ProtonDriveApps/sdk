@@ -8,7 +8,22 @@ import { FeatureFlagProvider } from './featureFlags';
 import { ProtonDriveHTTPClient } from './httpClient';
 import { MetricEvent, Telemetry } from './telemetry';
 
-export type { ProtonDriveSearchClient, SearchServiceProvider } from '../search/index';
+// From `search/types`, not `search/index`: the enums are values, and the index
+// would pull the wasm bindings into every SDK consumer.
+export {
+    type DateRange,
+    IndexStatus,
+    type ProtonDriveSearchClient,
+    type RunIndexingOptions,
+    type RunSchedule,
+    type SearchDebugInfo,
+    SearchIndex,
+    type SearchQuery,
+    type SearchResult,
+    type SearchServiceProvider,
+    type SearchStatus,
+    type StructuredSearchQuery,
+} from '../search/types';
 export type { ProtonDriveAccount, ProtonDriveAccountAddress } from './account';
 export type { AnonymousUser, Author, UnverifiedAuthorError } from './author';
 export type { ProtonDriveConfig } from './config';

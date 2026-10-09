@@ -1,4 +1,4 @@
-import { getSearchWorkerNameForTesting } from './searchService';
+import { getSearchWorkerNameForTesting } from './searchServiceProvider';
 
 describe('getSearchWorkerName', () => {
     it('scopes the name by SDK version and user id', () => {

@@ -55,6 +55,7 @@ import { makeNodeUid } from './internal/uids';
 import { initUploadModule } from './internal/upload';
 import { ProtonDrivePublicLinkClient } from './protonDrivePublicLinkClient';
 import type { ProtonDriveSearchClient, SearchServiceProvider } from './search/index';
+import { type SearchSdkCapabilities, SearchSdkCapabilitiesAdapter } from './search/sdkCapabilities';
 import { Telemetry } from './telemetry';
 import {
     convertInternalMissingNodeIterator,
@@ -86,6 +87,8 @@ export class ProtonDriveClient {
     private devices: ReturnType<typeof initDevicesModule>;
     private publicSessionManager: SharingPublicSessionManager;
     private searchServiceProvider?: SearchServiceProvider;
+    private searchSdkCapabilities: SearchSdkCapabilities;
+    private searchClient?: Promise<ProtonDriveSearchClient>;
 
     public experimental: {
         /**
@@ -170,6 +173,9 @@ export class ProtonDriveClient {
          *
          * Requires `searchServiceProvider` to be passed to the constructor.
          *
+         * Started once per client: later calls return the same search client,
+         * and so the same index. A failed start is retried on the next call.
+         *
          * @throws {@link Error} If no search service provider was configured.
          */
         initSearch: () => Promise<ProtonDriveSearchClient>;
@@ -207,6 +213,10 @@ export class ProtonDriveClient {
             httpClient,
             fullConfig.baseUrl,
             fullConfig.language,
+        );
+        this.searchSdkCapabilities = new SearchSdkCapabilitiesAdapter(
+            (nodeUids) => this.iterateNodes(nodeUids),
+            apiService,
         );
         this.shares = initSharesModule(telemetry, apiService, entitiesCache, cryptoCache, account, cryptoModule);
         this.nodes = initNodesModule(
@@ -329,13 +339,19 @@ export class ProtonDriveClient {
                 const rootFolder = await this.nodes.access.getVolumeRootFolder();
                 return this.nodes.management.prepareImportFolderCryptoMaterial(rootFolder.uid, name);
             },
-            initSearch: async () => {
-                this.logger.info('Initializing search service');
-                if (!this.searchServiceProvider) {
-                    throw new Error('Search service provider not available');
-                }
-                const { addressId } = await this.shares.getMyFilesShareMemberEmailKey();
-                return this.searchServiceProvider.start(VERSION, addressId);
+            initSearch: () => {
+                this.searchClient ??= (async () => {
+                    this.logger.info('Initializing search service');
+                    if (!this.searchServiceProvider) {
+                        throw new Error('Search service provider not available');
+                    }
+                    const { addressId } = await this.shares.getMyFilesShareMemberEmailKey();
+                    return this.searchServiceProvider.start(VERSION, addressId, this.searchSdkCapabilities);
+                })().catch((error: unknown) => {
+                    this.searchClient = undefined;
+                    throw error;
+                });
+                return this.searchClient;
             },
         };
     }

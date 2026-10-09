@@ -17,17 +17,54 @@
  * TypeScript only uses this when `vendor/proton_drive_sdk_search.d.ts` is
  * missing, so it never hides errors where the bindings exist: CI jobs that
  * have them (client-js lint/check-types, internal CLI build, js-publish) and
- * the published npm package are checked against the real engine API.
+ * the published npm package are checked against the real bindings API.
  */
 declare module '*/vendor/proton_drive_sdk_search.js' {
     export default function init(module?: unknown): Promise<unknown>;
     export const DriveSearchEngine: any;
     export type DriveSearchEngine = any;
-    // Callback interfaces implemented on the JS side; any-typed parameters so
-    // implementations still typecheck under noImplicitAny.
-    export type DriveSdkClient = Record<string, (...args: any[]) => any>;
-    export type Storage = Record<string, (...args: any[]) => any>;
-    export type HttpClient = Record<string, (...args: any[]) => any>;
+    export const DriveExtractEngine: any;
+    export type DriveExtractEngine = any;
+    // Callback interfaces implemented on the JS side by classes, which
+    // annotate their parameters with the types below.
+    export interface DriveSdkClient {
+        closeNodeStream(...args: any[]): any;
+        openNodeStream(...args: any[]): any;
+        nextNode(...args: any[]): any;
+        nextNodeBatch(...args: any[]): any;
+    }
+    export interface Storage {
+        store(...args: any[]): any;
+        load(...args: any[]): any;
+        remove(...args: any[]): any;
+        removeAll(...args: any[]): any;
+    }
+    export interface HttpClient {
+        get(...args: any[]): any;
+        put(...args: any[]): any;
+        post(...args: any[]): any;
+    }
+    export type StorageKey = any;
+    export type StreamToken = any;
     export type Node = any;
+    export type NodeKind = any;
+    export type Revision = any;
+    export type Author = any;
+    export type FfiNode = any;
+    export type FfiNodeKind = any;
+    export type FfiRevision = any;
+    export type FfiAuthor = any;
+    export type MemberRole = any;
+    export type RevisionState = any;
     export type NodeUid = any;
+    export type FoundItem = any;
+    export const SearchIndex: any;
+    // A class, not `any`: `instanceof` must still narrow an `unknown` error.
+    export class SearchEngineErrorException extends Error {
+        readonly value: any;
+        constructor(value: any);
+    }
+    export type SearchQuery = any;
+    export type DateRange = any;
+    export type SearchIndex = any;
 }

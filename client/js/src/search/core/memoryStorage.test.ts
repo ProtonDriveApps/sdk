@@ -1,8 +1,8 @@
-import { createMemoryStorage } from './memoryStorage';
+import { MemoryStorage } from './memoryStorage';
 
-describe('createMemoryStorage', () => {
+describe('MemoryStorage', () => {
     it('stores, loads and removes values by key', async () => {
-        const storage = createMemoryStorage();
+        const storage = new MemoryStorage();
         const value = new Uint8Array([1, 2, 3]);
 
         await storage.store({ inner: 'a' }, value);
@@ -13,7 +13,7 @@ describe('createMemoryStorage', () => {
     });
 
     it('removes all values', async () => {
-        const storage = createMemoryStorage();
+        const storage = new MemoryStorage();
         await storage.store({ inner: 'a' }, new Uint8Array([1]));
         await storage.store({ inner: 'b' }, new Uint8Array([2]));
 
@@ -24,8 +24,8 @@ describe('createMemoryStorage', () => {
     });
 
     it('keeps separate instances isolated', async () => {
-        const first = createMemoryStorage();
-        const second = createMemoryStorage();
+        const first = new MemoryStorage();
+        const second = new MemoryStorage();
         await first.store({ inner: 'a' }, new Uint8Array([1]));
 
         expect(await second.load({ inner: 'a' })).toBeNull();
