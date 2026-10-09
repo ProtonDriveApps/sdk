@@ -245,6 +245,52 @@ public sealed class ProtonPhotosClient
         return PhotoOperations.SavePhotosToTimelineAsync(DriveClient, photoUids, cancellationToken);
     }
 
+    /// <summary>Adds the given photos to an album, keeping them in their current location as well.</summary>
+    /// <remarks>
+    /// Same-volume photos are added directly to the album; cross-volume photos (e.g. from a shared-with-me album or
+    /// another user's timeline) are copied. A photo already in the album is reported as a per-node error.
+    /// </remarks>
+    public IAsyncEnumerable<NodeActionResult> AddPhotosToAlbumAsync(
+        NodeUid albumUid,
+        IReadOnlyList<NodeUid> photoUids,
+        CancellationToken cancellationToken)
+    {
+        return PhotoOperations.AddPhotosToAlbumAsync(DriveClient, albumUid, photoUids, cancellationToken);
+    }
+
+    /// <summary>Removes the given photos from an album, without deleting the photos themselves.</summary>
+    /// <remarks>
+    /// A photo that is also in the timeline stays there; a photo that exists only in the album is trashed by the server.
+    /// One result is yielded per photo. A failed request is reported as a failure for every photo it carried, and a
+    /// photo from a different volume than the album is reported as a validation failure without being sent.
+    /// </remarks>
+    public IAsyncEnumerable<NodeActionResult> RemovePhotosFromAlbumAsync(
+        NodeUid albumUid,
+        IReadOnlyList<NodeUid> photoUids,
+        CancellationToken cancellationToken)
+    {
+        return PhotoOperations.RemovePhotosFromAlbumAsync(DriveClient, albumUid, photoUids, cancellationToken);
+    }
+
+    /// <summary>Renames an album and/or sets its cover photo, returning the updated album.</summary>
+    /// <remarks>Providing neither a name nor a cover photo changes nothing and returns the album as it is.</remarks>
+    public ValueTask<AlbumNode> UpdateAlbumAsync(NodeUid albumUid, string? name, NodeUid? coverPhotoUid, CancellationToken cancellationToken)
+    {
+        return PhotoOperations.UpdateAlbumAsync(DriveClient, albumUid, name, coverPhotoUid, cancellationToken);
+    }
+
+    /// <summary>Permanently deletes an album; see <see cref="PhotoOperations.DeleteAlbumAsync"/> for the <paramref name="force"/>/<paramref name="saveToTimeline"/> semantics.</summary>
+    public ValueTask DeleteAlbumAsync(NodeUid albumUid, bool force, bool saveToTimeline, CancellationToken cancellationToken)
+    {
+        return PhotoOperations.DeleteAlbumAsync(DriveClient, albumUid, force, saveToTimeline, cancellationToken);
+    }
+
+    /// <summary>Creates a new, empty album at the root of the photos volume.</summary>
+    public ValueTask<AlbumNode> CreateAlbumAsync(string name, CancellationToken cancellationToken)
+    {
+        return PhotoOperations.CreateAlbumAsync(DriveClient, name, cancellationToken);
+    }
+
     internal ValueTask<FolderNode> GetPhotosRootAsync(CancellationToken cancellationToken)
     {
         return PhotosNodeOperations.GetOrCreatePhotosFolderAsync(DriveClient, cancellationToken);

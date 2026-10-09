@@ -103,6 +103,11 @@ message Request {
         DrivePhotosClientEnumerateEventsRequest drive_photos_client_enumerate_events = 2026;
         DrivePhotosClientEnumerateNodesRequest drive_photos_client_enumerate_nodes = 2027;
         DrivePhotosClientReportRecentlyAccessedRequest drive_photos_client_report_recently_accessed = 2028;
+        DrivePhotosClientAddPhotosToAlbumRequest drive_photos_client_add_photos_to_album = 2029;
+        DrivePhotosClientCreateAlbumRequest drive_photos_client_create_album = 2030;
+        DrivePhotosClientDeleteAlbumRequest drive_photos_client_delete_album = 2031;
+        DrivePhotosClientUpdateAlbumRequest drive_photos_client_update_album = 2032;
+        DrivePhotosClientRemovePhotosFromAlbumRequest drive_photos_client_remove_photos_from_album = 2033;
     };
 }
 
@@ -1229,6 +1234,50 @@ message DrivePhotosClientSavePhotosToTimelineRequest {
     int64 cancellation_token_source_handle = 4;
 }
 
+// The response must not have a value, yield_action will be called for each item (NodeResultPair).
+message DrivePhotosClientAddPhotosToAlbumRequest {
+    int64 client_handle = 1;
+    string album_uid = 2;
+    repeated string photo_uids = 3;
+    int64 yield_action = 4;
+    int64 cancellation_token_source_handle = 5;
+}
+
+// The response must not have a value, yield_action will be called for each item (NodeResultPair).
+// The photos are only removed from the album, not deleted.
+message DrivePhotosClientRemovePhotosFromAlbumRequest {
+    int64 client_handle = 1;
+    string album_uid = 2;
+    repeated string photo_uids = 3;
+    int64 yield_action = 4;
+    int64 cancellation_token_source_handle = 5;
+}
+
+message DrivePhotosClientDeleteAlbumRequest {
+    int64 client_handle = 1;
+    string album_uid = 2;
+    bool force = 3;
+    bool save_to_timeline = 4;
+    int64 cancellation_token_source_handle = 5;
+}
+
+// The response message must be of type Node, with the album case set.
+// With neither name nor cover_photo_uid, nothing is changed and the album is returned as it is.
+message DrivePhotosClientUpdateAlbumRequest {
+    int64 client_handle = 1;
+    string album_uid = 2;
+    string name = 3; // optional
+    string cover_photo_uid = 4; // optional
+    int64 cancellation_token_source_handle = 5;
+}
+
+// The response message must be of type Node, with the album case set.
+message DrivePhotosClientCreateAlbumRequest {
+    int64 client_handle = 1;
+    string name = 2;
+    int64 cancellation_token_source_handle = 3;
+}
+
 // The response must not have a value, yield_action will be called for each item.
 message DrivePhotosClientEnumerateSharedWithMeNodeUidsRequest {
     int64 client_handle = 1;
@@ -1431,4 +1480,8 @@ message ChecksumMismatchErrorData {
 
 message NodeNotFoundErrorData {
     string node_uid = 1;
+}
+
+message AlbumContainsPhotosNotInTimelineErrorData {
+    repeated string photo_uids = 1;
 }

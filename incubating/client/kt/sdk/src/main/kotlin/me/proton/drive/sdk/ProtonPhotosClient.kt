@@ -2,6 +2,7 @@ package me.proton.drive.sdk
 
 import kotlinx.coroutines.flow.Flow
 import me.proton.drive.sdk.entity.AlbumItem
+import me.proton.drive.sdk.entity.AlbumNode
 import me.proton.drive.sdk.entity.DriveEvent
 import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.NodeResultPair
@@ -23,5 +24,10 @@ interface ProtonPhotosClient : ProtonSdkClient {
     suspend fun findPhotoDuplicates(name: String, generateSha1: suspend () -> ByteArray): List<NodeUid>
     fun updatePhotos(updates: List<PhotoTagsUpdate>): Flow<NodeResultPair>
     fun savePhotosToTimeline(photoUids: List<NodeUid>): Flow<NodeResultPair>
+    fun addPhotosToAlbum(albumUid: NodeUid, photoUids: List<NodeUid>): Flow<NodeResultPair>
+    suspend fun deleteAlbum(albumUid: NodeUid, force: Boolean = false, saveToTimeline: Boolean = false)
+    suspend fun createAlbum(name: String): AlbumNode
+    fun removePhotosFromAlbum(albumUid: NodeUid, photoUids: List<NodeUid>): Flow<NodeResultPair>
+    suspend fun updateAlbum(albumUid: NodeUid, name: String? = null, coverPhotoUid: NodeUid? = null): AlbumNode
 }
 

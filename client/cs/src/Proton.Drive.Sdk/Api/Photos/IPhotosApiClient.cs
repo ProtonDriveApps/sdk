@@ -46,5 +46,27 @@ internal interface IPhotosApiClient
         CopyPhotoRequest request,
         CancellationToken cancellationToken);
 
+    ValueTask<AggregateApiResponse<TransferPhotoResponsePair>> AddPhotosToAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        AddPhotosToAlbumRequest request,
+        CancellationToken cancellationToken);
+
+    ValueTask<ApiResponse> RemovePhotosFromAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        MultipleLinksNullaryRequest request,
+        CancellationToken cancellationToken);
+
+    ValueTask<ApiResponse> UpdateAlbumAsync(VolumeId volumeId, LinkId albumLinkId, UpdateAlbumRequest request, CancellationToken cancellationToken);
+
+    ValueTask<ApiResponse> DeleteAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        bool deleteAlbumPhotos,
+        CancellationToken cancellationToken);
+
+    ValueTask<CreateAlbumResponse> CreateAlbumAsync(VolumeId volumeId, CreateAlbumRequest request, CancellationToken cancellationToken);
+
     ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken);
 }

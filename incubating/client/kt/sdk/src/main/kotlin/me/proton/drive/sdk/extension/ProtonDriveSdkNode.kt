@@ -2,6 +2,7 @@ package me.proton.drive.sdk.extension
 
 import me.proton.drive.sdk.entity.Node
 import proton.drive.sdk.ProtonDriveSdk
+import proton.drive.sdk.albumOrNull
 import proton.drive.sdk.folderOrNull
 
 fun ProtonDriveSdk.Node.toEntity(): Node =
@@ -16,4 +17,8 @@ fun ProtonDriveSdk.Node.toEntity(): Node =
 
 fun ProtonDriveSdk.Node.toFolder(): ProtonDriveSdk.FolderNode = checkNotNull(folderOrNull) {
     "Node must be a folder, not $nodeCase"
+}
+
+fun ProtonDriveSdk.Node.toAlbum(): ProtonDriveSdk.AlbumNode = checkNotNull(albumOrNull) {
+    "Node must be an album, not $nodeCase"
 }

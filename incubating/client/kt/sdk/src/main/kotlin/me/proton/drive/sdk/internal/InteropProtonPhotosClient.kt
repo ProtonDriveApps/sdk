@@ -15,6 +15,7 @@ import me.proton.drive.sdk.ProtonPhotosClient
 import me.proton.drive.sdk.SdkNode
 import me.proton.drive.sdk.Uploader
 import me.proton.drive.sdk.entity.AlbumItem
+import me.proton.drive.sdk.entity.AlbumNode
 import me.proton.drive.sdk.entity.DriveEvent
 import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.FileThumbnail
@@ -31,6 +32,9 @@ import me.proton.drive.sdk.entity.ScopeId
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
 import me.proton.drive.sdk.extension.toProto
+import proton.drive.sdk.drivePhotosClientAddPhotosToAlbumRequest
+import proton.drive.sdk.drivePhotosClientCreateAlbumRequest
+import proton.drive.sdk.drivePhotosClientDeleteAlbumRequest
 import proton.drive.sdk.drivePhotosClientDeleteNodesRequest
 import proton.drive.sdk.drivePhotosClientEmptyTrashRequest
 import proton.drive.sdk.drivePhotosClientEnumerateAlbumNodeUidsRequest
@@ -44,12 +48,14 @@ import proton.drive.sdk.drivePhotosClientEnumerateTimelineRequest
 import proton.drive.sdk.drivePhotosClientEnumerateTrashRequest
 import proton.drive.sdk.drivePhotosClientGetNodeRequest
 import proton.drive.sdk.drivePhotosClientLeaveSharedNodeRequest
+import proton.drive.sdk.drivePhotosClientRemovePhotosFromAlbumRequest
 import proton.drive.sdk.drivePhotosClientReportRecentlyAccessedRequest
 import proton.drive.sdk.drivePhotosClientRestoreNodesRequest
 import proton.drive.sdk.drivePhotosClientSavePhotosToTimelineRequest
 import proton.drive.sdk.drivePhotosClientTrashNodesRequest
-import proton.drive.sdk.recentlyAccessedReportItem
+import proton.drive.sdk.drivePhotosClientUpdateAlbumRequest
 import proton.drive.sdk.drivePhotosClientUpdatePhotosRequest
+import proton.drive.sdk.recentlyAccessedReportItem
 
 internal class InteropProtonPhotosClient internal constructor(
     internal val handle: Long,
@@ -266,6 +272,78 @@ internal class InteropProtonPhotosClient internal constructor(
         }
     }
 
+    override fun addPhotosToAlbum(
+        albumUid: NodeUid,
+        photoUids: List<NodeUid>,
+    ): Flow<NodeResultPair> = channelFlow {
+        log(INFO, "addPhotosToAlbum(${photoUids.size} photos)")
+        cancellationCoroutineScope { source ->
+            bridge.addPhotosToAlbum(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientAddPhotosToAlbumRequest {
+                    this.albumUid = albumUid.value
+                    this.photoUids += photoUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
+    }
+
+    override fun removePhotosFromAlbum(
+        albumUid: NodeUid,
+        photoUids: List<NodeUid>,
+    ): Flow<NodeResultPair> = channelFlow {
+        log(INFO, "removePhotosFromAlbum(${photoUids.size} photos)")
+        cancellationCoroutineScope { source ->
+            bridge.removePhotosFromAlbum(
+                coroutineScope = this@channelFlow,
+                request = drivePhotosClientRemovePhotosFromAlbumRequest {
+                    this.albumUid = albumUid.value
+                    this.photoUids += photoUids.map { it.value }
+                    clientHandle = handle
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { pair ->
+                    send(pair.toEntity())
+                }
+            )
+        }
+    }
+
+    override suspend fun updateAlbum(
+        albumUid: NodeUid,
+        name: String?,
+        coverPhotoUid: NodeUid?,
+    ): AlbumNode = cancellationCoroutineScope { source ->
+        log(INFO, "updateAlbum")
+        bridge.updateAlbum(
+            drivePhotosClientUpdateAlbumRequest {
+                this.albumUid = albumUid.value
+                name?.let { this.name = it }
+                coverPhotoUid?.let { this.coverPhotoUid = it.value }
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
+    override suspend fun createAlbum(name: String): AlbumNode = cancellationCoroutineScope { source ->
+        log(INFO, "createAlbum")
+        bridge.createAlbum(
+            drivePhotosClientCreateAlbumRequest {
+                this.name = name
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        ).toEntity()
+    }
+
     override fun enumerateNodes(
         nodeUids: List<NodeUid>,
     ): Flow<Node> = channelFlow {
@@ -354,6 +432,23 @@ internal class InteropProtonPhotosClient internal constructor(
         bridge.leaveSharedNode(
             drivePhotosClientLeaveSharedNodeRequest {
                 this.nodeUid = nodeUid.value
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            }
+        )
+    }
+
+    override suspend fun deleteAlbum(
+        albumUid: NodeUid,
+        force: Boolean,
+        saveToTimeline: Boolean,
+    ): Unit = cancellationCoroutineScope { source ->
+        log(INFO, "deleteAlbum")
+        bridge.deleteAlbum(
+            drivePhotosClientDeleteAlbumRequest {
+                this.albumUid = albumUid.value
+                this.force = force
+                this.saveToTimeline = saveToTimeline
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

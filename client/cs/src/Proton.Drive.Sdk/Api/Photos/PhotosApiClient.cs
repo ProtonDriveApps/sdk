@@ -180,6 +180,80 @@ internal sealed class PhotosApiClient(HttpClient httpClient) : IPhotosApiClient
             .ConfigureAwait(false);
     }
 
+    public async ValueTask<AggregateApiResponse<TransferPhotoResponsePair>> AddPhotosToAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        AddPhotosToAlbumRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.AggregateApiResponseTransferPhotoResponsePair)
+            .PostAsync(
+                $"photos/volumes/{volumeId}/albums/{albumLinkId}/add-multiple",
+                request,
+                PhotosApiSerializerContext.Default.AddPhotosToAlbumRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> RemovePhotosFromAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        MultipleLinksNullaryRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
+            .PostAsync(
+                $"photos/volumes/{volumeId}/albums/{albumLinkId}/remove-multiple",
+                request,
+                DriveApiSerializerContext.Default.MultipleLinksNullaryRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> UpdateAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        UpdateAlbumRequest request,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse)
+            .PutAsync(
+                $"photos/volumes/{volumeId}/albums/{albumLinkId}",
+                request,
+                PhotosApiSerializerContext.Default.UpdateAlbumRequest,
+                cancellationToken)
+                .ConfigureAwait(false);
+    }
+
+    public async ValueTask<ApiResponse> DeleteAlbumAsync(
+        VolumeId volumeId,
+        LinkId albumLinkId,
+        bool deleteAlbumPhotos,
+        CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(DriveApiSerializerContext.Default.ApiResponse, PhotosApiSerializerContext.Default.DeleteAlbumFailureResponse)
+            .DeleteAsync(
+                $"photos/volumes/{volumeId}/albums/{albumLinkId}?DeleteAlbumPhotos={(deleteAlbumPhotos ? 1 : 0)}",
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async ValueTask<CreateAlbumResponse> CreateAlbumAsync(VolumeId volumeId, CreateAlbumRequest request, CancellationToken cancellationToken)
+    {
+        return await _httpClient
+            .Expecting(PhotosApiSerializerContext.Default.CreateAlbumResponse)
+            .PostAsync(
+                $"photos/volumes/{volumeId}/albums",
+                request,
+                PhotosApiSerializerContext.Default.CreateAlbumRequest,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async ValueTask ReportRecentlyAccessedAsync(ReportRecentlyAccessedItemsRequest request, CancellationToken cancellationToken)
     {
         await _httpClient

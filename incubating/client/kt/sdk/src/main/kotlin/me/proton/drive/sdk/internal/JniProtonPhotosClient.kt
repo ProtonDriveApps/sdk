@@ -13,6 +13,7 @@ import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.UnitResponseCallback
 import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.extension.asNullableCallback
+import me.proton.drive.sdk.extension.toAlbum
 import me.proton.drive.sdk.extension.toLongResponse
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.ProtonDriveSdk.HttpRequest
@@ -264,6 +265,12 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
         drivePhotosClientLeaveSharedNode = request
     }
 
+    suspend fun deleteAlbum(
+        request: ProtonDriveSdk.DrivePhotosClientDeleteAlbumRequest,
+    ): Unit = executeOnce("deleteAlbum", UnitResponseCallback) {
+        drivePhotosClientDeleteAlbum = request
+    }
+
     suspend fun reportRecentlyAccessed(
         request: ProtonDriveSdk.DrivePhotosClientReportRecentlyAccessedRequest,
     ): Unit = executeOnce("reportRecentlyAccessed", UnitResponseCallback) {
@@ -312,6 +319,46 @@ class JniProtonPhotosClient internal constructor() : JniBaseProtonDriveSdk() {
     ) {
         drivePhotosClientSavePhotosToTimeline = request
     }
+
+    suspend fun addPhotosToAlbum(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientAddPhotosToAlbumRequest,
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "addPhotosToAlbum",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope }
+    ) {
+        drivePhotosClientAddPhotosToAlbum = request
+    }
+
+    suspend fun removePhotosFromAlbum(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DrivePhotosClientRemovePhotosFromAlbumRequest,
+        yield: suspend (ProtonDriveSdk.NodeResultPair) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "removePhotosFromAlbum",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.NodeResultPair::parseFrom,
+        coroutineScopeProvider = { coroutineScope }
+    ) {
+        drivePhotosClientRemovePhotosFromAlbum = request
+    }
+
+    suspend fun updateAlbum(
+        request: ProtonDriveSdk.DrivePhotosClientUpdateAlbumRequest,
+    ): ProtonDriveSdk.AlbumNode = executeOnce("updateAlbum", NodeConverter().asCallback) {
+        drivePhotosClientUpdateAlbum = request
+    }.toAlbum()
+
+    suspend fun createAlbum(
+        request: ProtonDriveSdk.DrivePhotosClientCreateAlbumRequest,
+    ): ProtonDriveSdk.AlbumNode = executeOnce("createAlbum", NodeConverter().asCallback) {
+        drivePhotosClientCreateAlbum = request
+    }.toAlbum()
 
     suspend fun enumerateNodes(
         coroutineScope: CoroutineScope,
