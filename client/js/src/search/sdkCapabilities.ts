@@ -1,3 +1,7 @@
+// Makes consumers compiling these sources (the CLIs) pick up the fallback types without their own include.
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="./vendorFallback.d.ts" />
+
 import type { Author } from '../interface/author';
 import {
     type MaybeMissingNode,
