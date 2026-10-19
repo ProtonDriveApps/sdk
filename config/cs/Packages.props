@@ -9,16 +9,16 @@
     <ProtonCryptographyVersion Condition="'$(CryptoBackend)' == 'rust'">$(RustCryptoVersion)</ProtonCryptographyVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="10.0.13" />
     <PackageVersion Include="SQLitePCLRaw.config.e_sqlite3" Version="3.0.5" />
     <PackageVersion Include="SQLite" Version="3.53.4" />
     <PackageVersion Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" />
     <PackageVersion Include="SQLitePCLRaw.provider.sqlite3" Version="3.0.5" />
     <PackageVersion Include="Polly" Version="8.7.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="Roslynator.Analyzers" Version="4.15.0" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="4.15.0" />
@@ -26,7 +26,7 @@
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Proton.Cryptography" Version="$(ProtonCryptographyVersion)" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.3" />
-    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.10" />
+    <PackageVersion Include="System.Numerics.Tensors" Version="10.0.13" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="3.2.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
     <PackageVersion Include="AwesomeAssertions" Version="9.5.0" />
