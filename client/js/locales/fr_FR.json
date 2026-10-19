@@ -168,6 +168,9 @@
       "Request aborted": [
         "La requête a été annulée."
       ],
+      "Search index reached its storage quota": [
+        "L'index de recherche a atteint son quota d'espace de stockage"
+      ],
       "Signature is missing": [
         "La signature est manquante"
       ],

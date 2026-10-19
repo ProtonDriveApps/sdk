@@ -168,6 +168,9 @@
       "Request aborted": [
         "Το αίτημα ακυρώθηκε"
       ],
+      "Search index reached its storage quota": [
+        "Το ευρετήριο αναζήτησης έφτασε στο όριο αποθηκευτικού χώρου του."
+      ],
       "Signature is missing": [
         "Η υπογραφή λείπει"
       ],
@@ -251,6 +254,9 @@
       ],
       "You do not have access to this shared item": [
         "Δεν έχετε πρόσβαση σε αυτό το κοινόχρηστο στοιχείο"
+      ],
+      "Your browser does not support features required for the search.": [
+        "Το πρόγραμμα περιήγησής σας δεν υποστηρίζει τις λειτουργίες που απαιτούνται για την αναζήτηση."
       ]
     },
     "Info": {

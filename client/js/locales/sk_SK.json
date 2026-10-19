@@ -170,6 +170,9 @@
       "Request aborted": [
         "Požiadavka prerušená"
       ],
+      "Search index reached its storage quota": [
+        "Vyhľadávací index dosiahol limit úložného priestoru"
+      ],
       "Signature is missing": [
         "Chýbajúci podpis"
       ],

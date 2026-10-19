@@ -168,6 +168,9 @@
       "Request aborted": [
         "Solicitud cancelada"
       ],
+      "Search index reached its storage quota": [
+        "El índice de búsqueda alcanzó la cuota de capacidad"
+      ],
       "Signature is missing": [
         "Falta la firma"
       ],

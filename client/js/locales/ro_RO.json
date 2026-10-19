@@ -169,6 +169,9 @@
       "Request aborted": [
         "Solicitare anulată."
       ],
+      "Search index reached its storage quota": [
+        "Indexul de căutare și-a atins cota de stocare."
+      ],
       "Signature is missing": [
         "Semnătura lipsește"
       ],

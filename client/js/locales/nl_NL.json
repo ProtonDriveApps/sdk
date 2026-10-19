@@ -247,10 +247,13 @@
         "U kunt een openbare link alleen voor uw eigen bestanden bijwerken"
       ],
       "You do not have access to this item": [
-        "Je hebt geen toegang tot dit item."
+        "U heeft geen toegang tot dit item."
       ],
       "You do not have access to this shared item": [
-        "U hebt geen toegang tot dit gedeeld item."
+        "U heeft geen toegang tot dit gedeeld item."
+      ],
+      "Your browser does not support features required for the search.": [
+        "Uw browser ondersteunt de functies die nodig zijn om te zoeken niet."
       ]
     },
     "Info": {
