@@ -1,5 +1,11 @@
 # Changelog
 
+## cs/v0.31.1 (2026-10-09)
+
+### Bug Fixes
+- Resume upload on space available
+
+
 ## cs/v0.31.0 (2026-10-08)
 
 ### Features
