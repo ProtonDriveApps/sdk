@@ -168,6 +168,9 @@
       "Request aborted": [
         "Richiesta interrotta"
       ],
+      "Search index reached its storage quota": [
+        "L'indice di ricerca ha raggiunto la quota di spazio di archiviazione massima"
+      ],
       "Signature is missing": [
         "Firma non presente"
       ],

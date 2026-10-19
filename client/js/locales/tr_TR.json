@@ -168,6 +168,9 @@
       "Request aborted": [
         "İstek iptal edildi"
       ],
+      "Search index reached its storage quota": [
+        "Arama dizini depolama alanı kotasına ulaştı"
+      ],
       "Signature is missing": [
         "İmza eksik"
       ],

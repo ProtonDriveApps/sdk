@@ -168,6 +168,9 @@
       "Request aborted": [
         "Sol·licitud cancel·lada"
       ],
+      "Search index reached its storage quota": [
+        "L'índex de cerca ha assolit la seva quota d'emmagatzematge"
+      ],
       "Signature is missing": [
         "Falta la signatura"
       ],

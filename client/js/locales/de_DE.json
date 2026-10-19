@@ -168,6 +168,9 @@
       "Request aborted": [
         "Anfrage abgebrochen"
       ],
+      "Search index reached its storage quota": [
+        "Der Suchindex hat seine Speicherkapazität erreicht"
+      ],
       "Signature is missing": [
         "Signatur fehlt"
       ],
