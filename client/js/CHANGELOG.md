@@ -1,5 +1,16 @@
 # Changelog
 
+## js/v0.23.0 (2026-10-19)
+
+### Features
+- Expose experimental search methods
+- Add recursive cleanup of deleted nodes and simplify the engine API
+- Require node type for getting available name
+
+### Bug Fixes
+- Provide search fallback types to CLI builds
+
+
 ## js/v0.22.2 (2026-10-02)
 
 ### Bug Fixes
