@@ -408,6 +408,28 @@ extension Message {
                 $0.payload = .driveClientDeleteDevice(request)
             }
 
+        // MARK: - Search
+
+        case let request as Proton_Drive_Sdk_DriveClientUpdateSearchIndexesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientUpdateSearchIndexes(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientProcessSearchExtractionQueueRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientProcessSearchExtractionQueue(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientRemoveNodeFromSearchIndexesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientRemoveNodeFromSearchIndexes(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DriveClientQueryRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientQuery(request)
+            }
+
         default:
             assertionFailure("Unknown request")
             throw ProtonDriveSDKError(interopError: .wrongProto(message: "Unknown request type: \(self)"))

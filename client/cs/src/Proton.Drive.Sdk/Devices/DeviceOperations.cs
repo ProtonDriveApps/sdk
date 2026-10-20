@@ -18,9 +18,9 @@ internal static partial class DeviceOperations
 
         var devicesByRootFolderUid = devices.ToDictionary(device => device.RootFolderUid);
 
-        await foreach (var node in NodeOperations
-            .EnumerateNodesAsync(client, devicesByRootFolderUid.Keys.ToAsyncEnumerable(), cancellationToken)
-            .ConfigureAwait(false))
+        var nodes = NodeOperations.EnumerateNodesAsync(client, devicesByRootFolderUid.Keys.ToAsyncEnumerable(), cancellationToken);
+
+        await foreach (var node in nodes.ConfigureAwait(false))
         {
             if (devicesByRootFolderUid.TryGetValue(node.Uid, out var device))
             {

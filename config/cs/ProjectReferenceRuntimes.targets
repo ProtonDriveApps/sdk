@@ -1,0 +1,19 @@
+<Project>
+
+  <!-- After build, merge runtimes/** from each direct ProjectReference output (if present). -->
+  <Target Name="PropagateRuntimesFromProjectReferences"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and '@(ProjectReference)' != ''">
+    <ItemGroup>
+      <_ReferencedRuntimeRoot Include="@(ProjectReference->'%(RootDir)%(Directory)bin/$(Configuration)/$(TargetFramework)/runtimes')"
+                              Condition="Exists('%(RootDir)%(Directory)bin/$(Configuration)/$(TargetFramework)/runtimes')" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)runtimes" Condition="'@(_ReferencedRuntimeRoot)' != ''" />
+    <Exec Condition="'$(OS)' == 'Windows_NT' and '@(_ReferencedRuntimeRoot)' != ''"
+          Command="robocopy &quot;%(Identity)&quot; &quot;$(OutputPath)runtimes&quot; /E /XO /NFL /NDL /NJH /NJS /nc /ns /np"
+          IgnoreExitCode="true" />
+    <Exec Condition="'$(OS)' != 'Windows_NT' and '@(_ReferencedRuntimeRoot)' != ''"
+          Command="cp -a &quot;%(Identity)/.&quot; &quot;$(OutputPath)runtimes/&quot;" />
+  </Target>
+
+</Project>

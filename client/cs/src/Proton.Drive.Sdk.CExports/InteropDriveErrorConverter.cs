@@ -18,6 +18,13 @@ internal static class InteropDriveErrorConverter
 
     public static void SetDomainAndCodes(Error error, Exception exception)
     {
+#if PROTON_DRIVE_SEARCH
+        if (InteropSearchErrorConverter.TrySetDomainAndCodes(error, exception))
+        {
+            return;
+        }
+#endif
+
         switch (exception)
         {
             case NodeMetadataDecryptionException e:

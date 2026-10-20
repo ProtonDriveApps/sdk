@@ -26,6 +26,14 @@ internal static class InteropProtonDriveClient
             request.ClientOptions.HasStorageCallTimeout ? request.ClientOptions.StorageCallTimeout : null,
             request.ClientOptions.HasBlockTransferParallelism ? request.ClientOptions.BlockTransferParallelism : null);
 
+#if PROTON_DRIVE_SEARCH
+        if (request.HasSearchIndexPath)
+        {
+            protonDriveClientOptions.SearchIndexStore = Proton.Sdk.Storage.SqliteBinaryKeyValueStore.OpenFile(request.SearchIndexPath);
+        }
+
+#endif
+
         var httpClientFactory = new InteropHttpClientFactory(
             bindingsHandle,
             request.BaseUrl,
@@ -520,10 +528,27 @@ internal static class InteropProtonDriveClient
         return null;
     }
 
-    public static IMessage? HandleFree(DriveClientFreeRequest request)
+#if PROTON_DRIVE_SEARCH
+    public static async ValueTask<IMessage?> HandleFreeAsync(DriveClientFreeRequest request)
     {
-        Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
+        var client = Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
+
+        // The engines are released before the store they persist to.
+        client.DisposeSearchClient();
+
+        if (client.SearchIndexStore is IAsyncDisposable searchIndexStore)
+        {
+            await searchIndexStore.DisposeAsync().ConfigureAwait(false);
+        }
 
         return null;
     }
+#else
+    public static ValueTask<IMessage?> HandleFreeAsync(DriveClientFreeRequest request)
+    {
+        Interop.FreeHandle<ProtonDriveClient>(request.ClientHandle);
+
+        return ValueTask.FromResult<IMessage?>(null);
+    }
+#endif
 }

@@ -1,0 +1,42 @@
+<Project>
+
+  <PropertyGroup>
+    <_SearchBindingsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../incubating/search/bindings/csharp'))</_SearchBindingsRoot>
+    <_SearchBindingsSource>$(_SearchBindingsRoot)/src</_SearchBindingsSource>
+    <_SearchRuntimesSource>$(_SearchBindingsRoot)/runtimes</_SearchRuntimesSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(_SearchBindingsSource)/**/*.cs"
+             Link="Search/Bindings/%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <None Include="$(_SearchRuntimesSource)/**"
+          Link="runtimes/%(RecursiveDir)%(Filename)%(Extension)"
+          Pack="true"
+          PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)"
+          Visible="false" />
+  </ItemGroup>
+
+  <Target Name="ValidateProtonDriveSearchBindings"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_SearchBindingSource Include="$(_SearchBindingsSource)/*.cs" />
+    </ItemGroup>
+    <Error Condition="'@(_SearchBindingSource)' == ''"
+           Text="Search C# bindings missing under '$(_SearchBindingsSource)'. From incubating/search run: just generate-csharp" />
+  </Target>
+
+  <Target Name="CopyProtonDriveSearchRuntimesToOutput"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup Condition="Exists('$(_SearchRuntimesSource)')">
+      <_SearchRuntimeSourceFile Include="$(_SearchRuntimesSource)/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_SearchRuntimeSourceFile)"
+          DestinationFiles="@(_SearchRuntimeSourceFile->'$(OutputPath)runtimes/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_SearchRuntimeSourceFile)' != ''" />
+  </Target>
+
+</Project>

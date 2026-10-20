@@ -20,7 +20,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <NeutralLanguage>en</NeutralLanguage>
     <Deterministic>true</Deterministic>
-    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+    <Configurations>Debug;Release;DebugWithSearch;ReleaseWithSearch</Configurations>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'ReleaseWithSearch'">true</TreatWarningsAsErrors>
 
     <NativeLibPrefix Condition="!$(RuntimeIdentifier.StartsWith('win'))">lib</NativeLibPrefix>
   </PropertyGroup>
@@ -29,7 +30,7 @@
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).globalconfig" />
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'DebugWithSearch'">
     <DebugType>embedded</DebugType>
     <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
@@ -86,5 +87,16 @@
     <Using Include="AwesomeAssertions" />
     <Using Include="NSubstitute" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <IncludeProtonDriveSearch Condition="'$(IncludeProtonDriveSearch)' == '' and $(Configuration.EndsWith('WithSearch'))">true</IncludeProtonDriveSearch>
+    <IncludeProtonDriveSearch Condition="'$(IncludeProtonDriveSearch)' == ''">false</IncludeProtonDriveSearch>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IncludeProtonDriveSearch)' == 'true'">
+    <DefineConstants>$(DefineConstants);PROTON_DRIVE_SEARCH</DefineConstants>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)ProjectReferenceRuntimes.targets" />
 
 </Project>

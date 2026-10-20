@@ -46,7 +46,7 @@ internal static class InteropMessageHandler
                     => InteropProtonDriveClient.HandleCreate(request.DriveClientCreate, bindingsHandle),
 
                 Request.PayloadOneofCase.DriveClientFree
-                    => InteropProtonDriveClient.HandleFree(request.DriveClientFree),
+                    => await InteropProtonDriveClient.HandleFreeAsync(request.DriveClientFree).ConfigureAwait(false),
 
                 Request.PayloadOneofCase.DriveClientGetFileUploader
                     => await InteropProtonDriveClient.HandleGetFileUploaderAsync(request.DriveClientGetFileUploader).ConfigureAwait(false),
@@ -130,6 +130,22 @@ internal static class InteropMessageHandler
 
                 Request.PayloadOneofCase.DriveClientDeleteDevice
                     => await InteropProtonDriveClient.HandleDeleteDeviceAsync(request.DriveClientDeleteDevice).ConfigureAwait(false),
+
+#if PROTON_DRIVE_SEARCH
+                Request.PayloadOneofCase.DriveClientUpdateSearchIndexes
+                    => await InteropProtonDriveClientSearch.HandleUpdateSearchIndexesAsync(request.DriveClientUpdateSearchIndexes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientProcessSearchExtractionQueue
+                    => await InteropProtonDriveClientSearch.HandleProcessSearchExtractionQueueAsync(
+                        request.DriveClientProcessSearchExtractionQueue).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientRemoveNodeFromSearchIndexes
+                    => await InteropProtonDriveClientSearch.HandleRemoveNodeFromSearchIndexesAsync(
+                        request.DriveClientRemoveNodeFromSearchIndexes).ConfigureAwait(false),
+
+                Request.PayloadOneofCase.DriveClientQuery
+                    => await InteropProtonDriveClientSearch.HandleQueryAsync(request.DriveClientQuery, bindingsHandle).ConfigureAwait(false),
+#endif
 
                 Request.PayloadOneofCase.UploadFromStream
                     => InteropFileUploader.HandleUploadFromStream(request.UploadFromStream, bindingsHandle),

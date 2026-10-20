@@ -4,6 +4,9 @@ import kotlinx.coroutines.flow.Flow
 import me.proton.drive.sdk.entity.Device
 import me.proton.drive.sdk.entity.DeviceType
 import me.proton.drive.sdk.entity.DeviceUid
+import me.proton.drive.sdk.entity.DriveSearchLogicalIndex
+import me.proton.drive.sdk.entity.DriveSearchWorkSchedule
+import me.proton.drive.sdk.entity.SearchHit
 import me.proton.drive.sdk.entity.DriveEvent
 import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.FileDownloaderRequest
@@ -32,5 +35,17 @@ interface ProtonDriveClient : ProtonSdkClient {
     suspend fun createDevice(name: String, type: DeviceType): Device
     suspend fun renameDevice(deviceUid: DeviceUid, name: String): Device
     suspend fun deleteDevice(deviceUid: DeviceUid)
+
+    @ExperimentalSearchApi
+    suspend fun updateSearchIndexes(): DriveSearchWorkSchedule
+
+    @ExperimentalSearchApi
+    suspend fun processSearchExtractionQueue(): DriveSearchWorkSchedule
+
+    @ExperimentalSearchApi
+    suspend fun removeNodeFromSearchIndexes(nodeUids: List<NodeUid>)
+
+    @ExperimentalSearchApi
+    fun query(index: DriveSearchLogicalIndex, query: String): Flow<SearchHit>
 }
 

@@ -1,0 +1,43 @@
+<Project>
+
+  <PropertyGroup Condition="'$(IncludeProtonDriveSearch)' == 'true'">
+    <NativeSearchLibName>proton_drive_sdk_search</NativeSearchLibName>
+    <_SearchStaticLinkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../incubating/search/bindings/csharp'))</_SearchStaticLinkRoot>
+    <_SearchStaticNativeDir>$(_SearchStaticLinkRoot)/runtimes/$(RuntimeIdentifier)/native</_SearchStaticNativeDir>
+    <_SearchStaticLibWin>$(_SearchStaticNativeDir)/$(NativeSearchLibName).lib</_SearchStaticLibWin>
+    <_SearchStaticLibUnix>$(_SearchStaticNativeDir)/lib$(NativeSearchLibName).a</_SearchStaticLibUnix>
+    <_SearchStaticLibApple>$(_SearchStaticNativeDir)/$(NativeSearchLibName).a</_SearchStaticLibApple>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludeProtonDriveSearch)' == 'true'">
+    <DirectPInvoke Include="$(NativeSearchLibName)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IncludeProtonDriveSearch)' == 'true' and $(RuntimeIdentifier.StartsWith('win'))">
+    <NativeLibrary Include="$(_SearchStaticLibWin)" Condition="Exists('$(_SearchStaticLibWin)')" />
+    <NativeLibrary Include="userenv.lib" />
+    <NativeLibrary Include="ws2_32.lib" />
+    <NativeLibrary Include="bcrypt.lib" />
+    <NativeLibrary Include="ntdll.lib" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IncludeProtonDriveSearch)' == 'true' and ($(RuntimeIdentifier.StartsWith('osx')) or $(RuntimeIdentifier.StartsWith('ios')))">
+    <NativeLibrary Include="$(_SearchStaticLibApple)" Condition="Exists('$(_SearchStaticLibApple)')" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IncludeProtonDriveSearch)' == 'true' and !$(RuntimeIdentifier.StartsWith('win')) and !$(RuntimeIdentifier.StartsWith('osx')) and !$(RuntimeIdentifier.StartsWith('ios')) and Exists('$(_SearchStaticLibUnix)')">
+    <NativeLibrary Include="$(_SearchStaticLibUnix)" />
+  </ItemGroup>
+
+  <Target Name="ValidateProtonDriveSearchStaticLinkLibrary"
+          BeforeTargets="LinkNative"
+          Condition="'$(IncludeProtonDriveSearch)' == 'true' and '$(RuntimeIdentifier)' != ''">
+    <Error Condition="$(RuntimeIdentifier.StartsWith('win')) and !Exists('$(_SearchStaticLibWin)')"
+           Text="Search static library missing at '$(_SearchStaticLibWin)'. From incubating/search run: just mode=release $(RuntimeIdentifier)." />
+    <Error Condition="!$(RuntimeIdentifier.StartsWith('win')) and !$(RuntimeIdentifier.StartsWith('osx')) and !$(RuntimeIdentifier.StartsWith('ios')) and !Exists('$(_SearchStaticLibUnix)')"
+           Text="Search static library missing at '$(_SearchStaticLibUnix)'. From incubating/search run: just mode=release $(RuntimeIdentifier)." />
+    <Error Condition="($(RuntimeIdentifier.StartsWith('osx')) or $(RuntimeIdentifier.StartsWith('ios'))) and !Exists('$(_SearchStaticLibApple)')"
+           Text="Search static library missing at '$(_SearchStaticLibApple)'. From incubating/search run: just mode=release $(RuntimeIdentifier)." />
+  </Target>
+
+</Project>

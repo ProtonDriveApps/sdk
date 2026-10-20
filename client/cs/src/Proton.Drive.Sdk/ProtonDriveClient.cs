@@ -23,7 +23,7 @@ using Proton.Sdk.Telemetry;
 
 namespace Proton.Drive.Sdk;
 
-public sealed class ProtonDriveClient
+public sealed partial class ProtonDriveClient
 {
     private const int DefaultDegreeOfBlockTransferParallelism = 6;
     private const int MaxDegreeOfThumbnailDownloadParallelism = 8;
@@ -31,6 +31,8 @@ public sealed class ProtonDriveClient
     // The types of shared items exposed by the Drive client.
     private static readonly ShareTargetType[] ShareTargetTypes =
         [ShareTargetType.Folder, ShareTargetType.File, ShareTargetType.ProtonVendor];
+
+    private readonly HttpClient? _defaultApiHttpClient;
 
     public ProtonDriveClient(
         IHttpClientFactory httpClientFactory,
@@ -52,9 +54,14 @@ public sealed class ProtonDriveClient
         ITelemetry telemetry,
         string? uid = null,
         int? degreeOfBlockTransferParallelism = null,
-        Func<ProtonDriveClient, INodeProvider?>? nodeProviderFactory = null)
+#if PROTON_DRIVE_SEARCH
+        Proton.Sdk.Storage.IBinaryKeyValueStore? searchIndexStore = null,
+#endif
+        Func<ProtonDriveClient, INodeProvider>? nodeProviderFactory = null,
+        HttpClient? defaultApiHttpClient = null)
     {
         Uid = uid ?? Guid.NewGuid().ToString();
+        _defaultApiHttpClient = defaultApiHttpClient;
 
         Account = accountClient;
         Api = api;
@@ -76,6 +83,10 @@ public sealed class ProtonDriveClient
         RevisionUploadBackendFactory = new RevisionUploadBackendFactory(this);
 
         PgpConfiguration.DefaultAeadStreamingChunkLength = PgpDefaults.AeadStreamingChunkLength;
+
+#if PROTON_DRIVE_SEARCH
+        _searchIndexStore = searchIndexStore;
+#endif
     }
 
     private ProtonDriveClient(CreationParameters parameters)
@@ -87,12 +98,19 @@ public sealed class ProtonDriveClient
             parameters.FeatureFlagProvider,
             parameters.Telemetry,
             parameters.Uid,
-            parameters.DegreeOfBlockTransferParallelism)
+            parameters.DegreeOfBlockTransferParallelism,
+#if PROTON_DRIVE_SEARCH
+            searchIndexStore: parameters.SearchIndexStore,
+#endif
+            nodeProviderFactory: null,
+            defaultApiHttpClient: parameters.DefaultApiHttpClient)
     {
     }
 
     internal static RecyclableMemoryStreamManager MemoryStreamManager { get; } =
         new(new RecyclableMemoryStreamManager.Options { BlockSize = PgpDefaults.MinimumDecryptionInputLength });
+
+    internal HttpClient? DefaultApiHttpClient => _defaultApiHttpClient;
 
     internal string Uid { get; }
 
@@ -361,6 +379,10 @@ public sealed class ProtonDriveClient
         IBlockVerifierFactory BlockVerifierFactory,
         IFeatureFlagProvider FeatureFlagProvider,
         ITelemetry Telemetry,
+        HttpClient DefaultApiHttpClient,
+#if PROTON_DRIVE_SEARCH
+        Proton.Sdk.Storage.IBinaryKeyValueStore? SearchIndexStore = null,
+#endif
         string? Uid = null,
         int? DegreeOfBlockTransferParallelism = null)
     {
@@ -387,6 +409,10 @@ public sealed class ProtonDriveClient
                 new BlockVerifierFactory(defaultHttpClient),
                 featureFlagProvider,
                 telemetry,
+                defaultHttpClient,
+#if PROTON_DRIVE_SEARCH
+                options?.SearchIndexStore,
+#endif
                 options?.Uid,
                 options?.DegreeOfBlockTransferParallelismOverride);
         }

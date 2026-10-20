@@ -57,18 +57,20 @@ internal static class NodeMoveOperation
                 continue;
             }
 
-            await foreach (var moveResult in PrepareItemAndAddToBatchAsync(
-                    client,
-                    item,
-                    operationData,
-                    volumeId,
-                    targetParentUid,
-                    membershipAddress.EmailAddress,
-                    targetParentKey,
-                    targetParentHashKey,
-                    signingKey,
-                    batch,
-                    cancellationToken).ConfigureAwait(false))
+            var moveResults = PrepareItemAndAddToBatchAsync(
+                client,
+                item,
+                operationData,
+                volumeId,
+                targetParentUid,
+                membershipAddress.EmailAddress,
+                targetParentKey,
+                targetParentHashKey,
+                signingKey,
+                batch,
+                cancellationToken);
+
+            await foreach (var moveResult in moveResults.ConfigureAwait(false))
             {
                 yield return moveResult;
             }
@@ -76,13 +78,15 @@ internal static class NodeMoveOperation
 
         while (batch.Items.Count > 0)
         {
-            await foreach (var moveResult in SubmitBatchAsync(
+            var moveResults = SubmitBatchAsync(
                 client,
                 volumeId,
                 targetParentUid,
                 membershipAddress.EmailAddress,
                 batch,
-                cancellationToken).ConfigureAwait(false))
+                cancellationToken);
+
+            await foreach (var moveResult in moveResults.ConfigureAwait(false))
             {
                 yield return moveResult;
             }
@@ -139,14 +143,16 @@ internal static class NodeMoveOperation
 
         if (preparation.TryGetValueElseError(out var itemRequest, out var preparationError))
         {
-            await foreach (var result in AddToBatchAsync(
+            var results = AddToBatchAsync(
                 new PreparedNodeMoveItem(item, itemRequest, operationData.NodeWasSignedAnonymously(), CurrentNameDigestIsLocallyComputed: true),
                 client,
                 volumeId,
                 targetParentUid,
                 membershipEmailAddress,
                 batch,
-                cancellationToken).ConfigureAwait(false))
+                cancellationToken);
+
+            await foreach (var result in results.ConfigureAwait(false))
             {
                 yield return result;
             }

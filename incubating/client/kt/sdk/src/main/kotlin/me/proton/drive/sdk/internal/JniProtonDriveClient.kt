@@ -6,8 +6,10 @@ import com.google.protobuf.kotlin.toByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import me.proton.drive.sdk.converter.DeviceConverter
+import me.proton.drive.sdk.converter.DriveSearchWorkScheduleConverter
 import me.proton.drive.sdk.converter.NodeConverter
 import me.proton.drive.sdk.converter.NodeResultListResponseConverter
+import me.proton.drive.sdk.extension.asCallback
 import me.proton.drive.sdk.entity.ClientCreateRequest
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.extension.StringResponseCallback
@@ -66,6 +68,7 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
                 }
                 featureEnabledFunction = ProtonDriveSdkNativeClient.getFeatureEnabledPointer()
                 request.cacheEncryptionKey?.let { cacheEncryptionKey = it.toByteString() }
+                request.searchIndexPath?.let { searchIndexPath = it }
                 clientOptions = protonDriveClientOptions {
                     request.bindingsLanguage?.let { bindingsLanguage = it }
                     request.uid?.let { uid = it }
@@ -304,6 +307,44 @@ class JniProtonDriveClient internal constructor() : JniBaseProtonDriveSdk() {
         request: ProtonDriveSdk.DriveClientDeleteDeviceRequest,
     ): Unit = executeOnce("deleteDevice", UnitResponseCallback) {
         driveClientDeleteDevice = request
+    }
+
+    suspend fun updateSearchIndexes(
+        request: ProtonDriveSdk.DriveClientUpdateSearchIndexesRequest,
+    ): ProtonDriveSdk.DriveSearchWorkSchedule = executeOnce(
+        "updateSearchIndexes",
+        DriveSearchWorkScheduleConverter().asCallback,
+    ) {
+        driveClientUpdateSearchIndexes = request
+    }
+
+    suspend fun processSearchExtractionQueue(
+        request: ProtonDriveSdk.DriveClientProcessSearchExtractionQueueRequest,
+    ): ProtonDriveSdk.DriveSearchWorkSchedule = executeOnce(
+        "processSearchExtractionQueue",
+        DriveSearchWorkScheduleConverter().asCallback,
+    ) {
+        driveClientProcessSearchExtractionQueue = request
+    }
+
+    suspend fun removeNodeFromSearchIndexes(
+        request: ProtonDriveSdk.DriveClientRemoveNodeFromSearchIndexesRequest,
+    ): Unit = executeOnce("removeNodeFromSearchIndexes", UnitResponseCallback) {
+        driveClientRemoveNodeFromSearchIndexes = request
+    }
+
+    suspend fun query(
+        coroutineScope: CoroutineScope,
+        request: ProtonDriveSdk.DriveClientQueryRequest,
+        yield: suspend (ProtonDriveSdk.SearchHit) -> Unit,
+    ): Unit = executeEnumerate(
+        name = "query",
+        callback = UnitResponseCallback,
+        yield = yield,
+        parser = ProtonDriveSdk.SearchHit::parseFrom,
+        coroutineScopeProvider = { coroutineScope },
+    ) {
+        driveClientQuery = request
     }
 
     fun free(handle: Long) {
