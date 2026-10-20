@@ -18,11 +18,13 @@ internal static class TelemetryRecorder
     {
         try
         {
-            foreach (var @event in TelemetryEventFactory.CreateDecryptionErrorEvents(
-                         nodeUid,
-                         link,
-                         activeRevision,
-                         failedFields))
+            var events = TelemetryEventFactory.CreateDecryptionErrorEvents(
+                nodeUid,
+                link,
+                activeRevision,
+                failedFields);
+
+            foreach (var @event in events)
             {
                 client.Telemetry.RecordMetric(@event);
             }

@@ -7,11 +7,14 @@
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <NativeCryptoLibName>proton_crypto</NativeCryptoLibName>
 
-    <NoWarn>$(NoWarn);Photos</NoWarn>
-
-    <!-- IL2113 warning due to usage of SqliteConnectionStringBuilder, but its usage is limited and tested under AOT -->
-    <NoWarn>$(NoWarn);IL2113</NoWarn>
+    <NoWarn>$(NoWarn);Photos;Search</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludeProtonDriveSearch)' != 'true'">
+    <Compile Remove="InteropProtonDriveClientSearch.cs" />
+    <Compile Remove="InteropSearchConversionExtensions.cs" />
+    <Compile Remove="InteropSearchErrorConverter.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
@@ -57,5 +60,7 @@
       <NativeBinary>$(NativeOutputPath)$(NativeLibPrefix)$(NativeLibBaseName)$(NativeBinaryExt)</NativeBinary>
     </PropertyGroup>
   </Target>
+
+  <Import Project="Search.StaticLink.targets" Condition="'$(IncludeProtonDriveSearch)' == 'true'" />
 
 </Project>

@@ -300,8 +300,9 @@ public sealed class ProtonPhotosClient
         ProtonDriveClient client,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var nodeUid in Shares.SharingOperations.EnumerateSharedWithMeNodeUidsAsync(client, ShareTargetTypes, cancellationToken)
-            .ConfigureAwait(false))
+        var nodeUids = Shares.SharingOperations.EnumerateSharedWithMeNodeUidsAsync(client, ShareTargetTypes, cancellationToken);
+
+        await foreach (var nodeUid in nodeUids.ConfigureAwait(false))
         {
             yield return nodeUid;
         }

@@ -74,6 +74,11 @@ message Request {
         DriveClientRenameDeviceRequest drive_client_rename_device = 1302;
         DriveClientDeleteDeviceRequest drive_client_delete_device = 1303;
 
+        DriveClientUpdateSearchIndexesRequest drive_client_update_search_indexes = 1400;
+        DriveClientProcessSearchExtractionQueueRequest drive_client_process_search_extraction_queue = 1401;
+        DriveClientRemoveNodeFromSearchIndexesRequest drive_client_remove_node_from_search_indexes = 1402;
+        DriveClientQueryRequest drive_client_query = 1403;
+
         DrivePhotosClientCreateRequest drive_photos_client_create = 2000;
         DrivePhotosClientFreeRequest drive_photos_client_free = 2001;
         DrivePhotosClientGetPhotoDownloaderRequest drive_photos_client_get_photo_downloader = 2002;
@@ -479,6 +484,9 @@ message DriveClientCreateRequest {
     // Encryption key used to encrypt the cache. Must be a 32-byte
     // random key. If a null value is provided, cache won't be encrypted.
     bytes cache_encryption_key = 8; // Optional
+
+    // Path to the dedicated search index key-value store (not the entity cache).
+    string search_index_path = 9; // Optional; if not set, the search index is kept in memory. Used only by builds with search
 }
 
 // The response must not have a value.
@@ -822,6 +830,76 @@ message DriveClientDeleteDeviceRequest {
     int64 client_handle = 1;
     string device_uid = 2;
     int64 cancellation_token_source_handle = 3;
+}
+
+// Drive - search
+
+enum DriveSearchLogicalIndex {
+    DRIVE_SEARCH_LOGICAL_INDEX_RECENT_NODES = 0;
+}
+
+// A single full-text search hit. identifier uses NodeUid wire format: volume~linkId.
+message SearchHit {
+    string identifier = 1;
+    double score = 2;
+}
+
+message DriveSearchWorkSchedule {
+    int64 recommended_next_call_after_ms = 1;
+}
+
+message DriveSearchDateRange {
+    google.protobuf.Timestamp from = 1; // optional
+    google.protobuf.Timestamp to = 2; // optional
+}
+
+message DriveSearchSizeRange {
+    uint64 from = 1; // unset when HasFrom is false
+    uint64 to = 2; // unset when HasTo is false
+}
+
+message DriveStructuredSearchQuery {
+    string name = 1;
+    string parent_uid = 2; // optional, NodeUid wire format
+    string media_type = 3; // optional
+    string created_by = 4; // optional
+    string owned_by = 5; // optional
+    DriveSearchDateRange creation_time = 6; // optional
+    DriveSearchDateRange modification_time = 7; // optional
+    DriveSearchDateRange last_access_time = 8; // optional
+    DriveSearchSizeRange size = 9; // optional
+}
+
+// The response value must be DriveSearchWorkSchedule.
+message DriveClientUpdateSearchIndexesRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2; // optional
+}
+
+// The response value must be DriveSearchWorkSchedule.
+message DriveClientProcessSearchExtractionQueueRequest {
+    int64 client_handle = 1;
+    int64 cancellation_token_source_handle = 2; // optional
+}
+
+// The response must not have a value.
+message DriveClientRemoveNodeFromSearchIndexesRequest {
+    int64 client_handle = 1;
+    repeated string node_uids = 2; // NodeUid wire format: volume~linkId
+    int64 cancellation_token_source_handle = 3; // optional
+}
+
+// yield_action is called for each SearchHit as results arrive.
+// The response must not have a value.
+message DriveClientQueryRequest {
+    int64 client_handle = 1;
+    DriveSearchLogicalIndex index = 2;
+    oneof query {
+        string text = 3;
+        DriveStructuredSearchQuery structured = 4;
+    }
+    int64 yield_action = 5;
+    int64 cancellation_token_source_handle = 6; // optional
 }
 
 message AlbumNode {

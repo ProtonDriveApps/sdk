@@ -5,6 +5,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import me.proton.drive.sdk.Downloader
+import me.proton.drive.sdk.ExperimentalSearchApi
 import me.proton.drive.sdk.FileDownloader
 import me.proton.drive.sdk.FileUploader
 import me.proton.drive.sdk.LoggerProvider
@@ -17,7 +18,10 @@ import me.proton.drive.sdk.entity.AvailableNameTarget
 import me.proton.drive.sdk.entity.Device
 import me.proton.drive.sdk.entity.DeviceType
 import me.proton.drive.sdk.entity.DeviceUid
+import me.proton.drive.sdk.entity.DriveSearchLogicalIndex
+import me.proton.drive.sdk.entity.DriveSearchWorkSchedule
 import me.proton.drive.sdk.entity.DriveEvent
+import me.proton.drive.sdk.entity.SearchHit
 import me.proton.drive.sdk.entity.DriveEventId
 import me.proton.drive.sdk.entity.FileDownloaderRequest
 import me.proton.drive.sdk.entity.FileRevisionUploaderRequest
@@ -57,7 +61,11 @@ import proton.drive.sdk.recentlyAccessedReportItem
 import proton.drive.sdk.driveClientRenameDeviceRequest
 import proton.drive.sdk.nodeMoveItem
 import proton.drive.sdk.driveClientRestoreNodesRequest
+import proton.drive.sdk.driveClientProcessSearchExtractionQueueRequest
+import proton.drive.sdk.driveClientQueryRequest
+import proton.drive.sdk.driveClientRemoveNodeFromSearchIndexesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
+import proton.drive.sdk.driveClientUpdateSearchIndexesRequest
 import java.time.Instant
 
 internal class InteropProtonDriveClient internal constructor(
@@ -505,6 +513,60 @@ internal class InteropProtonDriveClient internal constructor(
                     cancellationTokenSource = source,
                 )
             }
+        }
+    }
+
+    @ExperimentalSearchApi
+    override suspend fun updateSearchIndexes(): DriveSearchWorkSchedule = cancellationCoroutineScope { source ->
+        log(INFO, "updateSearchIndexes")
+        bridge.updateSearchIndexes(
+            driveClientUpdateSearchIndexesRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            },
+        ).toEntity()
+    }
+
+    @ExperimentalSearchApi
+    override suspend fun processSearchExtractionQueue(): DriveSearchWorkSchedule = cancellationCoroutineScope { source ->
+        log(INFO, "processSearchExtractionQueue")
+        bridge.processSearchExtractionQueue(
+            driveClientProcessSearchExtractionQueueRequest {
+                clientHandle = handle
+                cancellationTokenSourceHandle = source.handle
+            },
+        ).toEntity()
+    }
+
+    @ExperimentalSearchApi
+    override suspend fun removeNodeFromSearchIndexes(nodeUids: List<NodeUid>) = cancellationCoroutineScope { source ->
+        log(INFO, "removeNodeFromSearchIndexes(${nodeUids.size})")
+        bridge.removeNodeFromSearchIndexes(
+            driveClientRemoveNodeFromSearchIndexesRequest {
+                clientHandle = handle
+                this.nodeUids += nodeUids.map { it.value }
+                cancellationTokenSourceHandle = source.handle
+            },
+        )
+    }
+
+    @ExperimentalSearchApi
+    override fun query(index: DriveSearchLogicalIndex, query: String): Flow<SearchHit> = channelFlow {
+        log(INFO, "query")
+        cancellationCoroutineScope { source ->
+            bridge.query(
+                coroutineScope = this@channelFlow,
+                request = driveClientQueryRequest {
+                    clientHandle = handle
+                    this.index = index.toProto()
+                    text = query
+                    cancellationTokenSourceHandle = source.handle
+                    yieldAction = ProtonDriveSdkNativeClient.getYieldPointer()
+                },
+                yield = { hit ->
+                    send(hit.toEntity())
+                },
+            )
         }
     }
 

@@ -12,4 +12,5 @@ data class ClientCreateRequest(
     val storageCallTimeout: Int? = null,
     val blockTransferParallelism: Int? = null,
     val cacheEncryptionKey: ByteArray? = null,
+    val searchIndexPath: String? = null,
 )

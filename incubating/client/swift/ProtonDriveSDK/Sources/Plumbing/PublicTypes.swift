@@ -1053,6 +1053,37 @@ public typealias AlbumItemCallback = @Sendable (Result<AlbumItem, Error>) -> Voi
 /// Callback for thumbnail updates
 public typealias ThumbnailCallback = @Sendable (Result<ThumbnailDataWithId?, Error>) -> Void
 
+/// Recommended delay before repeating a search maintenance call.
+@_spi(ExperimentalSearch)
+public struct DriveSearchWorkSchedule: Sendable {
+    public let recommendedNextCallAfterMs: Int64
+
+    public init(recommendedNextCallAfterMs: Int64) {
+        self.recommendedNextCallAfterMs = recommendedNextCallAfterMs
+    }
+}
+
+@_spi(ExperimentalSearch)
+public enum DriveSearchLogicalIndex: Sendable {
+    case recentNodes
+}
+
+/// A single full-text search hit.
+@_spi(ExperimentalSearch)
+public struct SearchHit: Sendable {
+    public let nodeUid: SDKNodeUid
+    public let score: Double
+
+    public init(nodeUid: SDKNodeUid, score: Double) {
+        self.nodeUid = nodeUid
+        self.score = score
+    }
+}
+
+/// Callback for search hit enumeration updates
+@_spi(ExperimentalSearch)
+public typealias SearchHitCallback = @Sendable (Result<SearchHit, Error>) -> Void
+
 /// Thumbnail with file id
 public struct ThumbnailDataWithId: Sendable {
     public let fileUid: SDKNodeUid

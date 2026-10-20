@@ -23,18 +23,19 @@ public sealed class SqliteCacheRepository : ICacheRepository, IDisposable
             throw new ArgumentException("Value cannot be empty.", nameof(name));
         }
 
-        // Avoiding SqliteConnectionStringBuilder due to IL2113 warning in AOT scenarios
-        var connectionName = name ?? Guid.NewGuid().ToString();
-
-        var connectionString = $"Data Source={connectionName};Mode=Memory;Cache=Shared";
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = name ?? Guid.NewGuid().ToString(),
+            Mode = SqliteOpenMode.Memory,
+            Cache = SqliteCacheMode.Shared,
+        }.ToString();
 
         return Open(connectionString, maxCacheSize);
     }
 
     public static SqliteCacheRepository OpenFile(string path, int? maxCacheSize = 1000)
     {
-        // Avoiding SqliteConnectionStringBuilder due to IL2113 warning in AOT scenarios
-        var connectionString = $"Data Source=\"{path}\"";
+        var connectionString = new SqliteConnectionStringBuilder { DataSource = path }.ToString();
 
         return Open(connectionString, maxCacheSize);
     }

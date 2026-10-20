@@ -1,6 +1,6 @@
 namespace Proton.Drive.Sdk;
 
-public record struct ProtonDriveClientOptions(
+public partial record struct ProtonDriveClientOptions(
     string? Uid = null,
     string? BindingsLanguage = null,
     int? DefaultApiTimeoutSecondsOverride = null,

@@ -37,12 +37,14 @@ internal sealed class NodeProvider(
         IEnumerable<(T Item, LinkId LinkId)> itemLinkIdPairs,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var result in EnumerateAsync(
+        var results = EnumerateAsync(
             volumeId,
             itemLinkIdPairs,
             metadata => metadata.OperationData,
             ProbeOperationDataCacheAsync,
-            cancellationToken).ConfigureAwait(false))
+            cancellationToken);
+
+        await foreach (var result in results.ConfigureAwait(false))
         {
             yield return result;
         }
@@ -53,12 +55,14 @@ internal sealed class NodeProvider(
         IEnumerable<(T Item, LinkId LinkId)> itemLinkIdPairs,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var result in EnumerateAsync(
+        var results = EnumerateAsync(
             volumeId,
             itemLinkIdPairs,
             metadata => metadata,
             static (_, _, _) => ValueTask.FromResult(Option<NodeMetadata>.None),
-            cancellationToken).ConfigureAwait(false))
+            cancellationToken);
+
+        await foreach (var result in results.ConfigureAwait(false))
         {
             yield return result;
         }

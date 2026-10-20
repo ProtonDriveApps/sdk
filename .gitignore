@@ -16,8 +16,8 @@ dist
 # Search engine: compiled from Rust, not committed (see client/js/tasks/search)
 /client/js/src/search/vendor
 /incubating/search/bindings/typescript/
-/incubating/search/bindings/csharp/**
-!/incubating/search/bindings/csharp/Proton.Drive.Sdk.Search.csproj
+/incubating/search/bindings/csharp/src/
+/incubating/search/bindings/csharp/runtimes/**
 /target
 /incubating/search/target
 

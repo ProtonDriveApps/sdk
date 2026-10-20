@@ -42,6 +42,10 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case enumerateSharedWithMeNodeUids(UUID)
         case enumerateSharedNodeUids(UUID)
         case enumerateEvents(UUID)
+        case updateSearchIndexes(UUID)
+        case processSearchExtractionQueue(UUID)
+        case removeNodeFromSearchIndexes(UUID)
+        case query(UUID)
 
         var operationName: String {
             switch self {
@@ -65,6 +69,10 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             case .enumerateSharedWithMeNodeUids: return "enumerateSharedWithMeNodeUids"
             case .enumerateSharedNodeUids: return "enumerateSharedNodeUids"
             case .enumerateEvents: return "enumerateEvents"
+            case .updateSearchIndexes: return "updateSearchIndexes"
+            case .processSearchExtractionQueue: return "processSearchExtractionQueue"
+            case .removeNodeFromSearchIndexes: return "removeNodeFromSearchIndexes"
+            case .query: return "query"
             }
         }
     }
@@ -111,6 +119,9 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             }
             if let cacheEncryptionKey = configuration.cacheEncryptionKey {
                 $0.cacheEncryptionKey = cacheEncryptionKey
+            }
+            if let searchIndexPath = configuration.searchIndexPath {
+                $0.searchIndexPath = searchIndexPath
             }
 
             $0.clientOptions = Proton_Drive_Sdk_ProtonDriveClientOptions.with {
@@ -981,5 +992,133 @@ extension ProtonDriveClient {
 
     public func cancelDeleteDevice(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .deleteDevice(cancellationToken))
+    }
+}
+
+// MARK: - Search
+extension ProtonDriveClient {
+    /// Downloads pending extracts from the backend and updates the local search indexes.
+    ///
+    /// Experimental: requires a native library built with search included (`IncludeProtonDriveSearch=true`).
+    /// Against any other build, the call fails at runtime.
+    @_spi(ExperimentalSearch)
+    public func updateSearchIndexes(cancellationToken: UUID) async throws -> DriveSearchWorkSchedule {
+        let cancellationTokenSource = try await createCancellationTokenSource(.updateSearchIndexes(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .updateSearchIndexes(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DriveClientUpdateSearchIndexesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let schedule: Proton_Drive_Sdk_DriveSearchWorkSchedule = try await SDKRequestHandler.send(request, logger: logger)
+        return DriveSearchWorkSchedule(recommendedNextCallAfterMs: schedule.recommendedNextCallAfterMs)
+    }
+
+    /// Cancels ``updateSearchIndexes(cancellationToken:)``. Experimental, like the call it cancels.
+    @_spi(ExperimentalSearch)
+    public func cancelUpdateSearchIndexes(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .updateSearchIndexes(cancellationToken))
+    }
+
+    /// Processes the backend extraction queue: loads node data, runs extractors, and sends extracts to the backend.
+    ///
+    /// Experimental: requires a native library built with search included (`IncludeProtonDriveSearch=true`).
+    /// Against any other build, the call fails at runtime.
+    @_spi(ExperimentalSearch)
+    public func processSearchExtractionQueue(cancellationToken: UUID) async throws -> DriveSearchWorkSchedule {
+        let cancellationTokenSource = try await createCancellationTokenSource(.processSearchExtractionQueue(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .processSearchExtractionQueue(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DriveClientProcessSearchExtractionQueueRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let schedule: Proton_Drive_Sdk_DriveSearchWorkSchedule = try await SDKRequestHandler.send(request, logger: logger)
+        return DriveSearchWorkSchedule(recommendedNextCallAfterMs: schedule.recommendedNextCallAfterMs)
+    }
+
+    /// Cancels ``processSearchExtractionQueue(cancellationToken:)``. Experimental, like the call it cancels.
+    @_spi(ExperimentalSearch)
+    public func cancelProcessSearchExtractionQueue(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .processSearchExtractionQueue(cancellationToken))
+    }
+
+    /// Removes deleted nodes from all local search indexes.
+    ///
+    /// Experimental: requires a native library built with search included (`IncludeProtonDriveSearch=true`).
+    /// Against any other build, the call fails at runtime.
+    @_spi(ExperimentalSearch)
+    public func removeNodeFromSearchIndexes(
+        nodeUids: [SDKNodeUid],
+        cancellationToken: UUID
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.removeNodeFromSearchIndexes(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .removeNodeFromSearchIndexes(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DriveClientRemoveNodeFromSearchIndexesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodeUids.map(\.sdkCompatibleIdentifier)
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(request, logger: logger)
+    }
+
+    /// Cancels ``removeNodeFromSearchIndexes(nodeUids:cancellationToken:)``. Experimental, like the call it cancels.
+    @_spi(ExperimentalSearch)
+    public func cancelRemoveNodeFromSearchIndexes(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .removeNodeFromSearchIndexes(cancellationToken))
+    }
+
+    /// Queries a logical index and calls `onSearchHit` for each hit as it is found.
+    ///
+    /// Experimental: requires a native library built with search included (`IncludeProtonDriveSearch=true`).
+    /// Against any other build, the call fails at runtime.
+    @_spi(ExperimentalSearch)
+    public func query(
+        index: DriveSearchLogicalIndex,
+        query: String,
+        cancellationToken: UUID,
+        onSearchHit: @escaping SearchHitCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.query(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .query(cancellationToken))
+        }
+
+        let callbackState = SearchHitEnumerationCallbackWrapper(callback: onSearchHit)
+        let protoIndex: Proton_Drive_Sdk_DriveSearchLogicalIndex = switch index {
+        case .recentNodes: .recentNodes
+        }
+
+        let request = Proton_Drive_Sdk_DriveClientQueryRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.index = protoIndex
+            $0.text = query
+            $0.yieldAction = Int64(ObjectHandle(callback: cSearchHitEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    /// Cancels ``query(index:query:cancellationToken:onSearchHit:)``. Experimental, like the call it cancels.
+    @_spi(ExperimentalSearch)
+    public func cancelQuery(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .query(cancellationToken))
     }
 }
