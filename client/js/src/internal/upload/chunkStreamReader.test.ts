@@ -2,8 +2,10 @@ import { ChunkStreamReader } from './chunkStreamReader';
 
 describe('ChunkStreamReader', () => {
     let stream: ReadableStream<Uint8Array<ArrayBuffer>>;
+    let cancel: jest.Mock;
 
     beforeEach(() => {
+        cancel = jest.fn();
         stream = new ReadableStream<Uint8Array<ArrayBuffer>>({
             start(controller) {
                 controller.enqueue(new Uint8Array([1, 2, 3]));
@@ -12,7 +14,85 @@ describe('ChunkStreamReader', () => {
                 controller.enqueue(new Uint8Array([10, 11, 12]));
                 controller.close();
             },
+            cancel,
         });
+    });
+
+    it('should not cancel the stream when fully read', async () => {
+        const reader = new ChunkStreamReader(stream, 3);
+
+        for await (const _chunk of reader.iterateChunks()) {
+            // consume all chunks
+        }
+
+        expect(cancel).not.toHaveBeenCalled();
+    });
+
+    it('should cancel the stream when consumer stops early', async () => {
+        const openStream = new ReadableStream<Uint8Array<ArrayBuffer>>({
+            pull(controller) {
+                controller.enqueue(new Uint8Array([1, 2, 3]));
+            },
+            cancel,
+        });
+        const reader = new ChunkStreamReader(openStream, 3);
+
+        for await (const _chunk of reader.iterateChunks()) {
+            break;
+        }
+
+        expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('should cancel the stream and end iteration when aborted during pending read', async () => {
+        const abortController = new AbortController();
+        const pendingStream = new ReadableStream<Uint8Array<ArrayBuffer>>({ cancel });
+        const reader = new ChunkStreamReader(pendingStream, 3, abortController.signal);
+
+        const chunks: Uint8Array<ArrayBuffer>[] = [];
+        const consume = async () => {
+            for await (const chunk of reader.iterateChunks()) {
+                chunks.push(chunk);
+            }
+        };
+        const promise = consume();
+        abortController.abort();
+        await promise;
+
+        expect(cancel).toHaveBeenCalledTimes(1);
+        expect(chunks).toEqual([]);
+    });
+
+    it('should cancel the stream when already aborted', async () => {
+        const abortController = new AbortController();
+        abortController.abort();
+        const pendingStream = new ReadableStream<Uint8Array<ArrayBuffer>>({ cancel });
+        const reader = new ChunkStreamReader(pendingStream, 3, abortController.signal);
+
+        for await (const _chunk of reader.iterateChunks()) {
+            // no chunks expected
+        }
+
+        expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('should cancel the stream when consumer throws', async () => {
+        const openStream = new ReadableStream<Uint8Array<ArrayBuffer>>({
+            pull(controller) {
+                controller.enqueue(new Uint8Array([1, 2, 3]));
+            },
+            cancel,
+        });
+        const reader = new ChunkStreamReader(openStream, 3);
+
+        const consume = async () => {
+            for await (const _chunk of reader.iterateChunks()) {
+                throw new Error('consumer failed');
+            }
+        };
+
+        await expect(consume()).rejects.toThrow('consumer failed');
+        expect(cancel).toHaveBeenCalledTimes(1);
     });
 
     it('should yield chunks as enqueued if matching the size', async () => {
