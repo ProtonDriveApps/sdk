@@ -251,6 +251,7 @@ export class CommandFileSystemUpload implements Command {
 
         while (true) {
             const progressTracker = ctx.progress?.trackItem(item.baseName, file.size);
+            const stream = file.stream();
 
             try {
                 const uploader = newRevisionForNodeUid
@@ -258,7 +259,7 @@ export class CommandFileSystemUpload implements Command {
                     : await ctx.sdk.getFileUploader(item.parentNode, name, metadata);
 
                 const controller = await uploader.uploadFromStream(
-                    file.stream(),
+                    stream,
                     thumbnails,
                     createUploadProgressCallback(file.size, progressTracker),
                 );
@@ -300,6 +301,7 @@ export class CommandFileSystemUpload implements Command {
                 }
             } finally {
                 progressTracker?.onFinished();
+                await cancelUnconsumedStream(ctx.logger, stream);
             }
         }
     }
@@ -352,4 +354,23 @@ export async function getFileMetadata(
         metadata,
         thumbnails,
     };
+}
+
+/**
+ * Cancels the stream if the upload did not consume it, for example when the
+ * file was skipped due to a conflict or the upload failed before reading it.
+ * Without this, the open file handle is held until garbage collection.
+ *
+ * A locked stream is still owned by the SDK reader, which is responsible
+ * for releasing it.
+ */
+export async function cancelUnconsumedStream(logger: Logger, stream: ReadableStream): Promise<void> {
+    if (stream.locked) {
+        return;
+    }
+    try {
+        await stream.cancel();
+    } catch (error: unknown) {
+        logger.warn(`Failed to close local file: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }

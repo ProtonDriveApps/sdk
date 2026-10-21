@@ -298,7 +298,7 @@ export class StreamUploader {
     private async encryptBlocks(stream: ReadableStream) {
         try {
             let index = 0;
-            const reader = new ChunkStreamReader(stream, FILE_CHUNK_SIZE);
+            const reader = new ChunkStreamReader(stream, FILE_CHUNK_SIZE, this.abortController.signal);
             for await (const block of reader.iterateChunks()) {
                 index++;
 

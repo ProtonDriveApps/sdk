@@ -10,7 +10,7 @@ jest.mock('./transferProgress', () => ({
 jest.mock('./digest');
 jest.mock('./generateThumbnails');
 
-import { getFileMetadata } from './commandFileSystemUpload';
+import { cancelUnconsumedStream, getFileMetadata } from './commandFileSystemUpload';
 import { getSha1 } from './digest';
 import { generateThumbnails } from './generateThumbnails';
 import type { QueueItemFile } from './transferQueue';
@@ -170,5 +170,39 @@ describe('getFileMetadata', () => {
         ).rejects.toThrow(
             'Failed to generate thumbnails (use --skip-thumbnails to upload without thumbnails): decode failed',
         );
+    });
+});
+
+describe('cancelUnconsumedStream', () => {
+    const logger = getMockLogger();
+
+    it('cancels a stream that was not read', async () => {
+        const cancel = jest.fn();
+        const stream = new ReadableStream({ cancel });
+
+        await cancelUnconsumedStream(logger, stream);
+
+        expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not cancel a stream locked by a reader', async () => {
+        const cancel = jest.fn();
+        const stream = new ReadableStream({ cancel });
+        stream.getReader();
+
+        await cancelUnconsumedStream(logger, stream);
+
+        expect(cancel).not.toHaveBeenCalled();
+    });
+
+    it('logs instead of throwing when cancel fails', async () => {
+        const stream = new ReadableStream({
+            start(controller) {
+                controller.error(new Error('read failed'));
+            },
+        });
+
+        await expect(cancelUnconsumedStream(logger, stream)).resolves.toBeUndefined();
+        expect(logger.warn).toHaveBeenCalledWith('Failed to close local file: read failed');
     });
 });

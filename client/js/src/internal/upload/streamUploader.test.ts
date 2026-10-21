@@ -710,12 +710,15 @@ describe('StreamUploader', () => {
         const thumbnails: Thumbnail[] = [];
         let stream: ReadableStream<Uint8Array>;
         let streamController: ReadableStreamDefaultController<Uint8Array>;
+        let streamCancel: jest.Mock;
 
         beforeEach(() => {
+            streamCancel = jest.fn();
             stream = new ReadableStream({
                 start(controller) {
                     streamController = controller;
                 },
+                cancel: streamCancel,
             });
         });
 
@@ -723,6 +726,7 @@ describe('StreamUploader', () => {
             const promise = uploader.start(stream, thumbnails);
             abortController.abort();
             await expect(promise).rejects.toThrow('Operation aborted');
+            expect(streamCancel).toHaveBeenCalledTimes(1);
         });
 
         it('should abort when encrypting blocks', async () => {
@@ -732,6 +736,7 @@ describe('StreamUploader', () => {
             streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
             abortController.abort();
             await expect(promise).rejects.toThrow('Operation aborted');
+            expect(streamCancel).toHaveBeenCalledTimes(1);
         });
 
         it('should abort when uploading block', async () => {
@@ -743,6 +748,19 @@ describe('StreamUploader', () => {
             streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
 
             await expect(promise).rejects.toThrow('Operation aborted');
+            expect(streamCancel).toHaveBeenCalledTimes(1);
+        });
+
+        it('should cancel the stream when encryption fails', async () => {
+            cryptoService.encryptBlock = jest.fn().mockImplementation(async function () {
+                throw new Error('Failed to encrypt block');
+            });
+
+            const promise = uploader.start(stream, thumbnails);
+            streamController.enqueue(new Uint8Array(FILE_CHUNK_SIZE));
+
+            await expect(promise).rejects.toThrow('Failed to encrypt block');
+            expect(streamCancel).toHaveBeenCalledTimes(1);
         });
     });
 });
