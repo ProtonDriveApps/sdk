@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="10.0.13" />
     <PackageVersion Include="SQLitePCLRaw.config.e_sqlite3" Version="3.0.5" />
-    <PackageVersion Include="SQLite" Version="3.53.4" />
+    <PackageVersion Include="SQLite" Version="3.54.0" />
     <PackageVersion Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" />
     <PackageVersion Include="SQLitePCLRaw.provider.sqlite3" Version="3.0.5" />
     <PackageVersion Include="Polly" Version="8.8.0" />
