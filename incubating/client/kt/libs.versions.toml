@@ -20,7 +20,7 @@ protobuf-plugin = "0.10.0"
 # Kotlin
 kotlin = "2.2.21"
 coroutines = "1.10.2"
-okhttp = "4.10.0"
+okhttp = "4.12.0"
 retrofit = "2.9.0"
 # Test
 junit = "4.13.2"
