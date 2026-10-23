@@ -1,5 +1,9 @@
 # Changelog
 
+## cs/v0.32.1 (2026-10-23)
+
+* No changes
+
 ## cs/v0.32.0 (2026-10-22)
 
 ### Features
