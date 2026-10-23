@@ -1,5 +1,12 @@
 # Changelog
 
+## cs/v0.32.0 (2026-10-22)
+
+### Features
+- Add experimental search functionality
+- Add album capabilities
+
+
 ## cs/v0.31.1 (2026-10-09)
 
 ### Bug Fixes
