@@ -18,6 +18,7 @@
         "test:watch": "node node_modules/jest/bin/jest.js src --watch --coverage=false"
     },
     "devDependencies": {
+        "@protontech/global-types": "^1.0.0",
         "@swc/core": "^1.12.3",
         "@swc/jest": "^0.2.38",
         "@types/bun": "^1.4.2",
@@ -43,7 +44,7 @@
     },
     "dependencies": {
         "@noble/hashes": "^1.8.0",
-        "@protontech/crypto": "2.0.0",
+        "@protontech/crypto": "2.2.0",
         "@protontech/drive-sdk": "file:../client/js",
         "@sentry/bun": "^10.73.0",
         "ky": "^1.14.3",
@@ -51,6 +52,6 @@
         "ttag": "^1.8.7"
     },
     "patchedDependencies": {
-        "@protontech/crypto@2.0.0": "../config/js/patches/@protontech%2Fcrypto@2.0.0.patch"
+        "@protontech/crypto@2.2.0": "../config/js/patches/@protontech%2Fcrypto@2.2.0.patch"
     }
 }

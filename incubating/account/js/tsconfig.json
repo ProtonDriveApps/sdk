@@ -17,13 +17,14 @@
         "strict": true,
         "skipLibCheck": true,
         "target": "esnext",
+        "lib": ["esnext", "dom", "DOM.AsyncIterable", "DOM.Iterable"],
         "declaration": true,
         "sourceMap": true,
         "outDir": "dist",
         "resolveJsonModule": true,
         "allowImportingTsExtensions": true,
         "rewriteRelativeImportExtensions": true,
-        "types": ["bun", "jest", "node"]
+        "types": ["@protontech/global-types", "bun", "jest", "node"]
     },
     "include": ["src/**/*.ts"],
     "exclude": ["**/node_modules/*", "**/api-core-types.ts", "**/api-auth-types.ts", "dist/**/*"]

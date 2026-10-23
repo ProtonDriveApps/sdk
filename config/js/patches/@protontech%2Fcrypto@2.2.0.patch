@@ -1,0 +1,83 @@
+diff --git a/src/pmcrypto/openpgp.ts b/src/pmcrypto/openpgp.ts
+index 923c953e9ba2881fd52e976a593bf66208159565..d2b4360fdfeb3728ff77a6d66b1103b6315683fe 100644
+--- a/src/pmcrypto/openpgp.ts
++++ b/src/pmcrypto/openpgp.ts
+@@ -1,4 +1,4 @@
+-import { config } from "openpgp/lightweight";
++import { config } from "openpgp";
+ 
+ export const setConfig = () => {
+     config.s2kIterationCountByte = 255;
+@@ -34,4 +34,4 @@ export const setConfig = () => {
+     config.maxArgon2MemoryExponent = 20;
+ };
+ 
+-export * from "openpgp/lightweight";
++export * from "openpgp";
+diff --git a/src/pmcrypto/pmcrypto.d.ts b/src/pmcrypto/pmcrypto.d.ts
+index 82052deea448f3d6f17561335fcc2a2a0ffc6062..1da4e0bcc457450727af920106f5b94440fd90cc 100644
+--- a/src/pmcrypto/pmcrypto.d.ts
++++ b/src/pmcrypto/pmcrypto.d.ts
+@@ -23,7 +23,7 @@ import {
+     readPrivateKey,
+     type PartialConfig,
+     type AlgorithmInfo,
+-} from "openpgp/lightweight";
++} from "openpgp";
+ 
+ import { VERIFICATION_STATUS, SIGNATURE_TYPES } from "./constants.ts";
+ import type {
+diff --git a/src/pmcrypto/utils.ts b/src/pmcrypto/utils.ts
+index 0c89770b81685854d7e0019879feb52cfef3c125..24adffde249d0d5e1645820c9c58dd11c2a1bb4e 100644
+--- a/src/pmcrypto/utils.ts
++++ b/src/pmcrypto/utils.ts
+@@ -12,8 +12,7 @@ export function streamedUtf8StringToUint8Array(
+ ): WebStream<Uint8Array<ArrayBuffer>> {
+     const reader = str.getReader();
+     const encoder = new TextEncoder();
+-    const transformedStream: WebStream<Uint8Array<ArrayBuffer>> =
+-        new ReadableStream<Uint8Array<ArrayBuffer>>({
++    const transformedStream = new ReadableStream<Uint8Array<ArrayBuffer>>({
+             async pull(controller) {
+                 const { value, done } = await reader.read();
+ 
+@@ -26,7 +25,7 @@ export function streamedUtf8StringToUint8Array(
+             cancel() {
+                 return reader.cancel();
+             },
+-        });
++        }) as WebStream<Uint8Array<ArrayBuffer>>;
+ 
+     return transformedStream;
+ }
+@@ -41,7 +40,7 @@ export function streamedUint8ArrayToUtf8String(
+ ): WebStream<string> {
+     const reader = utf8.getReader();
+     const decoder = new TextDecoder();
+-    const transformedStream: WebStream<string> = new ReadableStream<string>({
++    const transformedStream = new ReadableStream<string>({
+         async pull(controller) {
+             const { value, done } = await reader.read();
+ 
+@@ -59,7 +58,7 @@ export function streamedUint8ArrayToUtf8String(
+         cancel() {
+             return reader.cancel();
+         },
+-    });
++    }) as WebStream<string>;
+ 
+     return transformedStream;
+ }
+diff --git a/src/proxy/endpoint/api.ts b/src/proxy/endpoint/api.ts
+index 339cf0b471cbea710d413495097515af02ea0b38..637415e2a1bc8fb0d53476b4059aaf08e1f5682a 100644
+--- a/src/proxy/endpoint/api.ts
++++ b/src/proxy/endpoint/api.ts
+@@ -1282,7 +1282,7 @@ export class Api extends KeyManagementApi {
+                             controller.enqueue(await unsafeSHA1(binaryDataStream));
+                             controller.close();
+                         }
+-                    })
++                    }) as WebStream<Uint8Array<ArrayBuffer>>
+                 }
+             }
+             default:
