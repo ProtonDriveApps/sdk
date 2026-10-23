@@ -36,7 +36,7 @@
         "exifreader": "^4.44.0"
     },
     "devDependencies": {
-        "@protontech/crypto": "^2.0.0",
+        "@protontech/crypto": "^2.2.0",
         "@protontech/global-types": "^1.0.0",
         "@swc/cli": "^0.8.1",
         "@swc/core": "^1.12.3",
@@ -56,6 +56,9 @@
         "typescript": "^5.9.3"
     },
     "peerDependencies": {
-        "@protontech/crypto": "^2.0.0"
+        "@protontech/crypto": "^2.2.0"
+    },
+    "patchedDependencies": {
+        "@protontech/crypto@2.2.0": "../../config/js/patches/@protontech%2Fcrypto@2.2.0.patch"
     }
 }

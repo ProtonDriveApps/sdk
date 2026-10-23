@@ -25,6 +25,7 @@
         "strict": true,
         "skipLibCheck": true,
         "target": "esnext",
+        "lib": ["esnext", "dom", "DOM.AsyncIterable", "DOM.Iterable"],
         "declaration": true,
         "sourceMap": true,
         "outDir": "dist",
@@ -32,6 +33,7 @@
         "allowImportingTsExtensions": true,
         "rewriteRelativeImportExtensions": true,
         "types": [
+            "@protontech/global-types",
             "bun",
             "jest"
         ]
