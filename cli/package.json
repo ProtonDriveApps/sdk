@@ -9,6 +9,7 @@
     "scripts": {
         "build": "bun ./scripts/build-cli.mjs",
         "build:bundle": "bun ./scripts/build-cli.mjs --bundle-only",
+        "build:man": "bun ./scripts/generate-man.ts release/proton-drive.1",
         "check-types": "tsc --noEmit",
         "generate-metric-schemas": "bun ./scripts/generate-metric-schemas.ts",
         "lint": "eslint src --ext .ts --cache --ignore-pattern '**/api/*-types.ts'",

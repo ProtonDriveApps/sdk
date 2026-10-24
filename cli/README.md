@@ -38,6 +38,16 @@ Running `bun run build` embeds a value `external-drive-sdkclijs` by default. If 
 
 Official release builds use `cli-drive`. Unmodified CLI repackaged for a distribution may use `cli-drive-<distro>`. Do not use this identifier for any other purpose.
 
+### Manual page
+
+```bash
+bun run build:man
+```
+
+This writes a manual page to **`release/proton-drive.1`**, generated from the same command definitions as `proton-drive --help`. Read it with `man ./release/proton-drive.1`, or install it as `share/man/man1/proton-drive.1` next to the executable.
+
+The page is dated from `SOURCE_DATE_EPOCH` if it is set, otherwise from the newest release in `CHANGELOG.md`. When building from a release tarball, set `SOURCE_DATE_EPOCH` to the release's commit time.
+
 ## Authentication
 
 Sign-in uses the browser (no password on the command line):
