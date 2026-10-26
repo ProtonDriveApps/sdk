@@ -3,6 +3,7 @@ package me.proton.drive.sdk.extension
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.ParentNodeUid
 import me.proton.drive.sdk.entity.PhotoNode
+import me.proton.drive.sdk.entity.PhotoTag
 import me.proton.drive.sdk.entity.ScopeId
 import proton.drive.sdk.ProtonDriveSdk
 import proton.drive.sdk.trashTimeOrNull
@@ -28,4 +29,7 @@ fun ProtonDriveSdk.PhotoNode.toEntity() = PhotoNode(
     deprecatedShareId = deprecatedShareId.takeIf { it.isNotEmpty() },
     captureTime = captureTime.toInstant(),
     albumUids = albumUidsList.map(::NodeUid),
+    tags = tagsValueList.mapNotNull { tagValue -> PhotoTag.fromLong(tagValue.toLong()) },
+    relatedPhotoUids = relatedPhotoUidsList.map(::NodeUid),
+    contentHash = contentHash.takeIf { hasContentHash() }?.toByteArray(),
 )

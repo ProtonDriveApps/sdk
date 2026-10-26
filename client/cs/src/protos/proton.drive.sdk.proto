@@ -950,6 +950,10 @@ message PhotoNode {
     // ID of the share this node is shared with, empty when it is not shared. Not part of the public interface,
     // only exists for backward compatibility with the old Drive client setup.
     string deprecated_share_id = 20; // optional
+
+    repeated PhotoTag tags = 21; // Tags this version does not know are left out
+    repeated string related_photo_uids = 22; // Other parts of a burst, live photo or motion photo
+    bytes content_hash = 23; // optional - digest of the content, when the service has one
 }
 
 message Node {
