@@ -118,7 +118,14 @@ internal static class InteropConversionExtensions
 
             photoNodeProto.ActiveRevision = photoNode.ActiveRevision.ToInterop();
             photoNodeProto.AlbumUids.AddRange(photoNode.AlbumUids.Select(albumUid => albumUid.ToString()));
+            photoNodeProto.Tags.AddRange(photoNode.Tags.Where(tag => System.Enum.IsDefined(tag)).Select(tag => (PhotoTag)(int)tag));
+            photoNodeProto.RelatedPhotoUids.AddRange(photoNode.RelatedPhotoUids.Select(relatedPhotoUid => relatedPhotoUid.ToString()));
             photoNodeProto.Errors.AddRange(photoNode.Errors.Select(ToInterop));
+
+            if (photoNode.ContentHash is { } contentHash)
+            {
+                photoNodeProto.ContentHash = ByteString.CopyFrom(contentHash.Span);
+            }
 
             return photoNodeProto;
         }
