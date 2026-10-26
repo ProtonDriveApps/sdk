@@ -1,6 +1,5 @@
 import { ValidationError } from '../../errors';
 import { MemberRole, NodeType, resultError, resultOk } from '../../interface';
-import { getMockLogger } from '../../tests/logger';
 import { SharingAPIService } from './apiService';
 import { SharingCache } from './cache';
 import { SharingCryptoService } from './cryptoService';
@@ -13,7 +12,6 @@ describe('SharingAccess', () => {
     let cryptoService: SharingCryptoService;
     let sharesService: SharesService;
     let nodesService: NodesService;
-
     let sharingAccess: SharingAccess;
 
     const nodeUids = Array.from({ length: BATCH_LOADING_SIZE + 5 }, (_, i) => `volumeId~nodeUid${i}`);
@@ -237,6 +235,83 @@ describe('SharingAccess', () => {
                 inviteeEmail: 'invitee-email',
                 role: MemberRole.Viewer,
             });
+        });
+
+        it('should yield decryptable invitations before throwing error', async () => {
+            const decryptError = new Error('Decryption failed');
+            apiService.iterateInvitationUids = jest.fn().mockImplementation(async function* () {
+                yield 'invitationUid1';
+                yield 'invitationUid2';
+                yield 'invitationUid3';
+            });
+            apiService.getInvitation = jest.fn().mockImplementation((invitationUid: string) =>
+                Promise.resolve({
+                    uid: invitationUid,
+                    node: { uid: 'volumeId~nodeUid' },
+                    inviteeEmail: 'invitee-email',
+                    role: MemberRole.Viewer,
+                }),
+            );
+            cryptoService.decryptInvitationWithNode = jest.fn().mockImplementation((encryptedInvitation) => {
+                if (encryptedInvitation.uid === 'invitationUid2') {
+                    return Promise.reject(decryptError);
+                }
+                return Promise.resolve({
+                    uid: encryptedInvitation.uid,
+                    inviteeEmail: 'invitee-email',
+                    role: MemberRole.Viewer,
+                    node: {
+                        uid: 'volumeId~nodeUid',
+                        name: { ok: true, value: 'SharedFile.txt' },
+                        type: NodeType.File,
+                    },
+                });
+            });
+
+            const generator = sharingAccess.iterateInvitations();
+            const invitation1 = await generator.next();
+            expect(invitation1.value).toMatchObject({ uid: 'invitationUid1' });
+            const invitation2 = await generator.next();
+            expect(invitation2.value).toMatchObject({ uid: 'invitationUid3' });
+            const invitation3 = generator.next();
+            await expect(invitation3).rejects.toThrow('Some invitations could not be loaded');
+            try {
+                await invitation3;
+            } catch (error: any) {
+                expect(error.cause).toEqual([decryptError]);
+            }
+        });
+
+        it('should propagate errors thrown into the generator', async () => {
+            const consumerError = new Error('Consumer aborted');
+            apiService.iterateInvitationUids = jest.fn().mockImplementation(async function* () {
+                yield 'invitationUid1';
+                yield 'invitationUid2';
+            });
+            apiService.getInvitation = jest.fn().mockImplementation((invitationUid: string) =>
+                Promise.resolve({
+                    uid: invitationUid,
+                    node: { uid: 'volumeId~nodeUid' },
+                    inviteeEmail: 'invitee-email',
+                    role: MemberRole.Viewer,
+                }),
+            );
+            cryptoService.decryptInvitationWithNode = jest.fn().mockImplementation((encryptedInvitation) =>
+                Promise.resolve({
+                    uid: encryptedInvitation.uid,
+                    inviteeEmail: 'invitee-email',
+                    role: MemberRole.Viewer,
+                    node: {
+                        uid: 'volumeId~nodeUid',
+                        name: { ok: true, value: 'SharedFile.txt' },
+                        type: NodeType.File,
+                    },
+                }),
+            );
+
+            const generator = sharingAccess.iterateInvitations();
+            await generator.next();
+            await expect(generator.throw(consumerError)).rejects.toBe(consumerError);
         });
     });
 

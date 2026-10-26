@@ -1,6 +1,6 @@
 import { c } from 'ttag';
 
-import { ValidationError } from '../../errors';
+import { ProtonDriveError, ValidationError } from '../../errors';
 import { MaybeBookmark, ProtonInvitationWithNode, resultError, resultOk } from '../../interface';
 import { BatchLoading } from '../batchLoading';
 import { DecryptedNode } from '../nodes';
@@ -145,10 +145,21 @@ export class SharingAccess {
     }
 
     async *iterateInvitations(signal?: AbortSignal): AsyncGenerator<ProtonInvitationWithNode> {
+        const errors: unknown[] = [];
         for await (const invitationUid of this.apiService.iterateInvitationUids(signal)) {
-            const encryptedInvitation = await this.apiService.getInvitation(invitationUid);
-            const invitation = await this.cryptoService.decryptInvitationWithNode(encryptedInvitation);
+            let invitation: ProtonInvitationWithNode;
+            try {
+                const encryptedInvitation = await this.apiService.getInvitation(invitationUid);
+                invitation = await this.cryptoService.decryptInvitationWithNode(encryptedInvitation);
+            } catch (error: unknown) {
+                errors.push(error);
+                continue;
+            }
             yield invitation;
+        }
+
+        if (errors.length > 0) {
+            throw new ProtonDriveError(c('Error').t`Some invitations could not be loaded`, { cause: errors });
         }
     }
 
