@@ -17,14 +17,41 @@
       "Cannot download a folder": [
         "No se puede descargar una carpeta."
       ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "No se puede mover el elemento sin un nombre válido. Cambia primero su nombre"
+      ],
       "Cannot share root folder": [
         "No se puede compartir la carpeta principal."
+      ],
+      "Cannot verify the author of this file": [
+        "No se puede verificar el autor de este archivo"
+      ],
+      "Cannot verify who uploaded this file": [
+        "No se puede verificar quién ha cargado este archivo"
       ],
       "Copy operation aborted": [
         "Se ha cancelado la copia."
       ],
       "Copying item to a non-folder is not allowed": [
         "No está permitido copiar un elemento a una ubicación que no sea una carpeta."
+      ],
+      "Could not find an available name": [
+        "No se ha encontrado un nombre disponible"
+      ],
+      "Could not load sharing details": [
+        "No se han podido cargar los detalles de uso compartido"
+      ],
+      "Could not load the image preview: ${ message }": [
+        "No se ha podido cargar la vista previa de la imagen: ${ message }"
+      ],
+      "Could not read part of this file: ${ message }": [
+        "No se ha podido leer una parte de este archivo: ${ message }"
+      ],
+      "Could not unlock the parent folder": [
+        "No se ha podido desbloquear la carpeta principal"
+      ],
+      "Could not unlock this item": [
+        "No se ha podido desbloquear este elemento"
       ],
       "Creating documents in non-folders is not allowed": [
         "No está permitido crear documentos en elementos que no sean carpetas."
@@ -74,11 +101,17 @@
       "File has no revision": [
         "El archivo no tiene revisiones"
       ],
+      "Image preview not found": [
+        "No se ha encontrado la vista previa de la imagen"
+      ],
       "Invalid URL": [
         "La URL no es válida."
       ],
       "Invitation not found": [
         "No se ha encontrado la invitación."
+      ],
+      "Item not found": [
+        "No se ha encontrado el elemento."
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "El enlace público de origen no se puede actualizar. Vuelve a crear un nuevo enlace público."
@@ -108,11 +141,20 @@
       "Name must not be empty": [
         "El nombre no debe estar vacío."
       ],
+      "No file data was received. Please try again.": [
+        "No se han recibido datos del archivo. Inténtalo de nuevo."
+      ],
+      "Only admins can convert external invitations": [
+        "Solo los administradores pueden convertir invitaciones externas"
+      ],
       "Operation aborted": [
         "Operación cancelada"
       ],
       "Operation failed, try again later": [
         "Operación fallida, inténtalo de nuevo más tarde"
+      ],
+      "Part of the file appears to be corrupted": [
+        "Parte del archivo parece estar dañada"
       ],
       "Photo is already in the target album": [
         "La foto ya está en el álbum de destino"
@@ -125,6 +167,9 @@
       ],
       "Request aborted": [
         "Solicitud cancelada"
+      ],
+      "Search index reached its storage quota": [
+        "El índice de búsqueda ha alcanzado su cuota de almacenamiento"
       ],
       "Signature is missing": [
         "Falta la firma"
@@ -141,6 +186,45 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Fallo en la verificación de firma para ${ signatureType }: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "No se han podido cargar algunos datos del archivo. Inténtalo de nuevo."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "No se han podido cargar algunas partes del archivo. Inténtalo de nuevo."
+      ],
+      "Some invitations could not be loaded": [
+        "No se han podido cargar algunas invitaciones"
+      ],
+      "Some items could not be loaded": [
+        "No se han podido cargar algunos elementos"
+      ],
+      "Something went wrong": [
+        "Se ha producido un error."
+      ],
+      "Something went wrong. Please try again.": [
+        "Algo ha salido mal. Inténtalo de nuevo."
+      ],
+      "The uploaded file does not match the original. Please try again.": [
+        "El archivo cargado no coincide con el original. Inténtalo de nuevo."
+      ],
+      "This file has missing crypto material": [
+        "Faltan datos de cifrado en este archivo"
+      ],
+      "This file has no version available to download": [
+        "Este archivo no tiene ninguna versión disponible para descargar"
+      ],
+      "This file version could not be uploaded": [
+        "No se ha podido cargar esta versión del archivo"
+      ],
+      "This item has no image preview": [
+        "Este elemento no tiene vista previa de imagen"
+      ],
+      "This item is no longer shared": [
+        "Este elemento ya no está compartido"
+      ],
+      "This item is not shared": [
+        "Este elemento no está compartido"
+      ],
       "Too many server errors, please try again later": [
         "Demasiados errores del servidor. Inténtalo de nuevo más tarde."
       ],
@@ -155,6 +239,24 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Las claves de verificación para ${ signatureType } no están disponibles."
+      ],
+      "You can create public links for your own files only": [
+        "Solo puedes crear enlaces públicos para tus propios archivos"
+      ],
+      "You can only leave items that are shared with you": [
+        "Solo puedes abandonar elementos compartidos contigo"
+      ],
+      "You can only upload a new version to a file": [
+        "Solo puedes cargar una nueva versión de un archivo"
+      ],
+      "You can update a public link for your own files only": [
+        "Solo puedes actualizar enlaces públicos de tus propios archivos"
+      ],
+      "You do not have access to this item": [
+        "No tienes acceso a este elemento"
+      ],
+      "You do not have access to this shared item": [
+        "No tienes acceso a este elemento compartido"
       ],
       "Your browser does not support features required for the search.": [
         "Tu navegador no admite las funciones necesarias para la búsqueda."

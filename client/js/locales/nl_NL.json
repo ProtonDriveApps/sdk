@@ -168,6 +168,9 @@
       "Request aborted": [
         "Verzoek afgebroken"
       ],
+      "Search index reached its storage quota": [
+        "Zoekindex heeft zijn opslaglimiet bereikt"
+      ],
       "Signature is missing": [
         "Handtekening ontbreekt"
       ],
@@ -188,6 +191,9 @@
       ],
       "Some file parts failed to upload. Please try again.": [
         "Sommige bestandsdelen konden niet worden opgeladen. Probeer het opnieuw."
+      ],
+      "Some invitations could not be loaded": [
+        "Sommige uitnodigingen konden niet worden geladen"
       ],
       "Some items could not be loaded": [
         "Sommige items konden niet worden geladen"

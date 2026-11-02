@@ -53,8 +53,14 @@
       "File download failed due to empty response": [
         "Не удалось скачать файл из-за пустого ответа"
       ],
+      "Invalid URL": [
+        "Неверный URL"
+      ],
       "Invitation not found": [
         "Приглашение не найдено"
+      ],
+      "Item not found": [
+        "Элемент не найден"
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Устаревшую публичную ссылку невозможно обновить. Создайте новую публичную ссылку."
@@ -106,6 +112,12 @@
       ],
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Проверка подписи для ${ signatureType } не удалась: ${ errorMessage }"
+      ],
+      "Something went wrong": [
+        "Что-то пошло не так"
+      ],
+      "Something went wrong. Please try again.": [
+        "Что-то пошло не так. Повторите попытку."
       ],
       "Too many server errors, please try again later": [
         "Слишком много ошибок сервера, повторите попытку позже"
