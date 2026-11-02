@@ -194,6 +194,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Niektoré časti súboru sa nepodarilo nahrať. Skúste to znova, prosím."
       ],
+      "Some invitations could not be loaded": [
+        "Niektoré pozvánky sa nepodarilo načítať"
+      ],
       "Some items could not be loaded": [
         "Niektoré položky sa nepodarilo načítať"
       ],

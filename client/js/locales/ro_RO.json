@@ -193,6 +193,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Unele părți ale fișierului nu au putut fi încărcate. Reîncercați."
       ],
+      "Some invitations could not be loaded": [
+        "Unele invitații nu au putut fi încărcate."
+      ],
       "Some items could not be loaded": [
         "Unele articole nu au putut fi încărcate."
       ],

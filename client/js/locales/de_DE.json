@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Einige Dateiteile konnten nicht hochgeladen werden. Bitte versuche es erneut."
       ],
+      "Some invitations could not be loaded": [
+        "Einige Einladungen konnten nicht geladen werden"
+      ],
       "Some items could not be loaded": [
         "Einige Einträge konnten nicht geladen werden"
       ],

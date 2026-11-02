@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "No s'han pogut carregar algunes parts del fitxer. Torneu-ho a provar."
       ],
+      "Some invitations could not be loaded": [
+        "Algunes de les invitacions no s'han pogut carregar"
+      ],
       "Some items could not be loaded": [
         "No s'han pogut carregar alguns elements"
       ],

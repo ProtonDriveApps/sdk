@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Des parties de fichier n'ont pas pu être importées. Veuillez réessayer."
       ],
+      "Some invitations could not be loaded": [
+        "Certaines invitations n'ont pas pu être chargés."
+      ],
       "Some items could not be loaded": [
         "Certains éléments n'ont pas pu être chargés."
       ],

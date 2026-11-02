@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Bazı dosya bölümleri yüklenemedi. Lütfen yeniden deneyin."
       ],
+      "Some invitations could not be loaded": [
+        "Bazı davetler yüklenemedi"
+      ],
       "Some items could not be loaded": [
         "Bazı ögeler yüklenemedi"
       ],

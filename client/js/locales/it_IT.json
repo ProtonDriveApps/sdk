@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Alcune parti del file non sono state caricate. Riprova."
       ],
+      "Some invitations could not be loaded": [
+        "Non è stato possibile caricare alcuni inviti"
+      ],
       "Some items could not be loaded": [
         "Impossibile caricare alcuni elementi."
       ],
@@ -254,6 +257,9 @@
       ],
       "You do not have access to this shared item": [
         "Non hai accesso a questo elemento condiviso."
+      ],
+      "Your browser does not support features required for the search.": [
+        "Il tuo browser non supporta le funzionalità necessarie per la ricerca."
       ]
     },
     "Info": {

@@ -192,6 +192,9 @@
       "Some file parts failed to upload. Please try again.": [
         "Η μεταφόρτωση ορισμένων τμημάτων του αρχείου απέτυχε. Παρακαλούμε δοκιμάστε ξανά."
       ],
+      "Some invitations could not be loaded": [
+        "Δεν ήταν δυνατή η φόρτωση ορισμένων προσκλήσεων"
+      ],
       "Some items could not be loaded": [
         "Δεν ήταν δυνατή η φόρτωση ορισμένων στοιχείων"
       ],

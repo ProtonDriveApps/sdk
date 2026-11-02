@@ -47,8 +47,14 @@
       "File download failed due to empty response": [
         "Erro na transferência do ficheiro devido a uma resposta vazia"
       ],
+      "Invalid URL": [
+        "URL inválido"
+      ],
       "Invitation not found": [
         "O convite não foi encontrado."
+      ],
+      "Item not found": [
+        "O item não foi encontrado."
       ],
       "Legacy public link cannot be updated. Please re-create a new public link.": [
         "Não é possível atualizar a ligação pública antiga. Cria uma nova ligação pública."
@@ -90,6 +96,12 @@
       "Signature verification for ${ signatureType } failed": [
         "Erro na verificação de assinatura para ${ signatureType }"
       ],
+      "Something went wrong": [
+        "Ocorreu um erro."
+      ],
+      "Something went wrong. Please try again.": [
+        "Ocorreu um erro. Tente novamente mais tarde."
+      ],
       "Too many server errors, please try again later": [
         "Demasiados erros do servidor. Tente novamente mais tarde."
       ],
@@ -118,6 +130,9 @@
       ],
       "key": [
         "chave"
+      ],
+      "membership": [
+        "subscrição"
       ],
       "name": [
         "nome"
