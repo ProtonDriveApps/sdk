@@ -19,7 +19,7 @@ internal fun PhotosUploaderRequest.toProtobuf(
                 captureTime = it.toTimestamp()
             }
             this@toProtobuf.lastModificationTime?.let {
-                lastModificationTime = it.toTimestamp()
+                lastModificationTime = it.toIso8601String()
             }
             additionalMetadata += this@toProtobuf.additionalMetadata.map { (name, data) ->
                 additionalMetadataProperty {

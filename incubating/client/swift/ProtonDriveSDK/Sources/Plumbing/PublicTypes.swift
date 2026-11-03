@@ -671,8 +671,9 @@ public struct FileRevision: Sendable {
     public let claimedSize: Int64?
     /// Claimed file digests for integrity verification
     public let claimedDigests: FileContentDigests
-    /// Claimed modification time from the file system
-    public let claimedModificationTime: Double?
+    /// Claimed modification time from the file system, as ISO 8601 with UTC offset, e.g. `2026-10-21T09:55:00.0000000+08:00`.
+    /// Values uploaded before the offset was kept are reported in UTC (`+00:00`).
+    public let claimedModificationTime: String?
     public let thumbnails: [ThumbnailHeader]
     public let claimedAdditionalMetadata: [AdditionalMetadata]?
     public let contentAuthor: Author?
@@ -683,7 +684,7 @@ public struct FileRevision: Sendable {
                 storageSize: Int64,
                 claimedSize: Int64?,
                 claimedDigests: FileContentDigests,
-                claimedModificationTime: Double?,
+                claimedModificationTime: String?,
                 thumbnails: [ThumbnailHeader],
                 claimedAdditionalMetadata: [AdditionalMetadata]?,
                 contentAuthor: Author?) {
@@ -711,7 +712,7 @@ public struct FileRevision: Sendable {
         self.claimedSize = sdkFileRevision.hasClaimedSize ? sdkFileRevision.claimedSize : nil
         self.claimedDigests = FileContentDigests(result: sdkFileRevision.claimedDigests)
         self.claimedModificationTime = sdkFileRevision.hasClaimedModificationTime
-        ? sdkFileRevision.claimedModificationTime.timeIntervalSince1970
+        ? sdkFileRevision.claimedModificationTime
         : nil
         self.thumbnails = sdkFileRevision.thumbnails.map { ThumbnailHeader(result: $0) }
         self.claimedAdditionalMetadata = sdkFileRevision.claimedAdditionalMetadata.map { AdditionalMetadata(result: $0) }

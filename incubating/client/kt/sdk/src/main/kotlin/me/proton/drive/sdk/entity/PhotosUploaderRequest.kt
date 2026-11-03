@@ -1,12 +1,13 @@
 package me.proton.drive.sdk.entity
 
 import java.time.Instant
+import java.time.OffsetDateTime
 
 data class PhotosUploaderRequest(
     val name: String,
     val mediaType: String,
     val fileSize: Long,
-    val lastModificationTime: Instant?,
+    val lastModificationTime: OffsetDateTime?,
     val captureTime: Instant?,
     val mainPhotoUid: String? = null,
     val tags: List<PhotoTag> = emptyList(),

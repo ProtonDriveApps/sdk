@@ -36,6 +36,7 @@ import me.proton.drive.sdk.entity.RecentlyAccessedReportItem
 import me.proton.drive.sdk.entity.ScopeId
 import me.proton.drive.sdk.entity.ThumbnailType
 import me.proton.drive.sdk.extension.toEntity
+import me.proton.drive.sdk.extension.toIso8601String
 import me.proton.drive.sdk.extension.toProto
 import me.proton.drive.sdk.extension.toTimestamp
 import proton.drive.sdk.driveClientCreateDeviceRequest
@@ -66,7 +67,7 @@ import proton.drive.sdk.driveClientQueryRequest
 import proton.drive.sdk.driveClientRemoveNodeFromSearchIndexesRequest
 import proton.drive.sdk.driveClientTrashNodesRequest
 import proton.drive.sdk.driveClientUpdateSearchIndexesRequest
-import java.time.Instant
+import java.time.OffsetDateTime
 
 internal class InteropProtonDriveClient internal constructor(
     internal val handle: Long,
@@ -146,14 +147,14 @@ internal class InteropProtonDriveClient internal constructor(
     override suspend fun createFolder(
         parentFolderUid: NodeUid,
         name: String,
-        lastModificationTime: Instant?,
+        lastModificationTime: OffsetDateTime?,
     ): FolderNode = cancellationCoroutineScope { source ->
         log(INFO, "createFolder")
         bridge.createFolder(
             driveClientCreateFolderRequest {
                 this.parentFolderUid = parentFolderUid.value
                 folderName = name
-                lastModificationTime?.toTimestamp()?.let { this.lastModificationTime = it }
+                lastModificationTime?.let { this.lastModificationTime = it.toIso8601String() }
                 clientHandle = handle
                 cancellationTokenSourceHandle = source.handle
             }

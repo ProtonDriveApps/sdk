@@ -1,3 +1,4 @@
+using System.Globalization;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Proton.Drive.Sdk.Nodes;
@@ -358,8 +359,12 @@ internal static class InteropConversionExtensions
                 CreationTime = revision.CreationTime.ToUniversalTime().ToTimestamp(),
                 StorageSize = revision.StorageSize,
                 ClaimedSize = revision.ClaimedSize ?? 0,
-                ClaimedModificationTime = revision.ClaimedModificationTime?.ToUniversalTime().ToTimestamp(),
             };
+
+            if (revision.ClaimedModificationTime is { } claimedModificationTime)
+            {
+                protoRevision.ClaimedModificationTime = claimedModificationTime.ToString("O", CultureInfo.InvariantCulture);
+            }
 
             if (revision.ClaimedDigests is { } claimedDigests)
             {

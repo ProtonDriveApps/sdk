@@ -11,6 +11,6 @@ internal fun FileRevisionUploaderRequest.toProtobuf(
     this.cancellationTokenSourceHandle = cancellationTokenSourceHandle
     this.currentActiveRevisionUid = this@toProtobuf.currentActiveRevisionUid.value
     this.size = this@toProtobuf.size
-    this@toProtobuf.lastModificationTime?.toTimestamp()?.let { lastModificationTime = it }
+    this@toProtobuf.lastModificationTime?.let { lastModificationTime = it.toIso8601String() }
     this@toProtobuf.noWaiting?.let { noWaiting = it }
 }

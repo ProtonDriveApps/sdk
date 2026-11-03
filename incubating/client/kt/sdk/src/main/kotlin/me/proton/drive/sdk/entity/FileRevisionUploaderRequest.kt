@@ -1,10 +1,10 @@
 package me.proton.drive.sdk.entity
 
-import java.time.Instant
+import java.time.OffsetDateTime
 
 data class FileRevisionUploaderRequest(
     val currentActiveRevisionUid: RevisionUid,
-    val lastModificationTime: Instant?,
+    val lastModificationTime: OffsetDateTime?,
     val size: Long,
     val noWaiting: Boolean? = null,
 )

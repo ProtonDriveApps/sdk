@@ -85,7 +85,7 @@ internal static class InteropProtonDriveClient
         var createdFolder = await client.CreateFolderAsync(
             NodeUid.Parse(request.ParentFolderUid),
             request.FolderName,
-            request.LastModificationTime?.ToDateTimeFixed(),
+            request.HasLastModificationTime ? Iso8601DateTimeOffsetParser.Parse(request.LastModificationTime) : null,
             cancellationToken).ConfigureAwait(false);
 
         return createdFolder.ToInterop();
@@ -101,7 +101,7 @@ internal static class InteropProtonDriveClient
 
         var metadata = new FileUploadMetadata
         {
-            LastModificationTime = request.LastModificationTime?.ToDateTimeFixed(),
+            LastModificationTime = request.HasLastModificationTime ? Iso8601DateTimeOffsetParser.Parse(request.LastModificationTime) : null,
             AdditionalMetadata = additionalMetadata,
         };
 
@@ -148,7 +148,7 @@ internal static class InteropProtonDriveClient
 
         var metadata = new FileUploadMetadata
         {
-            LastModificationTime = request.LastModificationTime?.ToDateTimeFixed(),
+            LastModificationTime = request.HasLastModificationTime ? Iso8601DateTimeOffsetParser.Parse(request.LastModificationTime) : null,
             AdditionalMetadata = additionalMetadata,
         };
 

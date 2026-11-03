@@ -23,7 +23,7 @@ actor PhotoUploadsManager {
         name: String,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date,
+        modificationTime: String,
         captureTime: Date,
         mainPhotoUid: SDKNodeUid?,
         mediaType: String,
@@ -42,7 +42,7 @@ actor PhotoUploadsManager {
         let uploaderHandle = try await buildUploader(
             name: name,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             mediaType: mediaType,
             captureTime: captureTime,
             mainPhotoUid: mainPhotoUid,
@@ -150,7 +150,7 @@ actor PhotoUploadsManager {
     private func buildUploader(
         name: String,
         fileSize: Int64,
-        modificationDate: Date,
+        modificationTime: String,
         mediaType: String,
         captureTime: Date,
         mainPhotoUid: SDKNodeUid?,
@@ -165,7 +165,7 @@ actor PhotoUploadsManager {
             $0.size = fileSize
 
             $0.metadata = Proton_Drive_Sdk_PhotosFileUploadMetadata.with { metadata in
-                metadata.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate)
+                metadata.lastModificationTime = modificationTime
                 metadata.additionalMetadata = additionalMetadata.map { $0.toSDK }
                 metadata.captureTime = Google_Protobuf_Timestamp(date: captureTime)
                 if let mainPhotoUid {

@@ -294,12 +294,14 @@ extension ProtonDriveClient {
 // MARK: - Upload file
 extension ProtonDriveClient {
     /// Convenience API for when you don't need a more granular control over the upload (pause, resume etc.)
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadFile(
         parentFolderUid: SDKNodeUid,
         name: String,
         url: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
@@ -313,7 +315,7 @@ extension ProtonDriveClient {
             name: name,
             url: url,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
@@ -328,12 +330,14 @@ extension ProtonDriveClient {
         )
     }
 
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadFileOperation(
         parentFolderUid: SDKNodeUid,
         name: String,
         url: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
@@ -346,7 +350,7 @@ extension ProtonDriveClient {
             name: name,
             fileURL: url,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             mediaType: mediaType,
             thumbnails: thumbnails,
             overrideExistingDraft: overrideExistingDraft,
@@ -370,11 +374,13 @@ extension ProtonDriveClient {
     }
 
     /// Convenience API for when you don't need a more granular control over the upload (pause, resume etc.)
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadNewRevision(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         thumbnails: [ThumbnailData],
         expectedSHA1: Data? = nil,
         cancellationToken: UUID,
@@ -385,7 +391,7 @@ extension ProtonDriveClient {
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileURL: fileURL,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             thumbnails: thumbnails,
             expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
@@ -398,11 +404,13 @@ extension ProtonDriveClient {
         )
     }
 
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadNewRevisionOperation(
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         thumbnails: [ThumbnailData],
         expectedSHA1: Data? = nil,
         cancellationToken: UUID,
@@ -412,7 +420,7 @@ extension ProtonDriveClient {
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileURL: fileURL,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             thumbnails: thumbnails,
             expectedSHA1: expectedSHA1,
             cancellationToken: cancellationToken,
@@ -428,10 +436,12 @@ extension ProtonDriveClient {
 // MARK: - Node action
 extension ProtonDriveClient {
 
+    /// - Parameter lastModificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func createFolder(
         parentFolderUid: SDKNodeUid,
         folderName: String,
-        lastModificationTime: Date,
+        lastModificationTime: String,
         cancellationToken: UUID
     ) async throws -> FolderNode {
         let cancellationTokenSource = try await createCancellationTokenSource(.createFolder(cancellationToken), logger)
@@ -445,7 +455,7 @@ extension ProtonDriveClient {
             $0.clientHandle = Int64(clientHandle)
             $0.parentFolderUid = parentFolderUid.sdkCompatibleIdentifier
             $0.folderName = folderName
-            $0.lastModificationTime = Google_Protobuf_Timestamp(date: lastModificationTime)
+            $0.lastModificationTime = lastModificationTime
             $0.cancellationTokenSourceHandle = Int64(cancellationHandle)
         }
 
