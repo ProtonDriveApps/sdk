@@ -432,6 +432,8 @@ internal sealed partial class RevisionWriter
 
                 if (bytesCopied == 0)
                 {
+                    await plainDataStream.DisposeAsync().ConfigureAwait(false);
+                    ArrayPool<byte>.Shared.Return(plainDataPrefixBuffer);
                     return null;
                 }
 
