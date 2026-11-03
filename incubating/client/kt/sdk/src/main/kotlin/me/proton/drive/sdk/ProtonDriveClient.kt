@@ -18,12 +18,16 @@ import me.proton.drive.sdk.entity.NodeMoveItem
 import me.proton.drive.sdk.entity.NodeResultPair
 import me.proton.drive.sdk.entity.NodeUid
 import me.proton.drive.sdk.entity.ScopeId
-import java.time.Instant
+import java.time.OffsetDateTime
 
 interface ProtonDriveClient : ProtonSdkClient {
     suspend fun getAvailableName(parentFolderUid: NodeUid, name: String, target: AvailableNameTarget): String
     fun moveNodes(items: List<NodeMoveItem>, targetParentFolderUid: NodeUid): Flow<NodeResultPair>
-    suspend fun createFolder(parentFolderUid: NodeUid, name: String, lastModificationTime: Instant? = null): FolderNode
+    suspend fun createFolder(
+        parentFolderUid: NodeUid,
+        name: String,
+        lastModificationTime: OffsetDateTime? = null,
+    ): FolderNode
     suspend fun getMyFilesFolder(): FolderNode
     fun enumerateFolderChildrenNodeUids(folderUid: NodeUid): Flow<NodeUid>
     fun enumerateEvents(scopeId: ScopeId, cursorEventId: DriveEventId? = null): Flow<DriveEvent>

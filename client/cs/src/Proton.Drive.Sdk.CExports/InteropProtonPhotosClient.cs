@@ -496,7 +496,7 @@ internal static class InteropProtonPhotosClient
         var metadata = new Nodes.PhotosFileUploadMetadata
         {
             AdditionalMetadata = additionalMetadata,
-            LastModificationTime = request.Metadata.LastModificationTime?.ToDateTimeFixed(),
+            LastModificationTime = request.Metadata.HasLastModificationTime ? Iso8601DateTimeOffsetParser.Parse(request.Metadata.LastModificationTime) : null,
             CaptureTime = request.Metadata.CaptureTime?.ToDateTimeFixed(),
             MainPhotoUid = request.Metadata.HasMainPhotoUid ? NodeUid.Parse(request.Metadata.MainPhotoUid) : null,
             Tags = tags,

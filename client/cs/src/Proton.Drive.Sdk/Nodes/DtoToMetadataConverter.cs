@@ -207,7 +207,7 @@ internal static partial class DtoToMetadataConverter
         FileDto fileDto,
         ActiveRevisionDto activeRevisionDto,
         ExtendedAttributes? extendedAttributes,
-        Result<DateTime, ProtonDriveError>? modificationTimeResult,
+        Result<DateTimeOffset, ProtonDriveError>? modificationTimeResult,
         ReadOnlyCollection<ThumbnailHeader> thumbnails,
         ReadOnlyCollection<AdditionalMetadataProperty>? additionalMetadata,
         ShareMembershipSummaryDto? membershipDto,
@@ -321,7 +321,7 @@ internal static partial class DtoToMetadataConverter
     private static (List<ProtonDriveError> NodeErrors, Dictionary<EncryptedField, ProtonDriveError> FailedDecryptionFields) CollectFileDecryptionFailures(
         FileDecryptionResult decryptionResult,
         Result<string, ProtonDriveError> nameResult,
-        Result<DateTime, ProtonDriveError>? modificationTimeResult)
+        Result<DateTimeOffset, ProtonDriveError>? modificationTimeResult)
     {
         Dictionary<EncryptedField, ProtonDriveError> failedDecryptionFields = [];
         List<ProtonDriveError> nodeErrors = [];

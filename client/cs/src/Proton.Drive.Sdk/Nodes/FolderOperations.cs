@@ -94,7 +94,7 @@ internal static class FolderOperations
         {
             Common = new CommonExtendedAttributes
             {
-                ModificationTime = lastModificationTime?.UtcDateTime,
+                ModificationTime = lastModificationTime,
             },
         };
 

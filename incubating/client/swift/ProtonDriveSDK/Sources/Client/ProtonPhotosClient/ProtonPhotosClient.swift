@@ -431,11 +431,13 @@ extension ProtonPhotosClient {
 
 // MARK: - Upload
 extension ProtonPhotosClient {
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadPhoto(
         name: String,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date,
+        modificationTime: String,
         captureTime: Date,
         mainPhotoUid: SDKNodeUid?,
         mediaType: String,
@@ -451,7 +453,7 @@ extension ProtonPhotosClient {
             name: name,
             fileURL: fileURL,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             captureTime: captureTime,
             mainPhotoUid: mainPhotoUid,
             mediaType: mediaType,
@@ -482,11 +484,13 @@ extension ProtonPhotosClient {
         )
     }
 
+    /// - Parameter modificationTime: ISO 8601 date and time with UTC offset, e.g. `2026-10-21T09:55:00+08:00`.
+    ///   Seconds and the offset (`Z` or `±hh:mm`) are required; any other format makes the call throw.
     public func uploadOperation(
         name: String,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date,
+        modificationTime: String,
         captureTime: Date,
         mainPhotoUid: SDKNodeUid?,
         mediaType: String,
@@ -509,7 +513,7 @@ extension ProtonPhotosClient {
             name: name,
             fileURL: fileURL,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             captureTime: captureTime,
             mainPhotoUid: mainPhotoUid,
             mediaType: mediaType,

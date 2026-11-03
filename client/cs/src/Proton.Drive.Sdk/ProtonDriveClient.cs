@@ -154,7 +154,7 @@ public sealed partial class ProtonDriveClient
         return NodeOperations.EnumerateNodesAsync(this, nodeUids, cancellationToken);
     }
 
-    public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, DateTime? lastModificationTime, CancellationToken cancellationToken)
+    public ValueTask<FolderNode> CreateFolderAsync(NodeUid parentId, string name, DateTimeOffset? lastModificationTime, CancellationToken cancellationToken)
     {
         return FolderOperations.CreateAsync(this, parentId, name, lastModificationTime, cancellationToken);
     }

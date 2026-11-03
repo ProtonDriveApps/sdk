@@ -49,7 +49,7 @@ internal static class SearchNodeMapper
         if (node is FileNode fileNode)
         {
             return ToUnixSeconds(
-                fileNode.ActiveRevision.ClaimedModificationTime ?? fileNode.CreationTime);
+                fileNode.ActiveRevision.ClaimedModificationTime?.UtcDateTime ?? fileNode.CreationTime);
         }
 
         return ToUnixSeconds(node.CreationTime);
@@ -70,7 +70,7 @@ internal static class SearchNodeMapper
         var revision = fileNode.ActiveRevision;
 
         var claimedModificationTimeSeconds = revision.ClaimedModificationTime is { } claimedModificationTime
-            ? ToUnixSeconds(claimedModificationTime)
+            ? claimedModificationTime.ToUnixTimeSeconds()
             : default(long?);
 
         return new FfiFile(

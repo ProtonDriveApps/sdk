@@ -231,7 +231,7 @@ internal sealed partial class RevisionWriter
             Common = new CommonExtendedAttributes
             {
                 Size = uploadedContentSize,
-                ModificationTime = metadata.LastModificationTime?.UtcDateTime,
+                ModificationTime = metadata.LastModificationTime,
                 BlockSizes = contentBlockSizes,
                 Digests = new FileContentDigestsDto { Sha1 = sha1Digest },
             },

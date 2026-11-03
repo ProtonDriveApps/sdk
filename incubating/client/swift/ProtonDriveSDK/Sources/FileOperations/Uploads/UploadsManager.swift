@@ -24,7 +24,7 @@ actor UploadsManager {
         name: String,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         mediaType: String,
         thumbnails: [ThumbnailData],
         overrideExistingDraft: Bool,
@@ -42,7 +42,7 @@ actor UploadsManager {
             name: name,
             mediaType: mediaType,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             overrideExistingDraft: overrideExistingDraft,
             cancellationHandle: cancellationHandle,
             logger: logger
@@ -64,7 +64,7 @@ actor UploadsManager {
         currentActiveRevisionUid: SDKRevisionUid,
         fileURL: URL,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         thumbnails: [ThumbnailData],
         expectedSHA1: Data?,
         cancellationToken: UUID,
@@ -78,7 +78,7 @@ actor UploadsManager {
         let uploaderHandle = try await getRevisionUploader(
             currentActiveRevisionUid: currentActiveRevisionUid,
             fileSize: fileSize,
-            modificationDate: modificationDate,
+            modificationTime: modificationTime,
             cancellationHandle: cancellationHandle
         )
 
@@ -120,7 +120,7 @@ extension UploadsManager {
         name: String,
         mediaType: String,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         overrideExistingDraft: Bool,
         cancellationHandle: ObjectHandle?,
         logger: Logger?
@@ -131,7 +131,7 @@ extension UploadsManager {
             $0.name = name
             $0.mediaType = mediaType
             $0.size = fileSize
-            if let modificationDate { $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate) }
+            if let modificationTime { $0.lastModificationTime = modificationTime }
             $0.overrideExistingDraftByOtherClient = overrideExistingDraft
 
             if let cancellationHandle = cancellationHandle {
@@ -147,14 +147,14 @@ extension UploadsManager {
     private func getRevisionUploader(
         currentActiveRevisionUid: SDKRevisionUid,
         fileSize: Int64,
-        modificationDate: Date?,
+        modificationTime: String?,
         cancellationHandle: ObjectHandle?
     ) async throws -> ObjectHandle {
         let uploaderRequest = Proton_Drive_Sdk_DriveClientGetFileRevisionUploaderRequest.with {
             $0.clientHandle = Int64(clientHandle)
             $0.currentActiveRevisionUid = currentActiveRevisionUid.sdkCompatibleIdentifier
             $0.size = fileSize
-            if let modificationDate { $0.lastModificationTime = Google_Protobuf_Timestamp(date: modificationDate) }
+            if let modificationTime { $0.lastModificationTime = modificationTime }
 
             if let cancellationHandle = cancellationHandle {
                 $0.cancellationTokenSourceHandle = Int64(cancellationHandle)

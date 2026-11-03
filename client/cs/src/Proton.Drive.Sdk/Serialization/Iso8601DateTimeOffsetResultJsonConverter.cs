@@ -5,11 +5,11 @@ using Proton.Drive.Sdk;
 
 namespace Proton.Sdk.Serialization;
 
-public sealed class Iso8601DateTimeResultJsonConverter : JsonConverter<Result<DateTime, ProtonDriveError>?>
+public sealed class Iso8601DateTimeOffsetResultJsonConverter : JsonConverter<Result<DateTimeOffset, ProtonDriveError>?>
 {
     public override bool HandleNull => true;
 
-    public override Result<DateTime, ProtonDriveError>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Result<DateTimeOffset, ProtonDriveError>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType is JsonTokenType.Null)
         {
@@ -30,14 +30,14 @@ public sealed class Iso8601DateTimeResultJsonConverter : JsonConverter<Result<Da
             return new ProtonDriveError($"Failed to parse date and time from '{redactedValue}'.");
         }
 
-        return value.UtcDateTime;
+        return value;
     }
 
-    public override void Write(Utf8JsonWriter writer, Result<DateTime, ProtonDriveError>? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Result<DateTimeOffset, ProtonDriveError>? value, JsonSerializerOptions options)
     {
-        if (value is { } result && result.TryGetValue(out var dateTime))
+        if (value is { } result && result.TryGetValue(out var dateTimeOffset))
         {
-            writer.WriteStringValue(dateTime.ToUniversalTime().ToString("O"));
+            writer.WriteStringValue(dateTimeOffset.ToString("O", CultureInfo.InvariantCulture));
         }
         else
         {

@@ -8,8 +8,8 @@ internal sealed class CommonExtendedAttributes
 {
     public long? Size { get; init; }
 
-    [JsonConverter(typeof(Iso8601DateTimeResultJsonConverter))]
-    public Result<DateTime, ProtonDriveError>? ModificationTime { get; init; }
+    [JsonConverter(typeof(Iso8601DateTimeOffsetResultJsonConverter))]
+    public Result<DateTimeOffset, ProtonDriveError>? ModificationTime { get; init; }
 
     public IReadOnlyList<int>? BlockSizes { get; init; }
 

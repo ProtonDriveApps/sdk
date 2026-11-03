@@ -316,7 +316,7 @@ message FileRevision {
     int64 storage_size = 3;
     int64 claimed_size = 4; // optional
     FileContentDigests claimed_digests = 5;
-    google.protobuf.Timestamp claimed_modification_time = 6; // optional
+    string claimed_modification_time = 6; // optional; ISO 8601 with UTC offset, e.g. 2026-10-21T09:55:00.0000000+08:00
     repeated ThumbnailHeader thumbnails = 7;
     repeated AdditionalMetadataProperty claimed_additional_metadata = 8; // optional
     AuthorResult content_author = 9; // optional
@@ -508,7 +508,7 @@ message DriveClientGetFileUploaderRequest {
     string name = 3;
     string mediaType = 4;
     int64 size = 5;
-    google.protobuf.Timestamp last_modification_time = 6; // Optional
+    string last_modification_time = 6; // Optional; ISO 8601 with UTC offset, e.g. 2026-10-21T09:55:00+08:00
     repeated AdditionalMetadataProperty additional_metadata = 7; // Optional
     bool override_existing_draft_by_other_client = 8;
     // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
@@ -522,7 +522,7 @@ message DriveClientGetFileRevisionUploaderRequest {
     int64 client_handle = 1;
     string current_active_revision_uid = 2;
     int64 size = 3;
-    google.protobuf.Timestamp last_modification_time = 4; // Optional
+    string last_modification_time = 4; // Optional; ISO 8601 with UTC offset, e.g. 2026-10-21T09:55:00+08:00
     repeated AdditionalMetadataProperty additional_metadata = 5; // Optional
     // When unset or false, waits for a slot in the queue (uses cancellation_token_source_handle).
     // When true, only reserves a slot if immediately available (cancellation_token_source_handle is ignored).
@@ -602,7 +602,7 @@ message DriveClientCreateFolderRequest {
     int64 client_handle = 1;
     string parent_folder_uid = 2;
     string folder_name = 3;
-    google.protobuf.Timestamp last_modification_time = 4; // Optional
+    string last_modification_time = 4; // Optional; ISO 8601 with UTC offset, e.g. 2026-10-21T09:55:00+08:00
     int64 cancellation_token_source_handle = 5;
 }
 
@@ -1189,7 +1189,7 @@ message DrivePhotosClientGetPhotoUploaderRequest {
 }
 
 message PhotosFileUploadMetadata {
-    google.protobuf.Timestamp last_modification_time = 1; // Optional
+    string last_modification_time = 1; // Optional; ISO 8601 with UTC offset, e.g. 2026-10-21T09:55:00+08:00
     repeated AdditionalMetadataProperty additional_metadata = 2; // Optional
     google.protobuf.Timestamp capture_time = 3; // Optional
     string main_photo_uid = 4; // Optional
