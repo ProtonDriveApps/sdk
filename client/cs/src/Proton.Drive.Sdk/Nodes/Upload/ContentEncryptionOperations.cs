@@ -86,6 +86,11 @@ internal static class ContentEncryptionOperations
                 await onVerificationError(false).ConfigureAwait(false);
                 throw;
             }
+            catch
+            {
+                await encryptionResult.EncryptedContentStream.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
         }
     }
 
