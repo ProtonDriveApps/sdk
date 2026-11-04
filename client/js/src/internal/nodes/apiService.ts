@@ -885,6 +885,7 @@ export function linkToEncryptedNodeBaseMetadata(
         membership: link.Membership
             ? {
                   inviterEmail: link.Membership.InviterEmail,
+                  acceptedByAddressId: link.Membership.AddressID,
                   base64MemberSharePassphraseKeyPacket: link.Membership.MemberSharePassphraseKeyPacket,
                   armoredInviterSharePassphraseKeyPacketSignature:
                       link.Membership.InviterSharePassphraseKeyPacketSignature,

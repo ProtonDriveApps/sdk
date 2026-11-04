@@ -240,6 +240,8 @@ export function deserialiseNode(nodeData: string): DecryptedNode {
         !node.directRole ||
         typeof node.directRole !== 'string' ||
         (typeof node.membership !== 'object' && node.membership !== undefined) ||
+        (node.membership &&
+            (!isSerialisedAuthor(node.membership.sharedBy) || !isSerialisedAuthor(node.membership.acceptedBy))) ||
         !node.type ||
         typeof node.type !== 'string' ||
         (typeof node.mediaType !== 'string' && node.mediaType !== undefined) ||
@@ -274,6 +276,10 @@ export function deserialiseNode(nodeData: string): DecryptedNode {
               }
             : undefined,
     };
+}
+
+function isSerialisedAuthor(value: unknown): value is { ok: boolean } {
+    return typeof value === 'object' && value !== null && typeof (value as { ok?: unknown }).ok === 'boolean';
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

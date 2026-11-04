@@ -660,6 +660,29 @@ export class DriveCrypto {
         };
     }
 
+    async verifyAcceptInvitation(
+        base64KeyPacket: string,
+        sessionKeySignature: { armored: string },
+        decryptionKeys: PrivateKey[],
+        verificationKeys: PublicKey[],
+    ): Promise<{
+        verified: VERIFICATION_STATUS;
+        verificationErrors?: Error[];
+    }> {
+        const sessionKey = await this.openPGPCrypto.decryptSessionKey(
+            Uint8Array.fromBase64(base64KeyPacket),
+            decryptionKeys,
+        );
+
+        const { verified, verificationErrors } = await this.openPGPCrypto.verifyArmored(
+            sessionKey.data,
+            sessionKeySignature.armored,
+            verificationKeys,
+            SIGNING_CONTEXTS.SHARING_MEMBER,
+        );
+        return { verified, verificationErrors };
+    }
+
     async encryptExternalInvitation(
         shareSessionKey: SessionKey,
         signingKey: PrivateKey,

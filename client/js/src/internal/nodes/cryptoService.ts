@@ -403,53 +403,131 @@ export class NodesCryptoService {
             return undefined;
         }
 
-        let sharedBy: Author;
-        if (node.encryptedCrypto.membership) {
-            let inviterEmailKeys: PublicKey[] | undefined;
-            try {
-                inviterEmailKeys = await this.account.getPublicKeys(node.encryptedCrypto.membership.inviterEmail);
-            } catch (error: unknown) {
-                this.logger.error('Failed to get inviter email keys', error);
-                sharedBy = resultError({
-                    claimedAuthor: node.encryptedCrypto.membership.inviterEmail,
-                    error: c('Error').t`Failed to get inviter keys`,
-                });
-            }
-
-            try {
-                const { verified, verificationErrors } = await this.driveCrypto.verifyInvitation(
-                    node.encryptedCrypto.membership.base64MemberSharePassphraseKeyPacket,
-                    { armored: node.encryptedCrypto.membership.armoredInviterSharePassphraseKeyPacketSignature },
-                    inviterEmailKeys || [],
-                );
-
-                sharedBy = await this.reporter.handleClaimedAuthor(
-                    node,
-                    'membershipInviter',
-                    c('Property').t`membership`,
-                    verified,
-                    verificationErrors,
-                    node.encryptedCrypto.membership.inviterEmail,
-                );
-            } catch (error: unknown) {
-                void this.reporter.reportVerificationError(node, 'membershipInviter');
-                this.logger.error('Failed to verify invitation', error);
-                sharedBy = resultError({
-                    claimedAuthor: node.encryptedCrypto.membership.inviterEmail,
-                    error: c('Error').t`Failed to verify invitation`,
-                });
-            }
-        } else {
-            sharedBy = resultError({
-                error: c('Error').t`Missing inviter email`,
-            });
-        }
+        const membershipCrypto = node.encryptedCrypto.membership;
+        const [sharedBy, acceptedBy] = await Promise.all([
+            this.verifyMembershipInviter(node, membershipCrypto),
+            this.verifyMembershipInvitee(node, membershipCrypto),
+        ]);
 
         return {
             role: node.membership.role,
             inviteTime: node.membership.inviteTime,
             sharedBy,
+            acceptedBy,
         };
+    }
+
+    private async verifyMembershipInviter(
+        node: EncryptedNode,
+        membershipCrypto: EncryptedNode['encryptedCrypto']['membership'],
+    ): Promise<Author> {
+        if (!membershipCrypto) {
+            return resultError({
+                error: c('Error').t`Missing inviter email`,
+            });
+        }
+
+        let inviterEmailKeys: PublicKey[] | undefined;
+        try {
+            inviterEmailKeys = await this.account.getPublicKeys(membershipCrypto.inviterEmail);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get inviter email keys', error);
+            return resultError({
+                claimedAuthor: membershipCrypto.inviterEmail,
+                error: c('Error').t`Failed to get inviter keys`,
+            });
+        }
+
+        try {
+            const { verified, verificationErrors } = await this.driveCrypto.verifyInvitation(
+                membershipCrypto.base64MemberSharePassphraseKeyPacket,
+                { armored: membershipCrypto.armoredInviterSharePassphraseKeyPacketSignature },
+                inviterEmailKeys || [],
+            );
+
+            return await this.reporter.handleClaimedAuthor(
+                node,
+                'membershipInviter',
+                c('Property').t`membership`,
+                verified,
+                verificationErrors,
+                membershipCrypto.inviterEmail,
+            );
+        } catch (error: unknown) {
+            void this.reporter.reportVerificationError(node, 'membershipInviter');
+            this.logger.error('Failed to verify invitation', error);
+            return resultError({
+                claimedAuthor: membershipCrypto.inviterEmail,
+                error: c('Error').t`Failed to verify invitation`,
+            });
+        }
+    }
+
+    private async verifyMembershipInvitee(
+        node: EncryptedNode,
+        membershipCrypto: EncryptedNode['encryptedCrypto']['membership'],
+    ): Promise<Author> {
+        if (!membershipCrypto) {
+            return resultError({
+                error: c('Error').t`Failed to load the membership`,
+            });
+        }
+
+        const acceptedByAddressId = membershipCrypto.acceptedByAddressId;
+        if (!acceptedByAddressId || !membershipCrypto.armoredInviteeSharePassphraseSessionKeySignature) {
+            return resultError({
+                error: c('Error').t`Failed to load the membership data`,
+            });
+        }
+
+        let inviteeEmail: string;
+        let decryptionKeys: PrivateKey[];
+        try {
+            const inviteeAddress = await this.account.getOwnAddress(acceptedByAddressId);
+            inviteeEmail = inviteeAddress.email;
+            decryptionKeys = inviteeAddress.keys.map((k) => k.key);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get invitee keys', error);
+            return resultError({
+                error: c('Error').t`Failed to get invitee keys`,
+            });
+        }
+
+        let inviteeEmailKeys: PublicKey[] | undefined;
+        try {
+            inviteeEmailKeys = await this.account.getPublicKeys(inviteeEmail);
+        } catch (error: unknown) {
+            this.logger.error('Failed to get invitee email keys', error);
+            return resultError({
+                claimedAuthor: inviteeEmail,
+                error: c('Error').t`Failed to get invitee keys`,
+            });
+        }
+
+        try {
+            const { verified, verificationErrors } = await this.driveCrypto.verifyAcceptInvitation(
+                membershipCrypto.base64MemberSharePassphraseKeyPacket,
+                { armored: membershipCrypto.armoredInviteeSharePassphraseSessionKeySignature },
+                decryptionKeys,
+                inviteeEmailKeys || [],
+            );
+
+            return await this.reporter.handleClaimedAuthor(
+                node,
+                'membershipInvitee',
+                c('Property').t`membership`,
+                verified,
+                verificationErrors,
+                inviteeEmail,
+            );
+        } catch (error: unknown) {
+            void this.reporter.reportVerificationError(node, 'membershipInvitee', undefined, inviteeEmail);
+            this.logger.error('Failed to verify membership', error);
+            return resultError({
+                claimedAuthor: inviteeEmail,
+                error: c('Error').t`Failed to verify membership`,
+            });
+        }
     }
 
     private async decryptHashKey(

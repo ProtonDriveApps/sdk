@@ -46,7 +46,6 @@ interface BaseNode {
     membership?: {
         role: MemberRole;
         inviteTime: Date;
-        // TODO: acceptedBy: Author;
     };
     ownedBy: {
         email?: string;
@@ -75,6 +74,7 @@ export interface EncryptedNodeCrypto {
     armoredNodePassphraseSignature?: string;
     membership?: {
         inviterEmail: string;
+        acceptedByAddressId: string;
         base64MemberSharePassphraseKeyPacket: string;
         armoredInviterSharePassphraseKeyPacketSignature: string;
         armoredInviteeSharePassphraseSessionKeySignature: string;
@@ -127,6 +127,7 @@ export interface DecryptedUnparsedNode extends Omit<BaseNode, 'membership'> {
         role: MemberRole;
         inviteTime: Date;
         sharedBy: Author;
+        acceptedBy: Author;
     };
     name: Result<string, Error>;
     activeRevision?: DecryptedUnparsedRevision;

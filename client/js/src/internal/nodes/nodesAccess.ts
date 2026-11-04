@@ -392,6 +392,9 @@ export abstract class NodesAccessBase<
                           claimedAuthor: encryptedNode.encryptedCrypto.membership?.inviterEmail,
                           error: getErrorMessage(error),
                       }),
+                      acceptedBy: resultError({
+                          error: getErrorMessage(error),
+                      }),
                   }
                 : undefined,
             errors: [error],
