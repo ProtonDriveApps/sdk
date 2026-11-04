@@ -275,6 +275,7 @@ describe('nodeAPIService', () => {
                             ShareID: 'shareId',
                         },
                         Membership: {
+                            AddressID: 'membershipAddressId',
                             Permissions: 22,
                             InviteTime: 1234567890,
                             InviterEmail: 'inviterEmail',
@@ -298,6 +299,7 @@ describe('nodeAPIService', () => {
                     {
                         membership: {
                             inviterEmail: 'inviterEmail',
+                            acceptedByAddressId: 'membershipAddressId',
                             base64MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
                             armoredInviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
                             armoredInviteeSharePassphraseSessionKeySignature:
@@ -317,6 +319,7 @@ describe('nodeAPIService', () => {
                             ShareID: 'shareId',
                         },
                         Membership: {
+                            AddressID: 'membershipAddressId',
                             Permissions: 42,
                             InviteTime: 1234567890,
                             InviterEmail: 'inviterEmail',
@@ -340,6 +343,7 @@ describe('nodeAPIService', () => {
                     {
                         membership: {
                             inviterEmail: 'inviterEmail',
+                            acceptedByAddressId: 'membershipAddressId',
                             base64MemberSharePassphraseKeyPacket: 'memberSharePassphraseKeyPacket',
                             armoredInviterSharePassphraseKeyPacketSignature: 'inviterSharePassphraseKeyPacketSignature',
                             armoredInviteeSharePassphraseSessionKeySignature:

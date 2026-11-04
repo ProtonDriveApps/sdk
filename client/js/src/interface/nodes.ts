@@ -168,7 +168,14 @@ export type Membership = {
      * the invitation or opening the shared content.
      */
     sharedBy: Author;
-    // TODO: acceptedBy: Author;
+    /**
+     * Author who accepted the share invitation.
+     *
+     * If the author cannot be verified, the acceptance signature could
+     * be forged by a bad actor. User should be warned before trusting
+     * the shared content.
+     */
+    acceptedBy: Author;
 };
 
 export enum MemberRole {

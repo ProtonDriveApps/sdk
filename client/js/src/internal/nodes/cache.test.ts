@@ -1,7 +1,7 @@
 import { MemoryCache } from '../../cache';
 import { MemberRole, NodeType, Result, resultOk, RevisionState } from '../../interface';
 import { getMockLogger } from '../../tests/logger';
-import { CACHE_TAG_KEYS, NodesCache } from './cache';
+import { CACHE_TAG_KEYS, deserialiseNode, NodesCache, serialiseNode } from './cache';
 import { DecryptedNode, DecryptedRevision } from './interface';
 
 function generateNode(
@@ -17,6 +17,7 @@ function generateNode(
             role: MemberRole.Admin,
             inviteTime: new Date(),
             sharedBy: resultOk('test@example.com'),
+            acceptedBy: resultOk('acceptedBy@example.com'),
         },
         type: NodeType.File,
         mediaType: 'text',
@@ -92,6 +93,15 @@ describe('nodesCache', () => {
         const result = await cache.getNode(node.uid);
 
         expect(result).toStrictEqual(node);
+    });
+
+    it('should reject cached node membership without acceptedBy', () => {
+        const node = generateNode('node1', '');
+        const serialised = serialiseNode(node);
+        const stale = JSON.parse(serialised) as DecryptedNode;
+        delete (stale.membership as { acceptedBy?: unknown }).acceptedBy;
+
+        expect(() => deserialiseNode(JSON.stringify(stale))).toThrow(/^Invalid node data:/);
     });
 
     it('should store and retrieve folder node', async () => {

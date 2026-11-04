@@ -72,6 +72,11 @@ describe('nodesCryptoService', () => {
                     verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
                 }),
             ),
+            verifyAcceptInvitation: jest.fn(async () =>
+                Promise.resolve({
+                    verified: VERIFICATION_STATUS.SIGNED_AND_VALID,
+                }),
+            ),
         };
         // @ts-expect-error No need to implement all methods for mocking
         account = {
@@ -84,6 +89,12 @@ describe('nodesCryptoService', () => {
                     keys: [ownPrivateAddressKey],
                 },
             ]),
+            getOwnAddress: jest.fn(async () => ({
+                email: 'acceptedEmail',
+                addressId: 'addressId',
+                primaryKeyIndex: 0,
+                keys: [ownPrivateAddressKey],
+            })),
         };
         // @ts-expect-error No need to implement all methods for mocking
         sharesService = {
@@ -155,6 +166,7 @@ describe('nodesCryptoService', () => {
                     },
                     membership: {
                         inviterEmail: 'inviterEmail',
+                        acceptedByAddressId: 'addressId',
                         base64MemberSharePassphraseKeyPacket: 'base64MemberSharePassphraseKeyPacket',
                         armoredInviterSharePassphraseKeyPacketSignature:
                             'armoredInviterSharePassphraseKeyPacketSignature',
@@ -182,6 +194,7 @@ describe('nodesCryptoService', () => {
                         role: MemberRole.Admin,
                         inviteTime: new Date(1234567890000),
                         sharedBy: { ok: true, value: 'inviterEmail' },
+                        acceptedBy: { ok: true, value: 'acceptedEmail' },
                     },
                     activeRevision: undefined,
                     errors: undefined,
@@ -211,19 +224,21 @@ describe('nodesCryptoService', () => {
                     nameAuthor: { ok: true, value: 'signatureEmail' },
                 });
 
-                expect(account.getPublicKeys).toHaveBeenCalledTimes(2); // signatureEmail (for both key and name) and inviterEmail
+                expect(account.getPublicKeys).toHaveBeenCalledTimes(3); // signatureEmail (for both key and name), inviterEmail, inviteeEmail
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('inviterEmail');
+                expect(account.getPublicKeys).toHaveBeenCalledWith('acceptedEmail');
                 expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
 
             it('different authors on key and name', async () => {
                 const result = await cryptoService.decryptNode(encryptedNode, parentKey);
                 verifyResult(result);
-                expect(account.getPublicKeys).toHaveBeenCalledTimes(3); // signatureEmail, nameSignatureEmail, inviterEmail
+                expect(account.getPublicKeys).toHaveBeenCalledTimes(4); // signatureEmail, nameSignatureEmail, inviterEmail, inviteeEmail
                 expect(account.getPublicKeys).toHaveBeenCalledWith('signatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('nameSignatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('inviterEmail');
+                expect(account.getPublicKeys).toHaveBeenCalledWith('acceptedEmail');
                 expect(telemetry.recordMetric).not.toHaveBeenCalled();
             });
         });
@@ -460,10 +475,38 @@ describe('nodesCryptoService', () => {
                                 error: 'Signature verification for membership failed: verification error',
                             },
                         },
+                        acceptedBy: { ok: true, value: 'acceptedEmail' },
                     },
                 });
                 verifyLogEventVerificationError({
                     field: 'membershipInviter',
+                    error: 'verification error',
+                });
+            });
+
+            it('on membership acceptance', async () => {
+                driveCrypto.verifyAcceptInvitation = jest.fn().mockResolvedValue({
+                    verified: VERIFICATION_STATUS.SIGNED_AND_INVALID,
+                    verificationErrors: [new Error('verification error')],
+                });
+
+                const result = await cryptoService.decryptNode(encryptedNode, parentKey);
+                verifyResult(result, {
+                    membership: {
+                        role: MemberRole.Admin,
+                        inviteTime: new Date(1234567890000),
+                        sharedBy: { ok: true, value: 'inviterEmail' },
+                        acceptedBy: {
+                            ok: false,
+                            error: {
+                                claimedAuthor: 'acceptedEmail',
+                                error: 'Signature verification for membership failed: verification error',
+                            },
+                        },
+                    },
+                });
+                verifyLogEventVerificationError({
+                    field: 'membershipInvitee',
                     error: 'verification error',
                 });
             });
@@ -568,6 +611,7 @@ describe('nodesCryptoService', () => {
                             ok: false,
                             error: { claimedAuthor: 'inviterEmail', error: 'Failed to verify invitation' },
                         },
+                        acceptedBy: { ok: true, value: 'acceptedEmail' },
                     },
                 });
                 verifyLogEventVerificationError({
