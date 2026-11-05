@@ -13,7 +13,9 @@ plugins {
 
 android {
     namespace = "me.proton.drive.sdk"
-    ndkVersion = "28.2.13676358"
+    // The NDK of the CI image (android-shared/docker-android api35-ndk in cs-kotlin.yml).
+    // Any other version is downloaded by every CI job.
+    ndkVersion = "28.1.13356709"
     externalNativeBuild {
         ndkBuild {
             path("src/main/jni/Android.mk")
