@@ -1,5 +1,16 @@
 # Changelog
 
+## cs/v0.33.0 (2026-11-05)
+
+### Features
+- Create the Kotlin client without the legacy Core and remove the Core code
+- Expose photo tags, related photos and content hash to Kotlin
+
+### Bug Fixes
+- Dispose the transfer buffer of an upload's final empty read
+- Preserve timezone offset in modification time
+
+
 ## cs/v0.32.1 (2026-10-23)
 
 * No changes
