@@ -17,11 +17,13 @@ import okio.Pipe
 import okio.buffer
 import proton.drive.sdk.ProtonDriveSdk.HttpRequest
 import java.io.IOException
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 private const val CHUNK_SIZE = 64 * 1024
+private const val BYTE_MASK = 0xFF
 private const val PIPE_SIZE = 256L * 1024
 
 internal suspend fun HttpStream.read(
@@ -121,7 +123,7 @@ internal class StreamingRequestBody(
     override fun contentLength(): Long = -1 // enables chunked mode
 
     override fun writeTo(sink: BufferedSink) {
-        // Core resends the same call after a token refresh, but the stream is already drained.
+        // An interceptor or a retry may send the same call again, but the stream is already drained.
         if (written.getAndSet(true)) throw IOException("Stream body cannot be resent")
         producer.start()
         val bytesWritten = try {
@@ -135,6 +137,48 @@ internal class StreamingRequestBody(
         sdkFailure()?.let { error -> throw error }
         // An upload block always carries content, so nothing read means the stream was drained.
         if (bytesWritten == 0L) throw IOException("SDK stream produced no content")
+    }
+
+    /** The same one-shot body for hosts that read it themselves; closing the stream cancels the producer. */
+    fun openStream(): InputStream {
+        if (written.getAndSet(true)) throw IOException("Stream body cannot be resent")
+        producer.start()
+        return StreamingInputStream(pipe.source.buffer().inputStream())
+    }
+
+    private inner class StreamingInputStream(private val delegate: InputStream) : InputStream() {
+        private var bytesRead = 0L
+
+        override fun read(): Int {
+            val single = ByteArray(1)
+            return if (read(single, 0, 1) == -1) -1 else single[0].toInt() and BYTE_MASK
+        }
+
+        override fun read(
+            buffer: ByteArray,
+            offset: Int,
+            length: Int
+        ): Int {
+            if (length == 0) return 0
+            val count = try {
+                delegate.read(buffer, offset, length)
+            } catch (error: IOException) {
+                cancel()
+                throw sdkFailure()?.apply { addSuppressed(error) } ?: error
+            }
+            if (count == -1) {
+                sdkFailure()?.let { error -> throw error }
+                if (bytesRead == 0L) throw IOException("SDK stream produced no content")
+            } else {
+                bytesRead += count
+            }
+            return count
+        }
+
+        // Only cancel: the host may still be reading on another thread, and closing the source under it is not thread-safe.
+        override fun close() {
+            cancel()
+        }
     }
 
     private fun sdkFailure(): IOException? =

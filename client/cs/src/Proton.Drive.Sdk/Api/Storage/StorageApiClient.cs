@@ -48,9 +48,18 @@ internal sealed class StorageApiClient(HttpClient defaultHttpClient, HttpClient 
             var blobResponse = await _defaultHttpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                 .ConfigureAwait(false);
 
-            await blobResponse.EnsureApiSuccessAsync<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await blobResponse.EnsureApiSuccessAsync<ApiResponse>(DriveApiSerializerContext.Default.ApiResponse, cancellationToken).ConfigureAwait(false);
 
-            return await blobResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                return await blobResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Only a successful response hands its stream to the caller; any other must release its connection here.
+                blobResponse.Dispose();
+                throw;
+            }
         }
         catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
         {
