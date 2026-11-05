@@ -13,4 +13,8 @@ data class ClientCreateRequest(
     val blockTransferParallelism: Int? = null,
     val cacheEncryptionKey: ByteArray? = null,
     val searchIndexPath: String? = null,
-)
+) {
+    init {
+        require(baseUrl.isNotBlank()) { "The base URL must not be blank" }
+    }
+}
