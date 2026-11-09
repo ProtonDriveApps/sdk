@@ -26,6 +26,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
         case moveNodes(UUID)
         case getAvailableName(UUID)
         case getNode(UUID)
+        case enumerateNodes(UUID)
         case getMyFilesRootFolder(UUID)
         case enumerateFolderChildren(UUID)
         case trashNode(UUID)
@@ -53,6 +54,7 @@ public actor ProtonDriveClient: Sendable, ProtonSDKClient {
             case .moveNodes: return "moveNodes"
             case .getAvailableName: return "getAvailableName"
             case .getNode: return "getNode"
+            case .enumerateNodes: return "enumerateNodes"
             case .getMyFilesRootFolder: return "getMyFilesRootFolder"
             case .enumerateFolderChildren: return "enumerateFolderChildren"
             case .trashNode: return "trashNode"
@@ -541,6 +543,39 @@ extension ProtonDriveClient {
 
     public func cancelGetNode(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .getNode(cancellationToken))
+    }
+
+    /// Behavior comes from the C# SDK, not this wrapper: UIDs that resolve to no node are skipped,
+    /// the order is not guaranteed, and the first unrecoverable error ends the enumeration and throws.
+    public func enumerateNodes(
+        nodeUids: [SDKNodeUid],
+        cancellationToken: UUID,
+        onNodeEnumerated: @escaping NodeCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.enumerateNodes(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .enumerateNodes(cancellationToken))
+        }
+
+        let callbackState = NodeEnumerationCallbackWrapper(callback: onNodeEnumerated)
+        let request = Proton_Drive_Sdk_DriveClientEnumerateNodesRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.nodeUids = nodeUids.map(\.sdkCompatibleIdentifier)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelEnumerateNodes(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .enumerateNodes(cancellationToken))
     }
 
     public func enumerateFolderChildrenNodeUids(

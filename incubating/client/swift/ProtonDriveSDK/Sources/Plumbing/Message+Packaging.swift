@@ -121,6 +121,11 @@ extension Message {
                 $0.payload = .driveClientGetNode(request)
             }
 
+        case let request as Proton_Drive_Sdk_DriveClientEnumerateNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .driveClientEnumerateNodes(request)
+            }
+
         case let request as Proton_Drive_Sdk_DriveClientLeaveSharedNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .driveClientLeaveSharedNode(request)
@@ -305,6 +310,11 @@ extension Message {
         case let request as Proton_Drive_Sdk_DrivePhotosClientGetNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientGetNode(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientEnumerateNodesRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientEnumerateNodes(request)
             }
 
         case let request as Proton_Drive_Sdk_DrivePhotosClientTrashNodesRequest:
