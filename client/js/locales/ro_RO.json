@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Nu s-au putut decripta metadatele reviziei."
       ],
+      "Failed to get invitee keys": [
+        "Nu s-au putut obține cheile persoanei invitate."
+      ],
       "Failed to get inviter keys": [
         "Preluarea cheilor de invitare a eșuat."
       ],
+      "Failed to load the membership": [
+        "Încărcarea calității de membru a eșuat."
+      ],
+      "Failed to load the membership data": [
+        "Încărcarea datelor privind calitatea de membru a eșuat."
+      ],
       "Failed to verify invitation": [
         "Eșuare verificare invitație."
+      ],
+      "Failed to verify membership": [
+        "Verificarea calității de membru a eșuat."
       ],
       "File download failed due to empty response": [
         "Descărcarea fișierului a eșuat din cauza unui răspuns gol."

@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Nepodarilo sa dešifrovať metadáta revízie"
       ],
+      "Failed to get invitee keys": [
+        "Nepodarilo sa získať kľúče pozývateľa"
+      ],
       "Failed to get inviter keys": [
         "Nepodarilo sa získať pozývacie kľúče"
       ],
+      "Failed to load the membership": [
+        "Načítanie členstva zlyhalo"
+      ],
+      "Failed to load the membership data": [
+        "Načítanie údajov o členstve zlyhalo"
+      ],
       "Failed to verify invitation": [
         "Nepodarilo sa overiť pozvánku"
+      ],
+      "Failed to verify membership": [
+        "Overenie členstva zlyhalo"
       ],
       "File download failed due to empty response": [
         "Stiahnutie súboru zlyhalo z dôvodu prázdnej odpovede."

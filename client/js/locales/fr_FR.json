@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Le déchiffrement des métadonnées de la révision n'a pas abouti."
       ],
+      "Failed to get invitee keys": [
+        "La récupération des clés des invités n'a pas abouti."
+      ],
       "Failed to get inviter keys": [
         "La récupération des clés de l'invitant n'a pas abouti"
       ],
+      "Failed to load the membership": [
+        "Le chargement de l'adhésion n'a pas abouti."
+      ],
+      "Failed to load the membership data": [
+        "Le chargement des données d'adhésion n'a pas abouti."
+      ],
       "Failed to verify invitation": [
         "La vérification de l'invitation n'a pas abouti."
+      ],
+      "Failed to verify membership": [
+        "La vérification de l'adhésion n'a pas abouti."
       ],
       "File download failed due to empty response": [
         "Le téléchargement du fichier n'a pas abouti en raison d'une réponse vide."

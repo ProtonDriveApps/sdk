@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "No s'han pogut desxifrar les metadades de la revisió"
       ],
+      "Failed to get invitee keys": [
+        "No s'han pogut obtenir les claus dels convidats"
+      ],
       "Failed to get inviter keys": [
         "No s'han pogut obtenir les claus de qui us convida"
       ],
+      "Failed to load the membership": [
+        "No s'ha pogut carregar l'afiliació"
+      ],
+      "Failed to load the membership data": [
+        "No s'han pogut carregar les dades d'afiliació"
+      ],
       "Failed to verify invitation": [
         "No s'ha pogut verificar la invitació"
+      ],
+      "Failed to verify membership": [
+        "No s'ha pogut verificar l'afiliació"
       ],
       "File download failed due to empty response": [
         "La descàrrega del fitxer ha fallat a causa d'una resposta buida."

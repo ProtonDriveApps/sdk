@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Sürüm üst bilgilerinin şifresi çözülemedi"
       ],
+      "Failed to get invitee keys": [
+        "Davetlinin anahtarları alınamadı"
+      ],
       "Failed to get inviter keys": [
         "Davet edenin anahtarları alınamadı"
       ],
+      "Failed to load the membership": [
+        "Üyelik yüklenemedi"
+      ],
+      "Failed to load the membership data": [
+        "Üyelik verileri yüklenemedi"
+      ],
       "Failed to verify invitation": [
         "Davet doğrulanamadı"
+      ],
+      "Failed to verify membership": [
+        "Üyelik doğrulanamadı"
       ],
       "File download failed due to empty response": [
         "Boş yanıt nedeniyle dosya indirilemedi"

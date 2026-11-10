@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Kan de metagegevens van de revisie niet ontsleutelen"
       ],
+      "Failed to get invitee keys": [
+        "Ophalen van de sleutels van de genodigden is mislukt"
+      ],
       "Failed to get inviter keys": [
         "Ophalen van de sleutels van de uitnodiger is niet gelukt."
       ],
+      "Failed to load the membership": [
+        "Laden van lidmaatschap mislukt"
+      ],
+      "Failed to load the membership data": [
+        "Laden van lidmaatschapdata mislukt"
+      ],
       "Failed to verify invitation": [
         "Verificatie van de uitnodiging is mislukt"
+      ],
+      "Failed to verify membership": [
+        "Verifiëren van lidmaatschap mislukt"
       ],
       "File download failed due to empty response": [
         "Het downloaden van het bestand is mislukt door een leeg antwoord"

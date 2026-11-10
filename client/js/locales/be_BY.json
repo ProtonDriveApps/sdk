@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Не ўдалося расшыфраваць выпраўленыя метаданыя"
       ],
+      "Failed to get invitee keys": [
+        "Не ўдалося атрымаць ключы запрошанай асобы"
+      ],
       "Failed to get inviter keys": [
         "Не ўдалося атрымаць ключы запрашальніка"
       ],
+      "Failed to load the membership": [
+        "Не ўдалося загрузіць удзел"
+      ],
+      "Failed to load the membership data": [
+        "Не ўдалося загрузіць даныя ўдзелу"
+      ],
       "Failed to verify invitation": [
         "Не ўдалося спраўдзіць запрашэнне"
+      ],
+      "Failed to verify membership": [
+        "Не ўдалося спраўдзіць удзел"
       ],
       "File download failed due to empty response": [
         "Спампоўка файла не атрымалася па прычыне пустога адказу"
@@ -170,6 +182,9 @@
       "Request aborted": [
         "Запыт перарваны"
       ],
+      "Search index reached its storage quota": [
+        "Пошукавы індэкс дасягнуў сваёй квоты захоўвання"
+      ],
       "Signature is missing": [
         "Подпіс адсутнічае"
       ],
@@ -190,6 +205,9 @@
       ],
       "Some file parts failed to upload. Please try again.": [
         "Не ўдалося запампаваць некаторыя часткі файла. Паўтарыце спробу."
+      ],
+      "Some invitations could not be loaded": [
+        "Немагчыма загрузіць некаторыя запрашэнні"
       ],
       "Some items could not be loaded": [
         "Некаторыя элементы не могуць быць загружаны"

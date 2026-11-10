@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Αποτυχία αποκρυπτογράφησης μεταδεδομένων αναθεώρησης"
       ],
+      "Failed to get invitee keys": [
+        "Αποτυχία λήψης των κλειδιών του προσκεκλημένου"
+      ],
       "Failed to get inviter keys": [
         "Αποτυχία λήψης κλειδιών προσκαλούντος"
       ],
+      "Failed to load the membership": [
+        "Αποτυχία φόρτωσης της συνδρομής"
+      ],
+      "Failed to load the membership data": [
+        "Αποτυχία φόρτωσης των δεδομένων συνδρομής"
+      ],
       "Failed to verify invitation": [
         "Αποτυχία επαλήθευσης πρόσκλησης"
+      ],
+      "Failed to verify membership": [
+        "Αποτυχία επαλήθευσης της συνδρομής"
       ],
       "File download failed due to empty response": [
         "Η λήψη αρχείου απέτυχε λόγω κενής απόκρισης"

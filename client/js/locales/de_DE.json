@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "Entschlüsselung der Versions-Metadaten fehlgeschlagen"
       ],
+      "Failed to get invitee keys": [
+        "Fehler beim Abruf der Einladungs-Schlüssel"
+      ],
       "Failed to get inviter keys": [
         "Fehler beim Abrufen der Schlüssel des Einladenden"
       ],
+      "Failed to load the membership": [
+        "Laden der Mitgliedschaft fehlgeschlagen"
+      ],
+      "Failed to load the membership data": [
+        "Laden der Daten der Mitgliedschaft fehlgeschlagen"
+      ],
       "Failed to verify invitation": [
         "Fehler beim Überprüfen der Einladung"
+      ],
+      "Failed to verify membership": [
+        "Fehler beim Verifizieren der Mitgliedschaft"
       ],
       "File download failed due to empty response": [
         "Download der Datei ist fehlgeschlagen, weil die Antwort leer war."

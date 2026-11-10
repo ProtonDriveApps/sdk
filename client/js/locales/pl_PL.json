@@ -14,11 +14,17 @@
       "Cannot share root folder": [
         "Nie można udostępnić folderu głównego"
       ],
+      "Cannot verify the author of this file": [
+        "Nie można zweryfikować autora tego pliku"
+      ],
       "Copy operation aborted": [
         "Operacja kopiowania została przerwana"
       ],
       "Copying item to a non-folder is not allowed": [
         "Kopiowanie elementu do nie-folderu nie jest dozwolone"
+      ],
+      "Could not unlock this item": [
+        "Nie udało się odblokować tego elementu"
       ],
       "Creating files in non-folders is not allowed": [
         "Tworzenie plików poza folderami nie jest dozwolone"
@@ -101,6 +107,9 @@
       "Operation aborted": [
         "Operacja została przerwana"
       ],
+      "Part of the file appears to be corrupted": [
+        "Wydaje się, że część pliku jest uszkodzona"
+      ],
       "Renaming root item is not allowed": [
         "Zmiana nazwy folderu głównego nie jest dozwolona"
       ],
@@ -128,6 +137,9 @@
       "Something went wrong. Please try again.": [
         "Coś poszło nie tak. Spróbuj ponownie."
       ],
+      "This item is no longer shared": [
+        "Ten element nie jest już udostępniany"
+      ],
       "Too many server errors, please try again later": [
         "Zbyt wiele błędów serwera. Spróbuj ponownie później"
       ],
@@ -142,6 +154,9 @@
       ],
       "Verification keys for ${ signatureType } are not available": [
         "Klucze weryfikacyjne dla ${ signatureType } nie są dostępne"
+      ],
+      "You do not have access to this item": [
+        "Nie masz dostępu do tego elementu"
       ]
     },
     "Info": {
