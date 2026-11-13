@@ -94,6 +94,11 @@ export class EventScheduler {
         // avoid race conditions where the client is called before the events
         // are processed.
         void promise.finally(() => {
+            // The scope can be removed, or removed and added again, while
+            // the callback runs. Its timer would then never be cleared.
+            if (this.scopes.get(scope.eventTreeScopeId) !== scope) {
+                return;
+            }
             this.setPolling(scope);
         });
     }

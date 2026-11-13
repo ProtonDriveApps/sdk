@@ -1,6 +1,4 @@
-import {
-    EventScheduler,
-} from './eventScheduler';
+import { EventScheduler } from './eventScheduler';
 
 jest.useFakeTimers();
 
@@ -138,5 +136,49 @@ describe('EventScheduler', () => {
 
         await jest.advanceTimersByTimeAsync(32_000);
         expect(callback).toHaveBeenCalledTimes(2);
+    });
+
+    it('stops polling a scope removed while its callback is running', async () => {
+        // Arrange
+        let resolveCallback!: () => void;
+        callback.mockImplementationOnce(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveCallback = resolve;
+                }),
+        );
+        scheduler.addScope('own-volume');
+        scheduler.removeScope('own-volume');
+        resolveCallback();
+
+        // Act
+        await jest.advanceTimersByTimeAsync(1_000_000);
+
+        // Assert
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it('keeps one timer for a scope removed and added again while its callback is running', async () => {
+        // Arrange
+        let resolveCallback!: () => void;
+        callback.mockImplementationOnce(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveCallback = resolve;
+                }),
+        );
+        scheduler.addScope('own-volume');
+        scheduler.removeScope('own-volume');
+        scheduler.addScope('own-volume');
+        resolveCallback();
+        await Promise.resolve();
+        callback.mockClear();
+
+        // Act
+        await jest.advanceTimersByTimeAsync(32_000);
+
+        // Assert
+        expect(callback).toHaveBeenCalledTimes(1);
     });
 });
