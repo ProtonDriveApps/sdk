@@ -210,7 +210,7 @@ export class ThumbnailDownloader {
         token: string,
         signal?: AbortSignal,
     ): Promise<Uint8Array<ArrayBuffer>> {
-        const logger = new LoggerWithPrefix(this.logger, `thumbnail ${token}`);
+        const logger = new LoggerWithPrefix(this.logger, `thumbnail`);
 
         let decryptedBlock: Uint8Array<ArrayBuffer> | null = null;
         let attempt = 0;

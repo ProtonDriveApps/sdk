@@ -432,9 +432,9 @@ describe('StreamUploader', () => {
             expect(apiService.uploadBlock).toHaveBeenCalledTimes(5);
             expect(logger.warn).toHaveBeenCalledTimes(2);
             expect(logger.warn).toHaveBeenCalledWith(
-                'block 1:token/block:1: Upload timeout, limiting upload capacity to 1 block',
+                'block 1: Upload timeout, limiting upload capacity to 1 block',
             );
-            expect(logger.warn).toHaveBeenCalledWith('block 1:token/block:1: Upload timeout, retrying');
+            expect(logger.warn).toHaveBeenCalledWith('block 1: Upload timeout, retrying');
             expect((uploader as any).maxUploadingBlocks).toEqual(1);
         });
 
@@ -512,9 +512,9 @@ describe('StreamUploader', () => {
 
             // Also verify the warning messages were logged
             expect(logger.warn).toHaveBeenCalledWith(
-                'block 2:token/block:2: Upload timeout, limiting upload capacity to 1 block',
+                'block 2: Upload timeout, limiting upload capacity to 1 block',
             );
-            expect(logger.warn).toHaveBeenCalledWith('block 2:token/block:2: Upload timeout, retrying');
+            expect(logger.warn).toHaveBeenCalledWith('block 2: Upload timeout, retrying');
         });
 
         it('should handle expired token when uploading block', async () => {

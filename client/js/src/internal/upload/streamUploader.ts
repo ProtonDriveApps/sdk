@@ -431,10 +431,7 @@ export class StreamUploader {
         encryptedThumbnail: EncryptedThumbnail,
         onProgress?: (uploadedBytes: number) => void,
     ) {
-        const logger = new LoggerWithPrefix(
-            this.logger,
-            `thumbnail type ${encryptedThumbnail.type} to ${uploadToken.token}`,
-        );
+        const logger = new LoggerWithPrefix(this.logger, `thumbnail type ${encryptedThumbnail.type}`);
         logger.info(`Upload started`);
 
         let attempt = 0;
@@ -495,7 +492,7 @@ export class StreamUploader {
         encryptedBlock: EncryptedBlock,
         onProgress?: (uploadedBytes: number) => void,
     ) {
-        const logger = new LoggerWithPrefix(this.logger, `block ${uploadToken.index}:${uploadToken.token}`);
+        const logger = new LoggerWithPrefix(this.logger, `block ${uploadToken.index}`);
         logger.info(`Upload started`);
 
         let attempt = 0;
