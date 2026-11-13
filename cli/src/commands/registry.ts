@@ -23,6 +23,7 @@ import { CommandAlbumRemovePhoto } from './photos/commandAlbumRemovePhoto';
 import { CommandAlbumUpdate } from './photos/commandAlbumUpdate';
 import { CommandPhotoDownload } from './photos/commandPhotoDownload';
 import { CommandPhotoTimeline } from './photos/commandPhotoTimeline';
+import { CommandPhotoTrash } from './photos/commandPhotoTrash';
 import { CommandPhotoUpload } from './photos/commandPhotoUpload';
 import { CommandInvitationAccept } from './sharing/commandInvitationAccept';
 import { CommandInvitationList } from './sharing/commandInvitationList';
@@ -71,6 +72,7 @@ export const COMMANDS = applyDefaultCliOptions([
     new CommandAlbumPhotos(),
     new CommandAlbumAddPhoto(),
     new CommandAlbumRemovePhoto(),
+    new CommandPhotoTrash(),
     new CommandPhotoTimeline(),
     new CommandPhotoUpload(),
     new CommandPhotoDownload(),
