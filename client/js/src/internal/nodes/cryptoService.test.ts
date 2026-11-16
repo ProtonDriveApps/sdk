@@ -9,6 +9,7 @@ import {
     DecryptedUnparsedNode,
     DecryptedUnparsedRevision,
     EncryptedNode,
+    EncryptedRevision,
     NodeSigningKeys,
     SharesService,
 } from './interface';
@@ -743,6 +744,98 @@ describe('nodesCryptoService', () => {
                 expect(account.getPublicKeys).toHaveBeenCalledWith('nameSignatureEmail');
                 expect(account.getPublicKeys).toHaveBeenCalledWith('revisionSignatureEmail');
                 expect(telemetry.recordMetric).not.toHaveBeenCalled();
+            });
+
+            describe('revision without extended attributes', () => {
+                const encryptedNodeWithoutExtendedAttributes = {
+                    ...encryptedNode,
+                    encryptedCrypto: {
+                        ...encryptedNode.encryptedCrypto,
+                        activeRevision: {
+                            ...(encryptedNode.encryptedCrypto as { activeRevision: object }).activeRevision,
+                            armoredExtendedAttributes: undefined,
+                        },
+                    },
+                } as EncryptedNode;
+
+                it('without fetching revision signer keys', async () => {
+                    const expectedNode: Parameters<typeof verifyResult>[1] = {
+                        activeRevision: {
+                            uid: 'revisionUid',
+                            state: RevisionState.Active,
+                            extendedAttributes: undefined,
+                            contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
+                        },
+                    };
+
+                    const result = await cryptoService.decryptNode(encryptedNodeWithoutExtendedAttributes, parentKey);
+
+                    verifyResult(result, expectedNode);
+                    expect(account.getPublicKeys).not.toHaveBeenCalledWith('revisionSignatureEmail');
+                    expect(driveCrypto.decryptExtendedAttributes).not.toHaveBeenCalled();
+                    expect(telemetry.recordMetric).not.toHaveBeenCalled();
+                });
+
+                it('without error when revision signer keys cannot be fetched', async () => {
+                    account.getPublicKeys = jest.fn(async (email: string) => {
+                        if (email === 'revisionSignatureEmail') {
+                            throw new Error('Failed to load keys');
+                        }
+                        return [publicAddressKey];
+                    });
+
+                    const result = await cryptoService.decryptNode(encryptedNodeWithoutExtendedAttributes, parentKey);
+
+                    verifyResult(result, {
+                        activeRevision: {
+                            uid: 'revisionUid',
+                            state: RevisionState.Active,
+                            extendedAttributes: undefined,
+                            contentAuthor: { ok: true, value: 'revisionSignatureEmail' },
+                        },
+                        errors: undefined,
+                    });
+                    expect(result.node.errors).toBeUndefined();
+                    expect(telemetry.recordMetric).not.toHaveBeenCalled();
+                });
+            });
+        });
+
+        describe('decryptRevision', () => {
+            const encryptedRevision = {
+                uid: 'revisionUid',
+                state: RevisionState.Active,
+                creationTime: revisionCreationTime,
+                signatureEmail: 'revisionSignatureEmail',
+            } as EncryptedRevision;
+
+            it('should return signer as content author without error when no extended attributes and keys cannot be fetched', async () => {
+                account.getPublicKeys = jest.fn().mockRejectedValue(new Error('Failed to load keys'));
+
+                const result = await cryptoService.decryptRevision('volumeId~nodeId', encryptedRevision, parentKey);
+
+                expect(result.error).toBeUndefined();
+                expect(result.revision.contentAuthor).toEqual({ ok: true, value: 'revisionSignatureEmail' });
+                expect(account.getPublicKeys).not.toHaveBeenCalled();
+                expect(telemetry.recordMetric).not.toHaveBeenCalled();
+            });
+
+            it('should return error when extended attributes are present and keys cannot be fetched', async () => {
+                const error = new Error('Failed to load keys');
+                account.getPublicKeys = jest.fn().mockRejectedValue(error);
+
+                const result = await cryptoService.decryptRevision(
+                    'volumeId~nodeId',
+                    { ...encryptedRevision, armoredExtendedAttributes: 'encryptedExtendedAttributes' },
+                    parentKey,
+                );
+
+                expect(account.getPublicKeys).toHaveBeenCalledWith('revisionSignatureEmail');
+                expect(result.error).toBe(error);
+                expect(result.revision.contentAuthor).toEqual({
+                    ok: false,
+                    error: { claimedAuthor: 'revisionSignatureEmail', error: 'Failed to decrypt revision metadata' },
+                });
             });
         });
 

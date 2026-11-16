@@ -33,8 +33,9 @@ export interface FileDownloader {
      * next several bytes of the video, or skip to the middle without the
      * need to download the entire file.
      *
-     * Stream doesn't verify data integrity. For the full integrity of
-     * the file, use `downloadToStream` instead.
+     * Stream doesn't verify data integrity, nor the authenticity of the
+     * content (who uploaded it). For the full integrity of the file, use
+     * `downloadToStream` instead.
      *
      * The stream is not opportunitistically downloading the data ahead of
      * the time. It will only download the data when it is requested. To

@@ -61,6 +61,8 @@ export class FileDownloader {
     }
 
     getSeekableStream(): BufferedSeekableStream {
+        // The stream does not verify the authenticity of the content: the manifest signature is never checked because
+        // the stream does not download every block, so the content author is not verified, unlike `downloadToStream`.
         let position = 0;
         let cryptoKeys: RevisionKeys;
 

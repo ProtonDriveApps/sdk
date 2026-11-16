@@ -578,6 +578,26 @@ export class NodesCryptoService {
         revision: DecryptedUnparsedRevision;
         error?: Error;
     }> {
+        // Without extended attributes there is nothing to verify here, so the claimed signer is returned without
+        // fetching keys and without error.
+        //
+        // The Proton Drive Crypto V1 model does not allow verifying the content signature without an undue performance
+        // penalty until the content has been downloaded. When the manifest signature fails to be verified, we return an
+        // error. When the extended attributes signature can be validated, we can use it as an early proxy since the
+        // signature is made simultaneously to the manifest signature, and they should either both pass, or both fail.
+        // In either case, we return an error once the manifest is computed, after downloading the last block. The
+        // upcoming Crypto V2 model will close this gap by having a signature of a hash of the manifest which can be
+        // checked ahead of time to establish authenticity, following which any hash mismatch is an integrity error.
+        if (!encryptedRevision.armoredExtendedAttributes) {
+            return {
+                revision: this.buildRevisionFromEncrypted(
+                    encryptedRevision,
+                    resultOk(encryptedRevision.signatureEmail) as Author,
+                    undefined,
+                ),
+            };
+        }
+
         try {
             const verificationKeys = encryptedRevision.signatureEmail
                 ? await this.account.getPublicKeys(encryptedRevision.signatureEmail)
