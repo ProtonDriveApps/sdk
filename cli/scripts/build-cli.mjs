@@ -23,6 +23,13 @@ if (!Bun.semver.satisfies(Bun.version, requiredBunVersion)) {
     process.exit(1);
 }
 
+// Print the versions a build would embed, as shell assignments, and exit. A build from a copy without
+// git history (the CI reproducibility check) sets them from this output.
+if (process.argv.includes('--print-versions')) {
+    console.log(`CLI_VERSION=${getVersion('cli')}\nJS_VERSION=${getVersion('js')}`);
+    process.exit(0);
+}
+
 let target = 'bun';
 let entry = 'src/proton-drive.ts';
 

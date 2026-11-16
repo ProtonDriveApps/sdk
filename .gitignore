@@ -15,6 +15,9 @@ dist
 
 # Search engine: compiled from Rust, not committed (see client/js/tasks/search)
 /client/js/src/search/vendor
+
+# Release SBOM of the npm package (internal/ci/just/client-js.just, `sbom`)
+/client/js/sbom.cdx.json
 /incubating/search/bindings/typescript/
 /incubating/search/bindings/csharp/src/
 /incubating/search/bindings/csharp/runtimes/**
@@ -71,6 +74,8 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+# The release pipeline configuration (internal/ci/README.md, "Releases").
+!/internal/ci/release/
 [Rr]eleases/
 x64/
 x86/

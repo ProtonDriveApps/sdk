@@ -26,6 +26,36 @@
     <NativeLibPrefix Condition="!$(RuntimeIdentifier.StartsWith('win'))">lib</NativeLibPrefix>
   </PropertyGroup>
 
+  <!--
+    NuGet lock files (packages.lock.json) pin every transitive package of the rust crypto backend. The
+    go backend has none until it is removed: its Proton.Cryptography version differs, and its restores
+    (the default, CryptoBackend unset) use no lock file. The release SBOMs are read from them
+    (internal/ci/just/client-cs.just, `sbom`). Publishing and restores for a runtime identifier
+    (dotnet publish, restore -r) use none either: some package references depend on the runtime
+    identifier, and a lock file per runtime would be rewritten by every platform build. Those
+    restores point NuGet at a lock file that never exists: NuGet uses any packages.lock.json it
+    finds, and fails (NU1005) when one exists while RestorePackagesWithLockFile is false. Without
+    UseDefaultPublishRuntimeIdentifier=false, the SDK would add the host's runtime to the restore of
+    AOT executables (the CLI), and the lock files would differ between Linux and macOS. CI restores in
+    locked mode, so a lock file that no longer matches the projects fails the pipeline; a local
+    restore of the rust backend (-p:CryptoBackend=rust) updates it.
+  -->
+  <PropertyGroup>
+    <_ProtonUseLockFile>false</_ProtonUseLockFile>
+    <_ProtonUseLockFile Condition="'$(CryptoBackend)' == 'rust' and '$(RuntimeIdentifier)' == '' and '$(RuntimeIdentifiers)' == '' and '$(_IsPublishing)' != 'true'">true</_ProtonUseLockFile>
+    <RestorePackagesWithLockFile>$(_ProtonUseLockFile)</RestorePackagesWithLockFile>
+    <NuGetLockFilePath Condition="'$(_ProtonUseLockFile)' != 'true'">obj/packages.unused.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(_ProtonUseLockFile)' == 'true'">
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+
+  <!-- Release packs embed the package's SBOM (internal/ci/just/client-cs.just, `pack` and `sbom`). -->
+  <ItemGroup Condition="'$(SbomDirectory)' != '' and '$(IsPackable)' == 'true'">
+    <None Include="$(SbomDirectory)/$(MSBuildProjectName).cdx.json" Pack="true" PackagePath="sbom/bom.cdx.json" Visible="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).globalconfig" />
   </ItemGroup>

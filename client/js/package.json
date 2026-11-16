@@ -7,7 +7,8 @@
     "types": "dist/index.d.ts",
     "files": [
         "dist",
-        "src"
+        "src",
+        "sbom.cdx.json"
     ],
     "scripts": {
         "build": "npm run search-bindings -- --optional && tsc --emitDeclarationOnly && swc src -d dist --strip-leading-paths --ignore 'src/search/vendor/**,**/*.d.ts' && npm run copy-search-vendor-to-dist",

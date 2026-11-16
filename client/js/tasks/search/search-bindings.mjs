@@ -6,7 +6,7 @@
  *  - otherwise, with `boltffi` installed: rebuild them. boltffi.toml points the
  *    output at src/search/vendor, so boltffi's tsc resolves @boltffi/runtime and
  *    @types/node from client/js/node_modules.
- *  - otherwise, if bindings are there (e.g. a downloaded search-rs-pack-wasm
+ *  - otherwise, if bindings are there (e.g. a downloaded search-rs-wasm-bindings
  *    artifact): use them as is.
  *
  * Without bindings the SDK still typechecks (against src/search/vendorFallback.d.ts)

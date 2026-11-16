@@ -42,6 +42,14 @@ allprojects {
     group = "me.proton.drive"
     version = providers.environmentVariable("VERSION").getOrElse("0.0.0-SNAPSHOT")
 
+    // Every resolved configuration is pinned by <project>/gradle.lockfile (both crypto flavors); a
+    // build fails when it resolves something else. The release SBOM is read from the release runtime
+    // classpath in it (internal/ci/just/sbom.just). After changing a dependency, regenerate with
+    // `just client-kt lock`.
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     afterEvaluate {
         configurations.all {
             resolutionStrategy.dependencySubstitution {
@@ -99,8 +107,12 @@ subprojects {
                 )
             }
 
-            if (!version.toString().endsWith("SNAPSHOT")) {
-                // Only sign non snapshot release
+            // Only sign non snapshot releases, and only with a key: CI builds the release
+            // publication unsigned and signs exactly those files when it publishes them
+            // (internal/ci/tools/publish_maven.py).
+            if (!version.toString().endsWith("SNAPSHOT") &&
+                providers.gradleProperty("signingInMemoryKey").isPresent
+            ) {
                 signAllPublications()
             }
             pom {

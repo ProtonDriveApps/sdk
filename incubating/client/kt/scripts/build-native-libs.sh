@@ -5,7 +5,7 @@
 # The recipes live one per library; this only sequences them.
 #
 # This is the single entry point. It is invoked by:
-#   - internal/build/android/Dockerfile  (the CI android-builder image)
+#   - internal/build/kotlin/Dockerfile  (the CI image of the Kotlin SDK jobs)
 #   - scripts/local-jnilibs.sh           (local, non-CI builds)
 #
 # See native-libs-common.sh for the environment all three scripts share.
