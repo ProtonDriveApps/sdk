@@ -15,7 +15,7 @@
         "Nie można udostępnić folderu głównego"
       ],
       "Cannot verify the author of this file": [
-        "Nie można zweryfikować autora tego pliku"
+        "Nie można zweryfikować autora pliku"
       ],
       "Copy operation aborted": [
         "Operacja kopiowania została przerwana"
@@ -108,7 +108,7 @@
         "Operacja została przerwana"
       ],
       "Part of the file appears to be corrupted": [
-        "Wydaje się, że część pliku jest uszkodzona"
+        "Część pliku jest uszkodzona"
       ],
       "Renaming root item is not allowed": [
         "Zmiana nazwy folderu głównego nie jest dozwolona"
@@ -138,7 +138,7 @@
         "Coś poszło nie tak. Spróbuj ponownie."
       ],
       "This item is no longer shared": [
-        "Ten element nie jest już udostępniany"
+        "Element nie jest już udostępniony"
       ],
       "Too many server errors, please try again later": [
         "Zbyt wiele błędów serwera. Spróbuj ponownie później"

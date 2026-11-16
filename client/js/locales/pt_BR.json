@@ -5,17 +5,29 @@
   },
   "contexts": {
     "Error": {
+      "A message is required when reporting copyright infringement or stolen data": [
+        "É obrigatório incluir uma mensagem ao denunciar violação de direitos autorais ou dados roubados"
+      ],
       "Bookmark password is not available": [
         "A senha do marcador não está disponível."
       ],
+      "Cannot add photo to album without a valid name": [
+        "Não é possível adicionar a foto ao álbum sem um nome válido"
+      ],
       "Cannot download a folder": [
         "Não é possível baixar uma pasta."
+      ],
+      "Cannot move item without a valid name, please rename the item first": [
+        "Não é possível mover um item sem um nome válido. Renomeie o item primeiro."
       ],
       "Cannot share root folder": [
         "Não é possível compartilhar a pasta raiz"
       ],
       "Cannot verify the author of this file": [
         "Não é possível verificar o autor deste arquivo"
+      ],
+      "Cannot verify who uploaded this file": [
+        "Não foi possível verificar quem enviou este arquivo"
       ],
       "Copy operation aborted": [
         "A cópia foi cancelado."
@@ -28,6 +40,9 @@
       ],
       "Could not load sharing details": [
         "Não foi possível carregar os detalhes de compartilhamento."
+      ],
+      "Could not load the image preview: ${ message }": [
+        "Não foi possível carregar a prévia da imagem: ${ message }"
       ],
       "Could not read part of this file: ${ message }": [
         "Não foi possível ler este arquivo: ${ message }"
@@ -71,11 +86,26 @@
       "Failed to decrypt node key: ${ message }": [
         "Falha ao descriptografar a chave do nó: ${ message }"
       ],
+      "Failed to decrypt revision metadata": [
+        "Não foi possível descriptografar os metadados da revisão"
+      ],
+      "Failed to get invitee keys": [
+        "Não foi possível obter as chaves do convidado"
+      ],
       "Failed to get inviter keys": [
         "Falha ao obter chaves do convidante"
       ],
+      "Failed to load the membership": [
+        "Não foi possível carregar a participação"
+      ],
+      "Failed to load the membership data": [
+        "Não foi possível carregar os dados de participação"
+      ],
       "Failed to verify invitation": [
         "Erro ao verificar o convite"
+      ],
+      "Failed to verify membership": [
+        "Não foi possível verificar a participação"
       ],
       "File download failed due to empty response": [
         "Erro ao baixar o arquivo devido a uma resposta vazia"
@@ -150,6 +180,9 @@
       "Request aborted": [
         "Solicitação cancelada"
       ],
+      "Search index reached its storage quota": [
+        "O índice de busca atingiu a cota de armazenamento"
+      ],
       "Signature is missing": [
         "Assinatura ausente"
       ],
@@ -165,6 +198,15 @@
       "Signature verification for ${ signatureType } failed: ${ errorMessage }": [
         "Verificação de assinatura para ${ signatureType } falhou: ${ errorMessage }"
       ],
+      "Some file data failed to upload. Please try again.": [
+        "Não foi possível enviar alguns dados do arquivo. Tente novamente."
+      ],
+      "Some file parts failed to upload. Please try again.": [
+        "Não foi possível enviar algumas partes do arquivo. Tente novamente."
+      ],
+      "Some invitations could not be loaded": [
+        "Não foi possível carregar alguns convites"
+      ],
       "Some items could not be loaded": [
         "Alguns itens não puderam ser carregados"
       ],
@@ -174,8 +216,17 @@
       "Something went wrong. Please try again.": [
         "Ocorreu um erro. Tente novamente."
       ],
+      "The uploaded file does not match the original. Please try again.": [
+        "O arquivo enviado não corresponde ao original. Tente novamente."
+      ],
+      "This file has missing crypto material": [
+        "Faltam dados criptográficos neste arquivo"
+      ],
       "This file has no version available to download": [
         "Este arquivo não possui nenhuma versão disponível para baixar"
+      ],
+      "This file version could not be uploaded": [
+        "Não foi possível enviar esta versão do arquivo"
       ],
       "This item has no image preview": [
         "Este item não possui pré-visualização da imagem"
@@ -201,8 +252,26 @@
       "Verification keys for ${ signatureType } are not available": [
         "As chaves de verificação para ${ signatureType } não estão disponíveis"
       ],
+      "You can create public links for your own files only": [
+        "Você só pode criar links públicos dos seus próprios arquivos"
+      ],
+      "You can only leave items that are shared with you": [
+        "Você só pode sair de itens compartilhados com você"
+      ],
+      "You can only upload a new version to a file": [
+        "Você só pode enviar uma nova versão de um arquivo"
+      ],
+      "You can update a public link for your own files only": [
+        "Você só pode atualizar links públicos dos seus próprios arquivos"
+      ],
       "You do not have access to this item": [
         "Você não pode acessar este item"
+      ],
+      "You do not have access to this shared item": [
+        "Você não tem acesso a este item compartilhado"
+      ],
+      "Your browser does not support features required for the search.": [
+        "Seu navegador não oferece os recursos necessários para a busca."
       ]
     },
     "Info": {

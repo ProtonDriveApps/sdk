@@ -89,11 +89,23 @@
       "Failed to decrypt revision metadata": [
         "No se han podido descifrar los metadatos de la revisión"
       ],
+      "Failed to get invitee keys": [
+        "No se han podido obtener las claves de los invitados"
+      ],
       "Failed to get inviter keys": [
         "Fallo al obtener las claves de quien invita"
       ],
+      "Failed to load the membership": [
+        "No se ha podido cargar la información de afiliación"
+      ],
+      "Failed to load the membership data": [
+        "No se han podido cargar los datos de afiliación"
+      ],
       "Failed to verify invitation": [
         "Fallo al verificar la invitación"
+      ],
+      "Failed to verify membership": [
+        "No se ha podido verificar la afiliación"
       ],
       "File download failed due to empty response": [
         "Error con la descarga del archivo debido a una respuesta vacía"
