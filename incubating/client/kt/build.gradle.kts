@@ -26,17 +26,15 @@ plugins {
 }
 allprojects {
     repositories {
-        providers.environmentVariable("INTERNAL_REPOSITORY").orNull?.let { path ->
-            maven { url = uri(path) }
-        }
-        google()
-        mavenCentral()
-        maven("https://plugins.gradle.org/m2/")
-        maven {
-            url = uri("https://jitpack.io")
-            content {
-                includeGroupByRegex("com.github.bastienpaulfr.*")
-            }
+        // As in settings.gradle.kts: in CI, MAVEN_REPOSITORY (Artifact Keeper's cache of these
+        // repositories) is the only repository.
+        val mavenRepository = providers.environmentVariable("MAVEN_REPOSITORY").orNull
+        if (mavenRepository != null) {
+            maven { url = uri(mavenRepository) }
+        } else {
+            google()
+            mavenCentral()
+            maven("https://plugins.gradle.org/m2/")
         }
     }
     group = "me.proton.drive"

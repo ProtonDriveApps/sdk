@@ -10,12 +10,16 @@ dependencyResolutionManagement {
 
 pluginManagement {
     repositories {
-        providers.environmentVariable("INTERNAL_REPOSITORY").orNull?.let { path ->
-            maven { url = uri(path) }
+        // CI sets MAVEN_REPOSITORY (internal/ci/just/gradle-env.just) to Proton's Artifact Keeper, which
+        // caches these repositories, and it is then the only one. Unset, they are used directly.
+        val mavenRepository = providers.environmentVariable("MAVEN_REPOSITORY").orNull
+        if (mavenRepository != null) {
+            maven { url = uri(mavenRepository) }
+        } else {
+            gradlePluginPortal()
+            google()
+            mavenCentral()
         }
-        gradlePluginPortal()
-        google()
-        mavenCentral()
     }
 }
 
@@ -32,15 +36,12 @@ gradleEnterprise {
     }
 }
 
+// No remote build cache: CI used one (BUILD_CACHE_URL) that every pipeline wrote and master and
+// release pipelines read (against internal/ci/SPEC.md SEC-1.1 and INT-3.1), and without it the
+// client-kt jobs were no slower (pipeline 3896931 against 3896480).
 buildCache {
     local {
         isEnabled = !providers.environmentVariable("CI_SERVER").isPresent
-    }
-    providers.environmentVariable("BUILD_CACHE_URL").orNull?.let { buildCacheUrl ->
-        remote<HttpBuildCache> {
-            isPush = providers.environmentVariable("CI_SERVER").isPresent
-            url = uri(buildCacheUrl)
-        }
     }
 }
 
