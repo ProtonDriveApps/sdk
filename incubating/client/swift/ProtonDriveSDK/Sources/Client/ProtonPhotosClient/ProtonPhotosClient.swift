@@ -33,6 +33,11 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
         case enumerateTrash(UUID)
         case enumerateEvents(UUID)
         case savePhotosToTimeline(UUID)
+        case createAlbum(UUID)
+        case updateAlbum(UUID)
+        case deleteAlbum(UUID)
+        case addPhotosToAlbum(UUID)
+        case removePhotosFromAlbum(UUID)
 
         var operationName: String {
             switch self {
@@ -52,6 +57,11 @@ public actor ProtonPhotosClient: Sendable, ProtonSDKClient {
             case .enumerateTrash: return "enumerateTrash"
             case .enumerateEvents: return "enumerateEvents"
             case .savePhotosToTimeline: return "savePhotosToTimeline"
+            case .createAlbum: return "createAlbum"
+            case .updateAlbum: return "updateAlbum"
+            case .deleteAlbum: return "deleteAlbum"
+            case .addPhotosToAlbum: return "addPhotosToAlbum"
+            case .removePhotosFromAlbum: return "removePhotosFromAlbum"
             }
         }
     }
@@ -346,6 +356,154 @@ extension ProtonPhotosClient {
 
     public func cancelSavePhotosToTimeline(cancellationToken: UUID) async throws {
         try await cancelOperation(identifier: .savePhotosToTimeline(cancellationToken))
+    }
+
+    /// Creates a new, empty album at the root of the photos volume.
+    public func createAlbum(name: String, cancellationToken: UUID) async throws -> DriveNode {
+        let cancellationTokenSource = try await createCancellationTokenSource(.createAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .createAlbum(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientCreateAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.name = name
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let sdkNode: Proton_Drive_Sdk_Node = try await SDKRequestHandler.send(request, logger: logger)
+        return try DriveNode(sdkNode: sdkNode)
+    }
+
+    public func cancelCreateAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .createAlbum(cancellationToken))
+    }
+
+    /// Updates the album name and/or cover photo. A `nil` value leaves that field unchanged;
+    /// with both `nil`, the album is returned as it is.
+    public func updateAlbum(
+        albumUid: SDKNodeUid,
+        name: String? = nil,
+        coverPhotoUid: SDKNodeUid? = nil,
+        cancellationToken: UUID
+    ) async throws -> DriveNode {
+        let cancellationTokenSource = try await createCancellationTokenSource(.updateAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .updateAlbum(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientUpdateAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.albumUid = albumUid.sdkCompatibleIdentifier
+            if let name {
+                $0.name = name
+            }
+            if let coverPhotoUid {
+                $0.coverPhotoUid = coverPhotoUid.sdkCompatibleIdentifier
+            }
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let sdkNode: Proton_Drive_Sdk_Node = try await SDKRequestHandler.send(request, logger: logger)
+        return try DriveNode(sdkNode: sdkNode)
+    }
+
+    public func cancelUpdateAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .updateAlbum(cancellationToken))
+    }
+
+    /// If the album also has photos that exist only in it, the call throws error code 200302 with
+    /// `AlbumContainsPhotosNotInTimelineErrorData` unless `config` is `.force` (permanently delete them too)
+    /// or `.saveToTimeline` (move them to the timeline first, then delete the album).
+    public func deleteAlbum(
+        albumUid: SDKNodeUid,
+        config: AlbumDeletionConfig = .failIfContainsPhotosNotInTimeline,
+        cancellationToken: UUID
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.deleteAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .deleteAlbum(cancellationToken))
+        }
+
+        let request = Proton_Drive_Sdk_DrivePhotosClientDeleteAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.albumUid = albumUid.sdkCompatibleIdentifier
+            $0.force = config == .force
+            $0.saveToTimeline = config == .saveToTimeline
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+
+        let _: Void = try await SDKRequestHandler.send(request, logger: logger)
+    }
+
+    public func cancelDeleteAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .deleteAlbum(cancellationToken))
+    }
+
+    /// Results are streamed per photo. A photo already in the album is reported as a per-node failure.
+    public func addPhotosToAlbum(
+        albumUid: SDKNodeUid,
+        photoUids: [SDKNodeUid],
+        cancellationToken: UUID,
+        onNodeResult: @escaping NodeResultCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.addPhotosToAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .addPhotosToAlbum(cancellationToken))
+        }
+
+        let callbackState = NodeResultEnumerationCallbackWrapper(callback: onNodeResult)
+        let request = Proton_Drive_Sdk_DrivePhotosClientAddPhotosToAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.albumUid = albumUid.sdkCompatibleIdentifier
+            $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeResultEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelAddPhotosToAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .addPhotosToAlbum(cancellationToken))
+    }
+
+    /// Results are streamed per photo.
+    public func removePhotosFromAlbum(
+        albumUid: SDKNodeUid,
+        photoUids: [SDKNodeUid],
+        cancellationToken: UUID,
+        onNodeResult: @escaping NodeResultCallback
+    ) async throws {
+        let cancellationTokenSource = try await createCancellationTokenSource(.removePhotosFromAlbum(cancellationToken), logger)
+        defer {
+            freeCancellationTokenSourceIfNeeded(identifier: .removePhotosFromAlbum(cancellationToken))
+        }
+
+        let callbackState = NodeResultEnumerationCallbackWrapper(callback: onNodeResult)
+        let request = Proton_Drive_Sdk_DrivePhotosClientRemovePhotosFromAlbumRequest.with {
+            $0.clientHandle = Int64(clientHandle)
+            $0.albumUid = albumUid.sdkCompatibleIdentifier
+            $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
+            $0.yieldAction = Int64(ObjectHandle(callback: cNodeResultEnumerationCallback))
+            $0.cancellationTokenSourceHandle = Int64(cancellationTokenSource.handle)
+        }
+        let _: Void = try await SDKRequestHandler.send(
+            request,
+            state: WeakReference(value: callbackState),
+            scope: .ownerManaged,
+            owner: callbackState,
+            logger: logger
+        )
+    }
+
+    public func cancelRemovePhotosFromAlbum(cancellationToken: UUID) async throws {
+        try await cancelOperation(identifier: .removePhotosFromAlbum(cancellationToken))
     }
 }
 

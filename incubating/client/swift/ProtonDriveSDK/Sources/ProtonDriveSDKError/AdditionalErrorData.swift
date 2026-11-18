@@ -9,6 +9,7 @@ struct AdditionalErrorDataFactory {
             ?? ThumbnailCountMismatchErrorData(data: data)
             ?? ChecksumMismatchErrorData(data: data)
             ?? NodeNotFoundErrorData(data: data)
+            ?? AlbumContainsPhotosNotInTimelineErrorData(data: data)
     }
 }
 
@@ -184,5 +185,32 @@ public struct ChecksumMismatchErrorData: AdditionalErrorData {
 
     public func errorDescription() -> String {
         "actual checksum: \(actualChecksum.map { String(format: "%02x", $0) }.joined()), expected checksum: \(expectedChecksum.map { String(format: "%02x", $0) }.joined())"
+    }
+}
+
+public struct AlbumContainsPhotosNotInTimelineErrorData: AdditionalErrorData {
+    /// Photos that exist only in the album and block the delete
+    public let photoUids: [SDKNodeUid]
+
+    init?(data: Google_Protobuf_Any) {
+        do {
+            let errorData = try Proton_Drive_Sdk_AlbumContainsPhotosNotInTimelineErrorData(unpackingAny: data)
+            let photoUids = errorData.photoUids.compactMap { SDKNodeUid(sdkCompatibleIdentifier: $0) }
+            guard photoUids.count == errorData.photoUids.count else { return nil }
+            self.photoUids = photoUids
+        } catch {
+            return nil
+        }
+    }
+
+    public func toProtobufAny() -> Google_Protobuf_Any? {
+        let errorData = Proton_Drive_Sdk_AlbumContainsPhotosNotInTimelineErrorData.with {
+            $0.photoUids = photoUids.map(\.sdkCompatibleIdentifier)
+        }
+        return try? Google_Protobuf_Any(message: errorData)
+    }
+
+    public func errorDescription() -> String {
+        "photoUids: \(photoUids.map(\.sdkCompatibleIdentifier))"
     }
 }

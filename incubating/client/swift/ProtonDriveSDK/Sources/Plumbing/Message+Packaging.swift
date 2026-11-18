@@ -282,6 +282,31 @@ extension Message {
                 $0.payload = .drivePhotosClientSavePhotosToTimeline(request)
             }
 
+        case let request as Proton_Drive_Sdk_DrivePhotosClientCreateAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientCreateAlbum(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientUpdateAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientUpdateAlbum(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientDeleteAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientDeleteAlbum(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientAddPhotosToAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientAddPhotosToAlbum(request)
+            }
+
+        case let request as Proton_Drive_Sdk_DrivePhotosClientRemovePhotosFromAlbumRequest:
+            Proton_Drive_Sdk_Request.with {
+                $0.payload = .drivePhotosClientRemovePhotosFromAlbum(request)
+            }
+
         case let request as Proton_Drive_Sdk_DrivePhotosClientLeaveSharedNodeRequest:
             Proton_Drive_Sdk_Request.with {
                 $0.payload = .drivePhotosClientLeaveSharedNode(request)
