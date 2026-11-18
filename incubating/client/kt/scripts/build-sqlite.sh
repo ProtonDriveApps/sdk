@@ -27,8 +27,10 @@ SQLITE_FLAGS=(
 require_tools curl unzip
 work_init
 
+# SQLITE_MIRROR: a mirror of www.sqlite.org to download from (the kotlin image's build passes Proton's).
+# The retries cover Artifact Keeper answering 504 while it fetches a file it does not have yet.
 log "Downloading SQLite amalgamation $SQLITE_AMALGAMATION"
-curl -fsSL "https://www.sqlite.org/${SQLITE_YEAR}/${SQLITE_AMALGAMATION}.zip" -o "$WORK/sqlite.zip"
+curl --retry 5 --retry-all-errors --retry-delay 5 -fsSL "${SQLITE_MIRROR:-https://www.sqlite.org/}${SQLITE_YEAR}/${SQLITE_AMALGAMATION}.zip" -o "$WORK/sqlite.zip"
 sha256_check "$WORK/sqlite.zip" "$SQLITE_SHA256"
 unzip -q "$WORK/sqlite.zip" -d "$WORK"
 AM="$WORK/$SQLITE_AMALGAMATION"

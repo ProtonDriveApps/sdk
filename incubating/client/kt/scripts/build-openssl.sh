@@ -17,9 +17,11 @@ OPENSSL_SHA256=a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8
 require_tools curl tar make perl
 work_init
 
+# GITHUB_MIRROR: a mirror of github.com to download from (the kotlin image's build passes Proton's).
+# The retries cover Artifact Keeper answering 504 while it fetches a file it does not have yet.
 log "Downloading OpenSSL $OPENSSL_VERSION"
-curl -fsSL \
-  "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+curl --retry 5 --retry-all-errors --retry-delay 5 -fsSL \
+  "${GITHUB_MIRROR:-https://github.com/}openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
   -o "$WORK/openssl.tar.gz"
 sha256_check "$WORK/openssl.tar.gz" "$OPENSSL_SHA256"
 
