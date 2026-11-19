@@ -1,5 +1,12 @@
 # Changelog
 
+## cs/v0.33.1 (2026-11-18)
+
+### Features
+- Bind the Photos album calls
+- Bind EnumerateNodesAsync for Drive and Photos clients
+
+
 ## cs/v0.33.0 (2026-11-05)
 
 ### Features
